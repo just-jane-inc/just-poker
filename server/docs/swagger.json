@@ -1,0 +1,616 @@
+{
+    "components": {
+        "schemas": {
+            "game.CardDTO": {
+                "description": "a card",
+                "properties": {
+                    "rank": {
+                        "description": "the rank of a card as a rune - int32 ASCII encoding",
+                        "type": "integer"
+                    },
+                    "suit": {
+                        "description": "the suit of a card as a rune - int32 ASCII encoding",
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "game.ChipExchangeDTO": {
+                "properties": {
+                    "give": {
+                        "$ref": "#/components/schemas/game.ChipStackDTO"
+                    },
+                    "receive": {
+                        "$ref": "#/components/schemas/game.ChipStackDTO"
+                    }
+                },
+                "type": "object"
+            },
+            "game.ChipStackDTO": {
+                "additionalProperties": {
+                    "type": "integer"
+                },
+                "description": "an optional mapping of chips that is required by some action types.",
+                "type": "object"
+            },
+            "game.GameDTO": {
+                "description": "yeah, the game",
+                "properties": {
+                    "game_config": {
+                        "$ref": "#/components/schemas/game.NewGameConfigDTO"
+                    },
+                    "id": {
+                        "description": "the id of the game",
+                        "type": "string"
+                    },
+                    "started_at": {
+                        "description": "the time that the game started originally",
+                        "type": "string"
+                    },
+                    "table": {
+                        "$ref": "#/components/schemas/game.TableDTO"
+                    }
+                },
+                "type": "object"
+            },
+            "game.HandDTO": {
+                "description": "the current hand",
+                "properties": {
+                    "big_blind": {
+                        "description": "the amount of chips for the big blind in this hand",
+                        "type": "integer"
+                    },
+                    "button": {
+                        "description": "the index of the position of the player who has the button",
+                        "type": "integer"
+                    },
+                    "count": {
+                        "description": "the (non decreasing) hand counter",
+                        "type": "integer"
+                    },
+                    "id": {
+                        "description": "the id of a hand",
+                        "type": "string"
+                    },
+                    "small_blind": {
+                        "description": "the amount of chips for the small blind in this hand",
+                        "type": "integer"
+                    },
+                    "started_at": {
+                        "description": "the time that this hand started",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "game.NewGameConfigDTO": {
+                "description": "the configuration used to setup the game",
+                "properties": {
+                    "big_blind": {
+                        "description": "the big blind",
+                        "type": "integer"
+                    },
+                    "player_count": {
+                        "description": "the number of players (max) the game supports",
+                        "type": "integer"
+                    },
+                    "small_blind": {
+                        "description": "the small blind",
+                        "type": "integer"
+                    },
+                    "starting_chips": {
+                        "$ref": "#/components/schemas/game.ChipStackDTO"
+                    }
+                },
+                "type": "object"
+            },
+            "game.PlayerActionDTO": {
+                "description": "The action that a player has taken...",
+                "properties": {
+                    "accepted_at": {
+                        "description": "a timestamp capturing when a succesful action was accepted by the game",
+                        "type": "string"
+                    },
+                    "chips": {
+                        "$ref": "#/components/schemas/game.ChipStackDTO"
+                    },
+                    "intent": {
+                        "description": "the type of action a player intended to preform",
+                        "type": "string"
+                    },
+                    "player_id": {
+                        "description": "the id of the player preforming the action",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "game.PlayerDTO": {
+                "description": "Detailed information about a registered user.",
+                "properties": {
+                    "current_bet": {
+                        "$ref": "#/components/schemas/game.ChipStackDTO"
+                    },
+                    "display_name": {
+                        "description": "the users display name",
+                        "type": "string"
+                    },
+                    "hole": {
+                        "description": "the cards current held by this player. the cards are only visible\nto authorized users. TODO: make the prev statement true, also make an anon card",
+                        "items": {
+                            "$ref": "#/components/schemas/game.CardDTO"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "position": {
+                        "description": "the players position at the table, starting with 0 being the\nfirst player sitting clockwise from the dealer",
+                        "type": "integer"
+                    },
+                    "pot_contribution": {
+                        "description": "the sum total the player has contributed to the pot, note that this\ndoes not include chips currently in CurrentBet",
+                        "type": "integer"
+                    },
+                    "stack": {
+                        "$ref": "#/components/schemas/game.ChipStackDTO"
+                    },
+                    "state": {
+                        "description": "the players state",
+                        "type": "string"
+                    },
+                    "user_id": {
+                        "description": "the is of the user",
+                        "type": "string"
+                    },
+                    "user_type": {
+                        "description": "the type of user TODO: make this an enum",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "game.RoundDTO": {
+                "description": "the current round",
+                "properties": {
+                    "bet": {
+                        "description": "the amount of chips required to call (how does this work with split pots?)",
+                        "type": "integer"
+                    },
+                    "current_agressor": {
+                        "description": "the player who currently ends the round? the last raise?",
+                        "type": "integer"
+                    },
+                    "current_player_position": {
+                        "description": "the index into the play array for the player whose turn it currently is",
+                        "type": "integer"
+                    },
+                    "current_round_type": {
+                        "$ref": "#/components/schemas/game.RoundType"
+                    }
+                },
+                "type": "object"
+            },
+            "game.RoundType": {
+                "description": "the type of round",
+                "enum": [
+                    "unset",
+                    "setup",
+                    "pre_flop",
+                    "flop",
+                    "turn",
+                    "river",
+                    "completed"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "round_type_unset",
+                    "round_type_setup",
+                    "round_type_pre_flop",
+                    "round_type_flop",
+                    "round_type_turn",
+                    "round_type_river",
+                    "round_type_completed"
+                ]
+            },
+            "game.TableDTO": {
+                "description": "the table",
+                "properties": {
+                    "big_blind_position": {
+                        "description": "the position of the big blind",
+                        "type": "integer"
+                    },
+                    "button_position": {
+                        "description": "the position of the button",
+                        "type": "integer"
+                    },
+                    "current_hand": {
+                        "$ref": "#/components/schemas/game.HandDTO"
+                    },
+                    "current_round": {
+                        "$ref": "#/components/schemas/game.RoundDTO"
+                    },
+                    "players": {
+                        "description": "An array of players at the table",
+                        "items": {
+                            "$ref": "#/components/schemas/game.PlayerDTO"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pot": {
+                        "$ref": "#/components/schemas/game.ChipStackDTO"
+                    },
+                    "small_blind_position": {
+                        "description": "the position of the small blind",
+                        "type": "integer"
+                    },
+                    "street": {
+                        "description": "the cards that are on the street (community cards)",
+                        "items": {
+                            "$ref": "#/components/schemas/game.CardDTO"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "poker_server_just.ResponseMessage-any": {
+                "properties": {
+                    "data": {},
+                    "type": {
+                        "example": "user.created",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "poker_server_just.ResponseMessage-game_GameDTO": {
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/game.GameDTO"
+                    },
+                    "type": {
+                        "example": "user.created",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "poker_server_just.ResponseMessage-int": {
+                "properties": {
+                    "data": {
+                        "type": "integer"
+                    },
+                    "type": {
+                        "example": "user.created",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "poker_server_just.ResponseMessage-string": {
+                "properties": {
+                    "data": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "example": "user.created",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "user.UserDTO": {
+                "properties": {
+                    "display_name": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "user_type": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
+    "info": {
+        "contact": {
+            "name": "Red_Epicness",
+            "url": "http://swagger.io"
+        },
+        "description": "# Error Format \u0026 Meaning\n\nAll response messages are in the format of:\n```json\n{\n  \"message_type\": \"string\",\n  \"data\": {}\n}\n```\n\nAll errors use the \"error\" message_type and have the data format of:\n```json\n{\n  \"error_code\": int,\n  \"error\": \"string\"\n}\n```\n\n\nThe \"error\" field is intended only as a human readable message and should not be depended on for branching or parsing in code.\nThis field should be considered volatile within the api.\nThe error_code field is stable and intended for client code to use within recovery operations.\nThe error codes and their meanings are enumerated in the table below\n\n\n|   Code | Name                  | Meaning                                       |\n| -----: | --------------------- | --------------------------------------------- |\n| `1000` | `Unknown` | A novel error...congrats.                |\n| `1001` | `TurnOrderViolation`     | Player action received for a player out of turn. |\n| `1002` | `InvalidActionType`   | Player action received with an intent that is not valid for the game state.                        |\n| `1003` | `NotEnoughChips`   | Player action received with a chip amount that cannot be covered by the players stack            |\n| `1004` | `InvalidBetAmount`    | Player action received with a bet amount that violates requirements i.e. incorrect amount for a blind, call, or a raise which is too low.                 |\n\n\n",
+        "license": {
+            "name": "BAHMS",
+            "url": "http://license.bahms.org"
+        },
+        "termsOfService": "http://swagger.io",
+        "title": "BAHMS Poker Tournament",
+        "version": "1.0"
+    },
+    "externalDocs": {
+        "description": "",
+        "url": ""
+    },
+    "paths": {
+        "/game": {
+            "post": {
+                "description": "post the action preformed by a player",
+                "parameters": [
+                    {
+                        "description": "the id of the game",
+                        "in": "path",
+                        "name": "game_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/game.PlayerActionDTO",
+                                        "summary": "request",
+                                        "description": "the action the player is preforming"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "the action the player is preforming",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/poker_server_just.ResponseMessage-any"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "summary": "Player Action",
+                "tags": [
+                    "Game"
+                ]
+            }
+        },
+        "/game/{game_id}/player": {
+            "post": {
+                "description": "Join an open game",
+                "parameters": [
+                    {
+                        "description": "ID of the Game to join",
+                        "in": "path",
+                        "name": "game_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "summary": "Join a Game",
+                "tags": [
+                    "Game"
+                ]
+            }
+        },
+        "/game/{game_id}/rack/exchange": {
+            "post": {
+                "description": "exchange chips in the players stack with the tables rack",
+                "parameters": [
+                    {
+                        "description": "ID of the Game exchange chips in",
+                        "in": "path",
+                        "name": "game_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/game.ChipExchangeDTO",
+                                        "summary": "request",
+                                        "description": "a specification for the chips to exchange"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "a specification for the chips to exchange",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "summary": "Exchange Chips",
+                "tags": [
+                    "Game"
+                ]
+            }
+        },
+        "/game/{game_id}/state": {
+            "get": {
+                "description": "gets the current state of the game from the perspective of the requesting user",
+                "parameters": [
+                    {
+                        "description": "ID of the Game to get the state of",
+                        "in": "path",
+                        "name": "game_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/poker_server_just.ResponseMessage-game_GameDTO"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "summary": "Game State",
+                "tags": [
+                    "Game"
+                ]
+            }
+        },
+        "/user/": {
+            "post": {
+                "description": "How does this differ from summary...",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/user.UserDTO",
+                                        "summary": "User",
+                                        "description": "user"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "user",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/user.UserDTO"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "summary": "Creates a user",
+                "tags": [
+                    "user"
+                ]
+            }
+        },
+        "/utility/eval-hand": {
+            "post": {
+                "description": "evaluates a poker hand with 5 or 7 cards",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "items": {
+                                            "$ref": "#/components/schemas/game.CardDTO"
+                                        },
+                                        "title": "request",
+                                        "type": "array"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "an array of cards to evaluate",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/poker_server_just.ResponseMessage-int"
+                                }
+                            }
+                        },
+                        "description": "an integer ranking of the provided hand with 1 being the best possible hand"
+                    }
+                },
+                "summary": "Evaluate Hand",
+                "tags": [
+                    "Utility"
+                ]
+            }
+        }
+    },
+    "openapi": "3.1.0",
+    "servers": [
+        {
+            "url": "localhost:8080/api/"
+        }
+    ]
+}

@@ -1,0 +1,9 @@
+.env
+Dockerfile
+*.o
+hand-evaluator
+just_eval
+*.md
+Dockerfile
+LICENSE
+*.txt

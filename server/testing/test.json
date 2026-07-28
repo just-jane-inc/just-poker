@@ -1,0 +1,150 @@
+{
+  "type": "game_state",
+  "data": {
+    "id": "339",
+    "started_at": "2026-07-24T23:37:41.600988111-04:00",
+    "game_config": {
+      "player_count": 4,
+      "starting_chips": {
+        "10": 20,
+        "100": 2,
+        "50": 5
+      },
+      "big_blind": 100,
+      "small_blind": 50
+    },
+    "table": {
+      "players": [
+        {
+          "user_id": "161",
+          "display_name": "test-name-0",
+          "user_type": "test",
+          "position": 0,
+          "hole": [
+            {
+              "rank": 56,
+              "suit": 104
+            },
+            {
+              "rank": 74,
+              "suit": 115
+            }
+          ],
+          "stack": {
+            "10": 20,
+            "100": 2,
+            "50": 5
+          },
+          "current_bet": {
+            "10": 10
+          },
+          "pot_contribution": 0,
+          "state": "inactive"
+        },
+        {
+          "user_id": "162",
+          "display_name": "test-name-1",
+          "user_type": "test",
+          "position": 1,
+          "hole": [
+            {
+              "rank": 55,
+              "suit": 104
+            },
+            {
+              "rank": 54,
+              "suit": 99
+            }
+          ],
+          "stack": {
+            "10": 20,
+            "100": 2,
+            "50": 5
+          },
+          "current_bet": {
+            "50": 2
+          },
+          "pot_contribution": 0,
+          "state": "inactive"
+        },
+        {
+          "user_id": "163",
+          "display_name": "test-name-2",
+          "user_type": "test",
+          "position": 2,
+          "hole": [
+            {
+              "rank": 65,
+              "suit": 100
+            },
+            {
+              "rank": 81,
+              "suit": 99
+            }
+          ],
+          "stack": {
+            "10": 20,
+            "100": 1,
+            "50": 4
+          },
+          "current_bet": {
+            "100": 1,
+            "50": 1
+          },
+          "pot_contribution": 0,
+          "state": "inactive"
+        },
+        {
+          "user_id": "164",
+          "display_name": "test-name-3",
+          "user_type": "test",
+          "position": 3,
+          "hole": [
+            {
+              "rank": 75,
+              "suit": 104
+            },
+            {
+              "rank": 52,
+              "suit": 99
+            }
+          ],
+          "stack": {
+            "10": 20,
+            "100": 1,
+            "50": 5
+          },
+          "current_bet": {
+            "10": 5,
+            "100": 1
+          },
+          "pot_contribution": 0,
+          "state": "inactive"
+        }
+      ],
+      "pot": {
+        "100": 2,
+        "50": 1
+      },
+      "street": [],
+      "current_round": {
+        "bet": 150,
+        "current_player_position": 0,
+        "current_agressor": 2,
+        "current_round_type": "pre_flop"
+      },
+      "current_hand": {
+        "id": "",
+        "count": 0,
+        "button": 1,
+        "big_blind": 100,
+        "small_blind": 50,
+        "started_at": "0001-01-01T00:00:00Z"
+      },
+      "button_position": 1,
+      "small_blind_position": 3,
+      "big_blind_position": 0
+    }
+  }
+}
+339

@@ -1,0 +1,92 @@
+package game
+
+import (
+	"fmt"
+	"poker_server/just"
+	"strconv"
+)
+
+type ChipExchangeDTO struct {
+	Give    ChipStackDTO
+	Receive ChipStackDTO
+}
+
+func (s ChipStackDTO) AsStack() stack {
+	createStack := make(map[int]int)
+	for d, c := range s {
+		denomination, err := strconv.Atoi(d)
+		if err != nil {
+			continue
+		}
+
+		createStack[denomination] += c
+	}
+
+	return createStack
+}
+
+func (this stack) Contains(that stack) bool {
+	for d, c := range that {
+		// get the number of chips with the provided denomination
+		// available to this stack
+		count, ok := this[d]
+		if !ok {
+			return false
+		}
+
+		// check if this stack has enough of the required denomination
+		// to cover the check
+		if count < c {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (g *game) ExchangeChips(playerID string, exchange ChipExchangeDTO) error {
+	if exchange.Give.Sum() != exchange.Receive.Sum() {
+		return &just.PokerError{
+			Message: "Give and Recieve sum to different values, exchange is invalid",
+			Code:    just.InvalidChipExchange,
+		}
+	}
+
+	var p *player
+	if p = g.table.GetPlayerWithID(playerID); p == nil {
+		return &just.PokerError{
+			Message: fmt.Sprintf("player [%s] not found at table", playerID),
+			Code:    just.UserNotFound,
+		}
+	}
+
+	if !p.chips.Contains(exchange.Give.AsStack()) {
+		return &just.PokerError{
+			Message: "player stack does not have enough chips to cover requested exchange",
+			Code:    just.InvalidChipExchange,
+		}
+	}
+
+	for d, c := range exchange.Give {
+		denomination, err := strconv.Atoi(d)
+		if err != nil {
+			continue
+		}
+
+		p.chips[denomination] -= c
+	}
+
+	for d, c := range exchange.Receive {
+		denomination, err := strconv.Atoi(d)
+		if err != nil {
+			continue
+		}
+
+		p.chips[denomination] -= c
+	}
+
+	return &just.PokerError{
+		Message: "user with id %s is not at this table",
+		Code:    just.UserNotFound,
+	}
+}
