@@ -2,8 +2,9 @@ package game
 
 import (
 	"fmt"
-	"poker_server/just"
 	"strconv"
+
+	"github.com/just-jane-inc/just-poker/server/just"
 )
 
 type ChipExchangeDTO struct {

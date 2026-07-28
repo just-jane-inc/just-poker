@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"maps"
-	"net/http"
-	"poker_server/just"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/just-jane-inc/just-poker/server/just"
 )
 
 func (this stack) MergeWith(that stack) stack {
@@ -76,38 +76,30 @@ func CreateGameFromConfig(config NewGameConfigDTO) (*game, error) {
 	return g, nil
 }
 
+type JoinGameError error
+
 // TODO: should this just be called and return error? do I need
 // a response channel really?
-func (g *game) TryJoinGame(username, userID string, ch chan just.HttpResponse) {
+func (g *game) TryJoinGame(username, userID string) error {
 	g.joinGameLock.Lock()
 	defer g.joinGameLock.Unlock()
 
 	if g.started_at != nil {
-		ch <- just.BadRequest("game has already started", 0)
-		return
+		return just.NewPokerError("table does not exist", just.GameAlreadyStarted)
 	}
 
 	if g.table == nil {
-		ch <- just.HttpResponse{
-			Code: http.StatusInternalServerError,
-			Object: map[string]string{
-				"msg": "table does not yet exist, game has not been initialized",
-			},
-		}
-
-		return
+		return just.NewPokerError("table does not exist", just.Unknown)
 	}
 
 	if len(g.table.players) >= g.config.PlayerCount {
-		ch <- just.BadRequest("the table is full", 0)
-		return
+		return just.NewPokerError("table does not exist", just.GameIsFull)
 	}
 
 	// check for duplicate player
 	for _, p := range g.table.players {
 		if p.UserID == userID {
-			ch <- just.BadRequest("player already exists at table dayo", 0)
-			return
+			return just.NewPokerError("player already joined table", just.PlayerAlreadyJoined)
 		}
 	}
 
@@ -121,7 +113,7 @@ func (g *game) TryJoinGame(username, userID string, ch chan just.HttpResponse) {
 	maps.Copy(p.chips, g.config.StartingChips.AsStack())
 
 	g.table.players = append(g.table.players, p)
-	ch <- just.OK("join table success", 0)
+	return nil
 }
 
 func (g *game) TryStartGame() error {

@@ -12,21 +12,13 @@ import (
 
 	"github.com/caarlos0/env/v6"
 	"github.com/joho/godotenv"
+
+	"github.com/just-jane-inc/just-poker/hand-evaluator/messages"
 )
 
 var (
 	Env Config
 )
-
-type Card struct {
-	Rank rune `json:"rank"`
-	Suit rune `json:"suit"`
-}
-
-type Response struct {
-	Error      string `json:"error"`
-	Evaluation int    `json:"evaluation"`
-}
 
 func main() {
 	log.Print("starting...")
@@ -54,9 +46,9 @@ func main() {
 func EvaluateHand(w http.ResponseWriter, r *http.Request) {
 	log.Print("request received to evaluate hand")
 
-	var hand []Card
+	var hand []messages.Card
 	if err := json.NewDecoder(r.Body).Decode(&hand); err != nil {
-		WriteJSONResponse(w, 400, Response{Error: err.Error()})
+		WriteJSONResponse(w, 400, messages.Response{Error: err.Error()})
 		return
 	}
 
@@ -81,17 +73,17 @@ func EvaluateHand(w http.ResponseWriter, r *http.Request) {
 	log.Printf("evaluating hand: %s [out: %s] [err: %s]", args, outString, errString)
 
 	if errString != "" {
-		WriteJSONResponse(w, 400, Response{Error: errString})
+		WriteJSONResponse(w, 400, messages.Response{Error: errString})
 		return
 	}
 
 	outInt, err := strconv.Atoi(outString)
 	if err != nil {
-		WriteJSONResponse(w, 400, Response{Error: err.Error()})
+		WriteJSONResponse(w, 400, messages.Response{Error: err.Error()})
 		return
 	}
 
-	WriteJSONResponse(w, 200, Response{Evaluation: outInt})
+	WriteJSONResponse(w, 200, messages.Response{Evaluation: outInt})
 }
 
 func WriteJSONResponse(w http.ResponseWriter, status int, value any) {
@@ -115,12 +107,8 @@ func IgnoreTrailingSlash(next http.Handler) http.Handler {
 }
 
 type Config struct {
-	ElasticHost     string `env:"ELASTIC_HOST,required"`
-	ElasticKey      string `env:"ELASTIC_API_KEY,required"`
-	ElasticLogIndex string `env:"ELASTIC_LOG_INDEX,required"`
-	DiscordLogHook  string `env:"DISCORD_ERR_LOGS_HOOK,required"`
-	Port            string `env:"JUST_POKER_PORT,required"`
-	PokerEvalCLI    string `env:"POKER_EVAL_CLI,required"`
+	Port         string `env:"PORT,required"`
+	PokerEvalCLI string `env:"CLI,required"`
 }
 
 func init() {

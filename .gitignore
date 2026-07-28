@@ -1,4 +1,8 @@
 **/tmp/*
 .env
-python-sdk
+**/__pycache__/*
+**/.venv/*
+python-sdk/openapi_client
+python-sdk/lib
+**/.ipynb_checkpoints/*
 

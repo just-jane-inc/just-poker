@@ -255,7 +255,18 @@
                 },
                 "type": "object"
             },
-            "poker_server_just.ResponseMessage-any": {
+            "just.ErrorDTO": {
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    },
+                    "error_code": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "just.ResponseMessage-any": {
                 "properties": {
                     "data": {},
                     "type": {
@@ -265,7 +276,7 @@
                 },
                 "type": "object"
             },
-            "poker_server_just.ResponseMessage-game_GameDTO": {
+            "just.ResponseMessage-game_GameDTO": {
                 "properties": {
                     "data": {
                         "$ref": "#/components/schemas/game.GameDTO"
@@ -277,10 +288,10 @@
                 },
                 "type": "object"
             },
-            "poker_server_just.ResponseMessage-int": {
+            "just.ResponseMessage-just_ErrorDTO": {
                 "properties": {
                     "data": {
-                        "type": "integer"
+                        "$ref": "#/components/schemas/just.ErrorDTO"
                     },
                     "type": {
                         "example": "user.created",
@@ -289,13 +300,39 @@
                 },
                 "type": "object"
             },
-            "poker_server_just.ResponseMessage-string": {
+            "just.ResponseMessage-string": {
                 "properties": {
                     "data": {
                         "type": "string"
                     },
                     "type": {
                         "example": "user.created",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "just.ResponseMessage-user_ApiKey": {
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/user.ApiKey"
+                    },
+                    "type": {
+                        "example": "user.created",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "user.ApiKey": {
+                "properties": {
+                    "key_id": {
+                        "type": "string"
+                    },
+                    "token": {
+                        "type": "string"
+                    },
+                    "user_id": {
                         "type": "string"
                     }
                 },
@@ -306,7 +343,10 @@
                     "display_name": {
                         "type": "string"
                     },
-                    "id": {
+                    "twitch_id": {
+                        "type": "string"
+                    },
+                    "user_id": {
                         "type": "string"
                     },
                     "user_type": {
@@ -315,18 +355,17 @@
                 },
                 "type": "object"
             }
+        },
+        "securitySchemes": {
+            "BearerAuth": {
+                "description": "Type \"Bearer\" followed by a space and your token (e.g. \"Bearer your_token_here\").",
+                "scheme": "bearer",
+                "type": "http"
+            }
         }
     },
     "info": {
-        "contact": {
-            "name": "Red_Epicness",
-            "url": "http://swagger.io"
-        },
         "description": "# Error Format \u0026 Meaning\n\nAll response messages are in the format of:\n```json\n{\n  \"message_type\": \"string\",\n  \"data\": {}\n}\n```\n\nAll errors use the \"error\" message_type and have the data format of:\n```json\n{\n  \"error_code\": int,\n  \"error\": \"string\"\n}\n```\n\n\nThe \"error\" field is intended only as a human readable message and should not be depended on for branching or parsing in code.\nThis field should be considered volatile within the api.\nThe error_code field is stable and intended for client code to use within recovery operations.\nThe error codes and their meanings are enumerated in the table below\n\n\n|   Code | Name                  | Meaning                                       |\n| -----: | --------------------- | --------------------------------------------- |\n| `1000` | `Unknown` | A novel error...congrats.                |\n| `1001` | `TurnOrderViolation`     | Player action received for a player out of turn. |\n| `1002` | `InvalidActionType`   | Player action received with an intent that is not valid for the game state.                        |\n| `1003` | `NotEnoughChips`   | Player action received with a chip amount that cannot be covered by the players stack            |\n| `1004` | `InvalidBetAmount`    | Player action received with a bet amount that violates requirements i.e. incorrect amount for a blind, call, or a raise which is too low.                 |\n\n\n",
-        "license": {
-            "name": "BAHMS",
-            "url": "http://license.bahms.org"
-        },
         "termsOfService": "http://swagger.io",
         "title": "BAHMS Poker Tournament",
         "version": "1.0"
@@ -337,6 +376,47 @@
     },
     "paths": {
         "/game": {
+            "post": {
+                "description": "creates a new game from a configuration file",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/game.NewGameConfigDTO",
+                                        "summary": "request",
+                                        "description": "an object defining configuration information for the new game"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "an object defining configuration information for the new game",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-string"
+                                }
+                            }
+                        },
+                        "description": "game created - game id as string"
+                    }
+                },
+                "summary": "Create Game",
+                "tags": [
+                    "Game"
+                ]
+            }
+        },
+        "/game/{game_id}/action": {
             "post": {
                 "description": "post the action preformed by a player",
                 "parameters": [
@@ -375,7 +455,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/poker_server_just.ResponseMessage-any"
+                                    "$ref": "#/components/schemas/just.ResponseMessage-any"
                                 }
                             }
                         },
@@ -388,48 +468,7 @@
                 ]
             }
         },
-        "/game/{game_id}/player": {
-            "post": {
-                "description": "Join an open game",
-                "parameters": [
-                    {
-                        "description": "ID of the Game to join",
-                        "in": "path",
-                        "name": "game_id",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    }
-                },
-                "summary": "Join a Game",
-                "tags": [
-                    "Game"
-                ]
-            }
-        },
-        "/game/{game_id}/rack/exchange": {
+        "/game/{game_id}/chip/exchange": {
             "post": {
                 "description": "exchange chips in the players stack with the tables rack",
                 "parameters": [
@@ -468,7 +507,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object"
+                                    "$ref": "#/components/schemas/just.ResponseMessage-any"
                                 }
                             }
                         },
@@ -476,6 +515,88 @@
                     }
                 },
                 "summary": "Exchange Chips",
+                "tags": [
+                    "Game"
+                ]
+            }
+        },
+        "/game/{game_id}/player": {
+            "post": {
+                "description": "Join an open game",
+                "parameters": [
+                    {
+                        "description": "ID of the Game to join",
+                        "in": "path",
+                        "name": "game_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-any"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "summary": "Join a Game",
+                "tags": [
+                    "Game"
+                ]
+            }
+        },
+        "/game/{game_id}/started": {
+            "post": {
+                "description": "starts a game from a created game lobby, closing it to joins and starting play",
+                "parameters": [
+                    {
+                        "description": "the id of the game to start",
+                        "in": "path",
+                        "name": "game_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-any"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "summary": "Start Game",
                 "tags": [
                     "Game"
                 ]
@@ -509,7 +630,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/poker_server_just.ResponseMessage-game_GameDTO"
+                                    "$ref": "#/components/schemas/just.ResponseMessage-game_GameDTO"
                                 }
                             }
                         },
@@ -522,7 +643,50 @@
                 ]
             }
         },
-        "/user/": {
+        "/hand-evaluator/evaluate": {
+            "post": {
+                "description": "Evaluator? I hardly...",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "items": {
+                                            "$ref": "#/components/schemas/game.CardDTO"
+                                        },
+                                        "title": "hand",
+                                        "type": "array"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "hand to evaluate, either 5 or 7 cards",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "summary": "Evaluate a Hand",
+                "tags": [
+                    "Game"
+                ]
+            }
+        },
+        "/user": {
             "post": {
                 "description": "How does this differ from summary...",
                 "requestBody": {
@@ -535,7 +699,7 @@
                                     },
                                     {
                                         "$ref": "#/components/schemas/user.UserDTO",
-                                        "summary": "User",
+                                        "summary": "request",
                                         "description": "user"
                                     }
                                 ]
@@ -550,67 +714,154 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/user.UserDTO"
+                                    "$ref": "#/components/schemas/just.ResponseMessage-user_ApiKey"
                                 }
                             }
                         },
                         "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
                     }
                 },
                 "summary": "Creates a user",
                 "tags": [
-                    "user"
+                    "User"
                 ]
             }
         },
-        "/utility/eval-hand": {
-            "post": {
-                "description": "evaluates a poker hand with 5 or 7 cards",
+        "/user/me": {
+            "delete": {
+                "description": "deletes the user associated to the token used to authenticate this request",
                 "requestBody": {
                     "content": {
                         "application/json": {
                             "schema": {
-                                "oneOf": [
-                                    {
-                                        "type": "object"
-                                    },
-                                    {
-                                        "items": {
-                                            "$ref": "#/components/schemas/game.CardDTO"
-                                        },
-                                        "title": "request",
-                                        "type": "array"
-                                    }
-                                ]
+                                "type": "object"
                             }
                         }
-                    },
-                    "description": "an array of cards to evaluate",
-                    "required": true
+                    }
                 },
                 "responses": {
                     "200": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/poker_server_just.ResponseMessage-int"
+                                    "$ref": "#/components/schemas/just.ResponseMessage-any"
                                 }
                             }
                         },
-                        "description": "an integer ranking of the provided hand with 1 being the best possible hand"
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
                     }
                 },
-                "summary": "Evaluate Hand",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "delete requesting user",
                 "tags": [
-                    "Utility"
+                    "User"
                 ]
             }
         }
     },
-    "openapi": "3.1.0",
-    "servers": [
-        {
-            "url": "localhost:8080/api/"
-        }
-    ]
+    "openapi": "3.1.0"
 }

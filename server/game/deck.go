@@ -1,8 +1,8 @@
 package game
 
 import (
+	"github.com/just-jane-inc/just-poker/server/just"
 	"math/rand/v2"
-	"poker_server/just"
 )
 
 type deck struct {
@@ -75,23 +75,23 @@ func (this Hand) GetHandStrings() []string {
 // this == that -> 0
 // this < that -> -1
 func (this Hand) CompareTo(that Hand) int {
-	thisHand := make([]string, len(this.Cards))
+	thisHand := make([]just.Card, len(this.Cards))
 	for i, card := range this.Cards {
-		thisHand[i] = card.ToString()
+		thisHand[i] = just.Card{Rank: card.rank, Suit: card.suit}
 	}
 
-	thatHand := make([]string, len(that.Cards))
+	thatHand := make([]just.Card, len(that.Cards))
 	for i, card := range that.Cards {
-		thatHand[i] = card.ToString()
+		thatHand[i] = just.Card{Rank: card.rank, Suit: card.suit}
 	}
 
-	thatScore, err := just.GetHandScore(thatHand...)
+	thatScore, err := just.GetHandScore(thatHand)
 	if err != nil {
 		just.Logger.Errorf("encountered error when getting score for hand: %v", err)
 		return 0
 	}
 
-	thisScore, err := just.GetHandScore(thisHand...)
+	thisScore, err := just.GetHandScore(thisHand)
 	if err != nil {
 		just.Logger.Errorf("encountered error when getting score for hand: %v", err)
 		return 0

@@ -18,7 +18,7 @@ type Config struct {
 	DiscordLogHook  string `env:"DISCORD_ERR_LOGS_HOOK,required"`
 	Port            string `env:"JUST_POKER_PORT,required"`
 	DbConnString    string `env:"PG_URL,required"`
-	PokerEvalCLI    string `env:"POKER_EVAL_CLI,required"`
+	PokerEvalURL    string `env:"HAND_EVAL_ROUTE,required"`
 	Pepper          []byte
 
 	pepper string `env:"JUST_POKER_PEPPER,required"`

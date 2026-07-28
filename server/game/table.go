@@ -3,9 +3,10 @@ package game
 import (
 	"fmt"
 	"math"
-	"poker_server/just"
 	"slices"
 	"strings"
+
+	"github.com/just-jane-inc/just-poker/server/just"
 )
 
 var (
@@ -173,6 +174,12 @@ func (t *table) NextRound() {
 			}
 		}
 
+		if len(winners) == 0 {
+			just.Logger.Errorf("critical error, hand terminated with no winners")
+			t.currentRound.currentRoundType = round_type_completed // blow up?
+			return
+		}
+
 		// we have one or more winners and a mapping
 		// of chip denominations to chips.
 		//
@@ -215,7 +222,13 @@ func (t *table) Showdown() map[int]int {
 
 	handEvaluations := make(map[int]int)
 	for _, p := range remainingPlayers {
-		eval, err := just.GetHandScore(t.GetHand(p.position).GetHandStrings()...)
+		model := t.GetHand(p.position).Cards
+		cards := make([]just.Card, len(model))
+		for i, c := range model {
+			cards[i] = just.Card{Rank: c.rank, Suit: c.suit}
+		}
+
+		eval, err := just.GetHandScore(cards)
 		if err != nil {
 			just.Logger.Errorf("encountered error evaluating hand %v", err)
 			continue

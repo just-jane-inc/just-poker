@@ -2,17 +2,11 @@ package just
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"strings"
 )
 
 type MessageType string
-
-const (
-	user_created_message    MessageType = "user.created"
-	not_found_error_message MessageType = "error.not-found"
-)
 
 type ResponseMessage[T any] struct {
 	Type string `json:"type" example:"user.created"`
@@ -24,7 +18,7 @@ type ErrorDTO struct {
 	Error     string `json:"error"`
 }
 
-type HttpResponse struct {
+type HTTPResponse struct {
 	Code   int
 	Object any
 }
@@ -40,8 +34,8 @@ func IgnoreTrailingSlash(next http.Handler) http.Handler {
 	})
 }
 
-func NotFound(message string, code int) HttpResponse {
-	return HttpResponse{
+func NotFound(message string, code int) HTTPResponse {
+	return HTTPResponse{
 		Code: http.StatusNotFound,
 		Object: ResponseMessage[ErrorDTO]{
 			Type: "error",
@@ -53,8 +47,34 @@ func NotFound(message string, code int) HttpResponse {
 	}
 }
 
-func BadRequest(message string, code int) HttpResponse {
-	return HttpResponse{
+func MissingToken() HTTPResponse {
+	return HTTPResponse{
+		Code: http.StatusUnauthorized,
+		Object: ResponseMessage[ErrorDTO]{
+			Type: "error",
+			Data: ErrorDTO{
+				ErrorCode: 0,
+				Error:     "access token not provided with request",
+			},
+		},
+	}
+}
+
+func InternalError(message string) HTTPResponse {
+	return HTTPResponse{
+		Code: http.StatusInternalServerError,
+		Object: ResponseMessage[ErrorDTO]{
+			Type: "error",
+			Data: ErrorDTO{
+				ErrorCode: int(Unknown),
+				Error:     message,
+			},
+		},
+	}
+}
+
+func BadRequest(message string, code int) HTTPResponse {
+	return HTTPResponse{
 		Code: http.StatusBadRequest,
 		Object: ResponseMessage[ErrorDTO]{
 			Type: "error",
@@ -66,8 +86,8 @@ func BadRequest(message string, code int) HttpResponse {
 	}
 }
 
-func OK(responseType string, obj any) HttpResponse {
-	return HttpResponse{
+func OK(responseType string, obj any) HTTPResponse {
+	return HTTPResponse{
 		Code: http.StatusOK,
 		Object: ResponseMessage[any]{
 			Type: responseType,
@@ -76,7 +96,7 @@ func OK(responseType string, obj any) HttpResponse {
 	}
 }
 
-func (r HttpResponse) WriteJSONResponse(w http.ResponseWriter) {
+func (r HTTPResponse) WriteJSONResponse(w http.ResponseWriter) {
 	WriteJSONResponse(w, r.Code, r.Object)
 }
 

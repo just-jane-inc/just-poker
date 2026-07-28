@@ -5,9 +5,9 @@ import (
 	"log"
 	"net/http"
 
-	"poker_server/game"
-	"poker_server/just"
-	"poker_server/user"
+	"github.com/just-jane-inc/just-poker/server/game"
+	"github.com/just-jane-inc/just-poker/server/just"
+	"github.com/just-jane-inc/just-poker/server/user"
 
 	_ "github.com/danielgtaylor/huma/v2/formats/cbor"
 )
@@ -74,15 +74,16 @@ func documentationHandler(
 // @version         1.0
 // @description.markdown
 // @termsOfService  http://swagger.io
-
+// @securityDefinitions.bearerauth BearerAuth
+// @name Authorization
+// @in header
+// @description Type "Bearer" followed by a space and your token (e.g. "Bearer your_token_here").
 // @contact.name   Red_Epicness
 // @contact.url    http://swagger.io
-
 // @license.name  BAHMS
 // @license.url   http://license.bahms.org
-
 // @host      localhost:8080
-// @BasePath  /api/
+// @BasePath  /api
 func main() {
 	just.Logger.Debug("starting server...")
 
@@ -95,7 +96,7 @@ func main() {
 
 	apiMux.HandleFunc(
 		"POST /game",
-		game.OnNewGame,
+		game.OnCreateGame,
 	)
 
 	apiMux.HandleFunc(
@@ -123,11 +124,6 @@ func main() {
 		game.OnExchangeChips,
 	)
 
-	apiMux.HandleFunc(
-		"POST /utility/eval-hand",
-		game.OnEvaluateHand,
-	)
-
 	// create a new user
 	apiMux.HandleFunc(
 		"POST /user",
@@ -143,12 +139,12 @@ func main() {
 	// get all bots for a twitch user
 	apiMux.HandleFunc(
 		"GET /user/twitch/{twitch_id}",
-		just.OnGetUsers,
+		user.OnGetUsers,
 	)
 
 	apiMux.HandleFunc(
 		"DELETE /user/{user_id}/key",
-		just.OnRenewKey,
+		user.OnRenewKey,
 	)
 
 	rootMux := http.NewServeMux()

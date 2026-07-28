@@ -16,13 +16,23 @@ const (
 	NotEnoughChips      ErrorCode = 2002
 	InvalidBetAmount    ErrorCode = 2003
 	InvalidChipExchange ErrorCode = 2004
+
+	GameAlreadyStarted  ErrorCode = 2020
+	GameIsFull          ErrorCode = 2021
+	PlayerAlreadyJoined ErrorCode = 2022
 )
 
 type PokerError struct {
 	Message string
 	Code    ErrorCode
+	Cause   error
+}
 
-	Cause error
+func NewPokerError(message string, code ErrorCode) *PokerError {
+	return &PokerError{
+		Message: message,
+		Code:    code,
+	}
 }
 
 func (e *PokerError) Error() string {
