@@ -14,4 +14,10 @@ FROM alpine
 COPY --from=cbuilder /build/just_eval /just_eval
 COPY --from=gobuilder /build/hand-evaluator /hand-evaluator
 
+# Pterodactyl setup
+RUN useradd -m -d /home/container -s /bin/bash container
+USER container
+ENV  USER=container HOME=/home/container
+WORKDIR /home/container
+
 ENTRYPOINT ["/hand-evaluator"]
