@@ -184,3 +184,34 @@ func OnRenewKey(w http.ResponseWriter, r *http.Request) {
 	keyID, token, err := just.CreateApiKey(conn, userID, username)
 	just.OK("new_key", ApiKey{KeyID: keyID, Token: token, UserID: userID}).WriteJSONResponse(w)
 }
+
+/*
+*
+* Internal Use Endpoints
+*
+ */
+
+func OnDeleteUser(w http.ResponseWriter, r *http.Request) {
+	userIDStr := r.PathValue("user_id")
+	ctx := context.Background()
+	conn, err := just.DBConnPool.Acquire(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		just.Logger.Errorf("invalid user id returned from GetAuthorizedUser: [%s]", userIDStr)
+		just.InternalError(fmt.Sprintf("user id [%s] does not parse to an int, invalid id", userIDStr)).WriteJSONResponse(w)
+		return
+	}
+
+	stmt := `delete from poker_users where id=$1`
+	_, err = conn.Exec(ctx, stmt, userID)
+	if err != nil {
+		just.NotFound("user not found", int(just.UserNotFound)).WriteJSONResponse(w)
+		return
+	}
+
+	just.OK("user_deleted", struct{}{}).WriteJSONResponse(w)
+}

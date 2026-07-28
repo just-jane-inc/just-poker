@@ -5,6 +5,7 @@ go 1.25.0
 require (
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/danielgtaylor/huma/v2 v2.39.0
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/joho/godotenv v1.5.1
 	github.com/just-jane-inc/just-services/just-logger v0.0.0-20260416040858-8e3b2ae304c2

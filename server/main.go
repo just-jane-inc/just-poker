@@ -147,6 +147,11 @@ func main() {
 		user.OnRenewKey,
 	)
 
+	apiMux.HandleFunc(
+		"DELETE /user/{user_id}",
+		user.OnDeleteUser,
+	)
+
 	rootMux := http.NewServeMux()
 
 	rootMux.HandleFunc(

@@ -11,6 +11,8 @@ import (
 	"github.com/just-jane-inc/just-poker/server/just"
 )
 
+type JoinGameError error
+
 func (this stack) MergeWith(that stack) stack {
 	result := make(stack)
 	for d, c := range that {
@@ -37,6 +39,7 @@ type game struct {
 	config              NewGameConfigDTO
 	table               *table
 	playerActionChannel chan PlayerActionThing
+	listeners           map[string]*Listener
 }
 
 func (g *game) AsDTO() GameDTO {
@@ -75,8 +78,6 @@ func CreateGameFromConfig(config NewGameConfigDTO) (*game, error) {
 	g.id = strconv.Itoa(id)
 	return g, nil
 }
-
-type JoinGameError error
 
 // TODO: should this just be called and return error? do I need
 // a response channel really?
@@ -184,7 +185,33 @@ func (g *game) TryStartNewHand() error {
 	t.NextRound()
 	t.currentRound.currentAggressor = t.NextPosition(t.currentHand.Button + 2)
 
+	deck := make([]CardDTO, len(g.table.deck.cards))
+	for i, card := range g.table.deck.cards {
+		deck[i] = card.AsDTO()
+	}
+
+	msg := just.ResponseMessage[any]{
+		Type: "new.hand",
+		Data: NewHandState{
+			Deck:       deck,
+			Button:     g.table.currentHand.Button,
+			BigBlind:   g.table.NextPosition(g.table.currentHand.Button),
+			SmallBlind: g.table.NextPosition(g.table.currentHand.Button + 1),
+		},
+	}
+
+	g.sendToListeners(msg)
 	return nil
+}
+
+func (g *game) sendToListeners(msg just.ResponseMessage[any]) {
+	// TODO: listener collection can change during iteration must lock
+	// TODO: also need to lock this method, order must be guaranteed on all channels
+	for id, listener := range g.listeners {
+		if err := listener.Send(msg); err != nil {
+			just.Logger.Errorf("encountered error sending to listener [%s]", id)
+		}
+	}
 }
 
 func (g *game) TryPlayerAction(action PlayerActionDTO) error {
@@ -251,7 +278,8 @@ func (g *game) TryCoverBet(p *player, chips ChipStackDTO) error {
 					"player cannot cover %d of %d chips with their current count of %d",
 					c,
 					d,
-					player_count),
+					player_count,
+				),
 				Code: just.NotEnoughChips,
 			}
 		}
@@ -341,7 +369,7 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 		}
 
 		betAmount := action.Bet.Sum()
-		if p.position == (g.table.NextPosition(g.table.currentHand.Button)) {
+		if p.position == g.table.NextPosition(g.table.currentHand.Button) {
 			if betAmount != g.table.currentHand.SmallBlind {
 				return &just.PokerError{
 					Message: fmt.Sprintf("small blind requires exactly %d chips", g.table.currentHand.SmallBlind),
@@ -353,7 +381,7 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 				return err
 			}
 
-		} else if p.position == (g.table.NextPosition(g.table.currentHand.Button + 1)) {
+		} else if p.position == g.table.NextPosition(g.table.currentHand.Button+1) {
 			if betAmount != g.table.currentHand.BigBlind {
 				return &just.PokerError{
 					Message: fmt.Sprintf("big blind requires exactly %d chips", g.table.currentHand.BigBlind),
@@ -369,7 +397,8 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 			just.Logger.Errorf(
 				"play is currently at %d turn during setup round however they are neither the big nor small blind. game is deadlocked. game state: %v",
 				p.position,
-				g.AsDTO())
+				g.AsDTO(),
+			)
 
 			return &just.PokerError{
 				Message: "critical error - game state cannot progress - alert game master",
@@ -386,7 +415,8 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 				Message: fmt.Sprintf(
 					"you must call the current bet of %d with %d chips",
 					g.table.currentRound.bet,
-					g.table.currentRound.bet-p.currentBet.Sum()),
+					g.table.currentRound.bet-p.currentBet.Sum(),
+				),
 				Code: just.InvalidBetAmount,
 			}
 		}
@@ -398,7 +428,8 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 				Message: fmt.Sprintf(
 					"%d is not valid to call the current amount of %d",
 					totalBet.Sum(),
-					g.table.currentRound.bet),
+					g.table.currentRound.bet,
+				),
 				Code: just.InvalidBetAmount,
 			}
 		}
@@ -412,7 +443,8 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 				Message: fmt.Sprintf(
 					"%d is not valid to raise the current amount of %d",
 					g.table.currentRound.bet,
-					g.table.currentRound.bet),
+					g.table.currentRound.bet,
+				),
 				Code: just.InvalidBetAmount,
 			}
 		}
@@ -485,7 +517,8 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 				"starting next round for game [%s] [%s]->[%s]",
 				g.id,
 				prevRoundType,
-				g.table.currentRound.currentRoundType)
+				g.table.currentRound.currentRoundType,
+			)
 		}
 
 		if p != nil {
@@ -501,6 +534,16 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 		g.table.currentRound.currentPlayerPosition = nextPlayer.position
 	}
 
+	msg := just.ResponseMessage[any]{
+		Type: "player_update",
+		Data: PlayerUpdateMessage{
+			Position: p.position,
+			Chips:    action.Bet,
+			Intent:   action.Intent,
+		},
+	}
+
+	g.sendToListeners(msg)
 	g.table.currentTurn.StartedAt = time.Now()
 
 	if g.table.currentRound.currentRoundType == round_type_completed {

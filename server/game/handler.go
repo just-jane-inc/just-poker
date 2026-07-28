@@ -63,6 +63,7 @@ func OnJoinGameRequest(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// OnGetCurrentGameState godoc
 // @Summary      Game State
 // @Description  gets the current state of the game from the perspective of the requesting user
 // @Tags         Game
@@ -83,6 +84,7 @@ func OnGetCurrentGameState(w http.ResponseWriter, r *http.Request) {
 	just.OK("game_state", g.AsDTO()).WriteJSONResponse(w)
 }
 
+// OnCreateGame godoc
 // @Summary      Create Game
 // @Description  creates a new game from a configuration file
 // @Tags         Game
@@ -117,6 +119,7 @@ func OnCreateGame(w http.ResponseWriter, r *http.Request) {
 	just.Logger.Debugf("game lobby [%s] created for [%s]", g.id, userID)
 }
 
+// OnExchangeChips godoc
 // @Summary      Exchange Chips
 // @Description  exchange chips in the players stack with the tables rack
 // @Tags         Game
@@ -169,6 +172,7 @@ func OnExchangeChips(w http.ResponseWriter, r *http.Request) {
 	just.OK("chips_exchanged", struct{}{}).WriteJSONResponse(w)
 }
 
+// OnStartGame godoc
 // @Summary      Start Game
 // @Description  starts a game from a created game lobby, closing it to joins and starting play
 // @Tags         Game
@@ -225,7 +229,7 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 	gameID := r.PathValue("game_id")
 	g, ok := CurrentGames[gameID]
 	if !ok {
-		just.NotFound(fmt.Sprintf("could not find game with id %s", gameID), 0)
+		just.NotFound(fmt.Sprintf("could not find game with id %s", gameID), 0).WriteJSONResponse(w)
 		return
 	}
 
