@@ -1,4 +1,5 @@
 import openapi_client as poker_api
+from enum import Enum
 
 
 def create_connection(base_url: str, token: str = "") -> poker_api.ApiClient:
@@ -30,12 +31,26 @@ def throw(e: CustomException):
     raise e
 
 
-def delete_user(base_url: str, token: str):
+def delete_user(base_url: str, token: str) -> str | None:
     api = poker_api.UserApi(create_connection(base_url, token))
-    resp = api.user_me_delete()
+    try:
+        resp = api.user_me_delete()
+        return None
+    except poker_api.ApiException as e:
+        return e.body
+
     if resp.type == "error":
-        if (isinstance(resp.data, poker_api.JustErrorDTO)):
-            raise CustomException(isinstance(resp.data)
+        print(resp.data)
+        raise CustomException(resp.data)
+
+
+class CardRank(Enum):
+    ACE = ord("A")
+    KING = ord("A")
+    QUEEN = ord("A")
+    JACK = ord("A")
+    TEN = ord("A")
+    NINE = ord("A")
 
 
 class PokerBot:
@@ -53,18 +68,32 @@ class PokerBot:
         self._api_client = create_connection(base_url, token)
         self._user_api = poker_api.UserApi(self._api_client)
         self._game_api = poker_api.GameApi(self._api_client)
+        self._joined = False
 
-    def join_game(self, game_id: str, player_id: str, token: str):
-        self._game_api.join_game()
+    def join_game(self):
+        if self._joined:
+            return
 
-        if self.game_id is not None:
-            raise CustomException("already joined to a game")
+        try:
+            _ = self._game_api.game_game_id_player_post(self._game_id)
+        except poker_api.ApiException as e:
+            print("error encountered when trying to join")
+            print(e)
 
-        url = get_url(f"game/{game_id}/player")
-        response = requests.post(url, headers=get_auth_header(token))
-        if response.status_code != 200:
-            error_message = response.json()["error"]
-            raise CustomException(f"error joining game: {error_message}")
+    def start_game(self):
+        try:
+            self._game_api.game_game_id_started_post(self._game_id)
+        except poker_api.ApiException as e:
+            print("error encountered when trying to join")
+            print(e)
+
+    @property
+    def CurrentHand(self):
+        return self._hand
+
+    # get state and preserve history
+    # get current hand
+    #
 
 
 tmp = """
