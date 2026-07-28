@@ -167,6 +167,8 @@ func main() {
 		Addr:    ":" + just.Env.Port,
 		Handler: rootMux,
 	}
+    
+    just.Logger.Info("just__started")
 
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)
