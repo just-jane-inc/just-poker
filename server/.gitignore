@@ -30,10 +30,10 @@ go.work.sum
 # env file
 .env
 
-poker_server
 .venv
 *.ipynb
 
 testing/cards/*
 **/__pycache__/*
+server
 
