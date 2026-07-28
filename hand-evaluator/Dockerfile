@@ -15,7 +15,7 @@ COPY --from=cbuilder /build/just_eval /just_eval
 COPY --from=gobuilder /build/hand-evaluator /hand-evaluator
 
 # Pterodactyl setup
-RUN useradd -m -d /home/container -s /bin/bash container
+RUN adduser --disabled-password --home /home/container container
 USER container
 ENV  USER=container HOME=/home/container
 WORKDIR /home/container
