@@ -33,11 +33,16 @@ func main() {
 
 	apiMux := http.NewServeMux()
 	apiMux.HandleFunc("POST /evaluate", EvaluateHand)
-	apiMux.Handle("/", IgnoreTrailingSlash(apiMux))
+
+	rootMux := http.NewServeMux()
+	rootMux.Handle(
+		"/",
+		IgnoreTrailingSlash(apiMux),
+	)
 
 	server := &http.Server{
 		Addr:    ":" + Env.Port,
-		Handler: apiMux,
+		Handler: rootMux,
 	}
 
 	log.Printf("starting server on :%s", Env.Port)
