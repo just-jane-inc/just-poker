@@ -82,8 +82,13 @@ func CreateGameFromConfig(config NewGameConfigDTO) (*game, error) {
 // TODO: should this just be called and return error? do I need
 // a response channel really?
 func (g *game) TryJoinGame(username, userID string) error {
+	just.Logger.Debugf("%s trying to join game %s", username, g.id)
 	g.joinGameLock.Lock()
-	defer g.joinGameLock.Unlock()
+	defer func() {
+		just.Logger.Debugf("unlocking the lock")
+		g.joinGameLock.Unlock()
+		just.Logger.Debugf("lock is unlocked yippie")
+	}()
 
 	if g.started_at != nil {
 		return just.NewPokerError("table does not exist", just.GameAlreadyStarted)
@@ -530,9 +535,14 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 			}
 		}
 
+		// TODO should we set next player (active) here?
+
 	} else {
 		g.table.currentRound.currentPlayerPosition = nextPlayer.position
 	}
+
+	p.state = player_state_inactive
+	nextPlayer.state = player_state_active
 
 	msg := just.ResponseMessage[any]{
 		Type: "player_update",

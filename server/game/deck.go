@@ -1,8 +1,9 @@
 package game
 
 import (
-	"github.com/just-jane-inc/just-poker/server/just"
 	"math/rand/v2"
+
+	"github.com/just-jane-inc/just-poker/server/just"
 )
 
 type deck struct {

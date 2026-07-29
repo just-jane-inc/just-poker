@@ -83,11 +83,8 @@ func (g *game) ExchangeChips(playerID string, exchange ChipExchangeDTO) error {
 			continue
 		}
 
-		p.chips[denomination] -= c
+		p.chips[denomination] += c
 	}
 
-	return &just.PokerError{
-		Message: "user with id %s is not at this table",
-		Code:    just.UserNotFound,
-	}
+	return nil
 }

@@ -29,6 +29,8 @@ func GetAuthorizedUser(r *http.Request) (string, string, error) {
 	token := r.Header.Get("Authorization")
 	splitToken := strings.Split(token, "Bearer ")
 
+	Logger.Debug(token)
+
 	if len(splitToken) != 2 {
 		return "", "", NewPokerError("invalid token format", Unknown)
 	}

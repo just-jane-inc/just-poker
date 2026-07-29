@@ -192,7 +192,7 @@ func (t *table) NextRound() {
 			}
 		} else {
 			sum := t.pot.Sum()
-			sum = sum / (len(winners))
+			sum = sum / len(winners)
 
 			for _, winner := range winners {
 				t.players[winner].chips[10] += sum / 10
@@ -263,5 +263,6 @@ func (t table) ToString() string {
 	return fmt.Sprintf(
 		"players:\n{%s}\npot: [%s]\n",
 		playerString.String(),
-		"unknown")
+		"unknown",
+	)
 }

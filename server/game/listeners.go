@@ -48,8 +48,8 @@ func (l *Listener) Send(msg just.ResponseMessage[any]) error {
 // @Tags         Game
 // @Accept       json
 // @Produce      json
-// @Param listener_id path str true "the id of the game"
-// @Param game_id path str true "the id of the listener"
+// @Param listener_id path string true "the id of the game"
+// @Param game_id path string true "the id of the listener"
 // @Success      200 {object} just.ResponseMessage[any]
 // @Router       /game/{game_id}/listener/{listener_id} [get]
 func OnListenerRequest(w http.ResponseWriter, r *http.Request) {
@@ -84,7 +84,7 @@ func OnListenerRequest(w http.ResponseWriter, r *http.Request) {
 // @Tags         Game
 // @Accept       json
 // @Produce      json
-// @Param game_id path str true "the id of the game to create a listener in"
+// @Param game_id path string true "the id of the game to create a listener in"
 // @Success      200 {object} just.ResponseMessage[string] "the id of the listener"
 // @Router       /game/{game_id}/listener [post]
 func OnCreateListener(w http.ResponseWriter, r *http.Request) {

@@ -12,14 +12,10 @@ import (
 )
 
 type Config struct {
-	ElasticHost     string `env:"ELASTIC_HOST,required"`
-	ElasticKey      string `env:"ELASTIC_API_KEY,required"`
-	ElasticLogIndex string `env:"ELASTIC_LOG_INDEX,required"`
-	DiscordLogHook  string `env:"DISCORD_ERR_LOGS_HOOK,required"`
-	Port            string `env:"JUST_POKER_PORT,required"`
-	DbConnString    string `env:"PG_URL,required"`
-	PokerEvalURL    string `env:"HAND_EVAL_ROUTE,required"`
-	Pepper          []byte
+	Port         string `env:"JUST_POKER_PORT,required"`
+	DbConnString string `env:"PG_URL,required"`
+	PokerEvalURL string `env:"HAND_EVAL_ROUTE,required"`
+	Pepper       []byte
 
 	pepper string `env:"JUST_POKER_PEPPER,required"`
 }

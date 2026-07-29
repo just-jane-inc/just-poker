@@ -1,5 +1,42 @@
-import openapi_client as poker_api
 from enum import Enum
+
+import openapi_client as poker_api
+
+from typing import Dict
+
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger("testing")
+
+
+class CustomException(Exception):
+    pass
+
+
+def create_game(
+    base_url: str,
+    token: str,
+    bb: int = 100,
+    sb: int = 50,
+    chips: Dict[str, int] | None = None,
+) -> str | None:
+    if not chips:
+        chips = {"10": 10, "50": 5, "100": 2, "500": 1}
+    conn = create_connection(base_url, token)
+    api = poker_api.GameApi(conn)
+    dto = poker_api.GameNewGameConfigDTO(
+        big_blind=bb,
+        small_blind=sb,
+        starting_chips=chips,
+        player_count=5,
+    )
+
+    try:
+        resp = api.game_post(poker_api.GamePostRequest(dto))
+        return resp.data
+    except poker_api.ApiException as e:
+        logger.error(f"encountered error creating game: {e}")
 
 
 def create_connection(base_url: str, token: str = "") -> poker_api.ApiClient:
@@ -17,18 +54,10 @@ def create_user(
 ) -> poker_api.UserApiKey | None:
     api = poker_api.UserApi(create_connection(base_url))
     dto = poker_api.UserUserDTO(
-        display_name=display_name, twitch_id=twitch_id, user_type="bot"
+        display_name=display_name, twitch_id=twitch_id, user_type="test-user"
     )
     resp = api.user_post(poker_api.UserPostRequest(dto))
     return resp.data
-
-
-class CustomException(Exception):
-    pass
-
-
-def throw(e: CustomException):
-    raise e
 
 
 def delete_user(base_url: str, token: str) -> str | None:
@@ -44,17 +73,41 @@ def delete_user(base_url: str, token: str) -> str | None:
         raise CustomException(resp.data)
 
 
+class CardSuit(Enum):
+    SPADE = ord("s")
+    CLUB = ord("c")
+    HEART = ord("h")
+    DIAMOND = ord("d")
+
+
 class CardRank(Enum):
     ACE = ord("A")
-    KING = ord("A")
-    QUEEN = ord("A")
-    JACK = ord("A")
-    TEN = ord("A")
-    NINE = ord("A")
+    KING = ord("K")
+    QUEEN = ord("Q")
+    JACK = ord("J")
+    TEN = ord("T")
+    NINE = ord("9")
+    EIGHT = ord("8")
+    SEVEN = ord("7")
+    SIX = ord("6")
+    FIVE = ord("5")
+    FOUR = ord("4")
+    THREE = ord("3")
+    TWO = ord("2")
 
 
 class PokerBot:
     def __init__(self, base_url, token, game_id):
+        """A poker bot
+
+        Args:
+            base_url: the url for the poker server to connect to
+            token: the user authorization token to use for this bot
+            game_id: the id of the game to interact with
+
+        Raises:
+            CustomException: if an argument is not provided
+        """
         if not token:
             raise CustomException("api_key not provided")
 
@@ -74,283 +127,16 @@ class PokerBot:
         if self._joined:
             return
 
-        try:
-            _ = self._game_api.game_game_id_player_post(self._game_id)
-        except poker_api.ApiException as e:
-            print("error encountered when trying to join")
-            print(e)
+        _ = self._game_api.game_game_id_player_post(self._game_id)
 
     def start_game(self):
-        try:
-            self._game_api.game_game_id_started_post(self._game_id)
-        except poker_api.ApiException as e:
-            print("error encountered when trying to join")
-            print(e)
+        self._game_api.game_game_id_started_post(self._game_id)
 
-    @property
-    def CurrentHand(self):
-        return self._hand
+    def get_game_state(self):
+        resp = self._game_api.game_game_id_state_get(self._game_id)
+        return resp.data
 
-    # get state and preserve history
-    # get current hand
-    #
-
-
-tmp = """
-
-    def get_header(self):
-        return {'Authorization': f'Bearer {self._api_key}', 'Content-Type': 'application/json'}
-
-    def get_url(self, endpoint: str)
-        return f'{self.base_url}/{endpoint}'
-
-    def start_game(game_id: str):
-        url = f'{base_url}/game/{game_id}/started'
-        response = requests.post(url)
-        if response.status_code == 200:
-            raise Exception(f'error: {response.join()['error']}')
-
-    def call(self):
-        return True
-        
-    def get_current_state(game_id: str) -> object:
-        url = f'{base_url}/game/{game_id}/state'
-        response = requests.get(url)
-        if response.status_code != 200:
-            raise Exception(f'error: {response.join()['error']}')
-
-        return respoonse.json()['data']
-
-
-
-
-def player_action(game_id: str, player_id: str, action: str, chips: Dict[str, int], just_status=True):
-    url = f'{base_url}/game/{game_id}/action/'
-    payload = {'player_id':player_id, 'intent': action, 'chips':chips}
-    response = requests.post(url, json=payload)
-    if just_status:
-        return response.status_code
-    return response
-
-def test_player_fold():
-    game_id = create_new_game(4, {"5":10, "20":100})
-    join_game(game_id, '42')
-    join_game(game_id, '420')
-    join_game(game_id, '69')
-    join_game(game_id, '67')
-    start_game(game_id)
-
-    # setup
-    assert player_action(game_id, '69', 'ante', {'10':5}) == 200
-    assert player_action(game_id, '67', 'ante', {'10':10}) == 200
-
-    # pre-flop
-    assert player_action(game_id, '42', 'call', {'10':10}) == 200
-    assert player_action(game_id, '420', 'call', {'10':10}) == 200
-    assert player_action(game_id, '69', 'call', {'10':5}) == 200 # to-call == 150
-    assert player_action(game_id, '67', 'fold', {}) == 200
-
-    # flop
-    assert player_action(game_id, '69', 'check', {}) == 200
-    assert player_action(game_id, '42', 'raise', {'10':15}) == 200
-    assert player_action(game_id, '420', 'call', {'10':15}) == 200
-    assert player_action(game_id, '69', 'call', {'10':15}) == 200
-
-    # turn
-    assert player_action(game_id, '69', 'check', {}) == 200
-    assert player_action(game_id, '42', 'check', {}) == 200
-    assert player_action(game_id, '420', 'check', {}) == 200
-
-    # river
-    assert player_action(game_id, '69', 'check', {}) == 200
-    assert player_action(game_id, '42', 'check', {}) == 200
-    assert player_action(game_id, '420', 'check', {}) == 200
-
-def test_raise_once():
-    game_id = create_new_game(4, {'10':20, '50':5, '100':2})
-    users = []
-    for i in range(4):
-        name, twitch_id = (f"test-name-{i}", f"test-twitch-id-{i}")
-        resp = create_user(name, twitch_id)
-        assert resp.status_code == 200
-        d = resp.json()['data']
-        id, token = d['user_id'], d['token']
-        user = (id, name, token)
-        users.append(user)
-
-        join_game(game_id, id, user[2])
-
-    start_game(game_id)
-
-    # setup
-    assert player_action(game_id, users[2][0], 'ante', {'50':1}) == 200
-    assert player_action(game_id, users[3][0], 'ante', {'100':1}) == 200
-
-    # pre-flop
-    assert player_action(game_id, users[0][0], 'call', {'10':10}) == 200
-    assert player_action(game_id, users[1][0], 'call', {'50':2}) == 200
-    assert player_action(game_id, users[2][0], 'raise', {'100':1}) # to-call == 150
-    assert player_action(game_id, users[3][0], 'call', {'10':5}) == 200
-
-    print(json.dumps(get_current_state(game_id), indent=2))
-
-    assert player_action(game_id, users[0][0], 'call', {'10':5}) == 200
-    assert player_action(game_id, users[1][0], 'call', {'10':5}) == 200
-
-    # flop
-    assert player_action(game_id, users[2][0], 'check', {}) == 200
-    assert player_action(game_id, users[3][0], 'check', {}) == 200
-    assert player_action(game_id, users[0][0], 'check', {}) == 200
-    assert player_action(game_id, users[1][0], 'check', {}) == 200
-
-    # turn
-    assert player_action(game_id, users[2][0], 'check', {}) == 200
-    assert player_action(game_id, users[3][0], 'check', {}) == 200
-    assert player_action(game_id, users[0][0], 'check', {}) == 200
-    assert player_action(game_id, users[1][0], 'check', {}) == 200
-
-    # river
-    assert player_action(game_id, users[2][0], 'check', {}) == 200
-    assert player_action(game_id, users[3][0], 'check', {}) == 200
-    assert player_action(game_id, users[0][0], 'check', {}) == 200
-    assert player_action(game_id, users[1][0], 'check', {}) == 200
-
-    print(game_id)
-
-def test_all_in():
-    game_id = create_new_game(4, {"5":10, "20":100})
-    users = []
-    for i in range(4):
-        name, twitch_id = (f"test-name-{i}", f"test-twitch-id-{i}")
-        resp = create_user(name, twitch_id)
-        assert resp.status_code == 200
-        d = resp.json()['data']
-        id, token = d['user_id'], d['token']
-        user = (id, name, token)
-        users.append(user)
-
-        join_game(game_id, id, user[2])
-
-    start_game(game_id)
-
-    # setup
-    assert player_action(game_id, users[2][0], 'ante', {'10':5}) == 200
-    assert player_action(game_id, users[3][0], 'ante', {'10':10}) == 200
-
-    # pre-flop
-    assert player_action(game_id, users[0][0], 'all_in', {'10':10})
-
-    state = get_current_state(game_id)
-    print(json.dumps(state, indent=2))
-
-    assert player_action(game_id, users[1][0], 'all_in', {'10':10}) == 200
-    assert player_action(game_id, users[2][0], 'all_in', {'10':5}) == 200
-    assert player_action(game_id, users[3][0], 'all_in', {}) == 200
-
-
-def test_all_check():
-    game_id = create_new_game(4, {"5":10, "20":100})
-
-    join_game(game_id, '42') # "under the gun"
-    join_game(game_id, '420') # button
-    join_game(game_id, '69') # small_blind
-    join_game(game_id, '67') # big blind
-    start_game(game_id)
-
-    # setup
-    assert player_action(game_id, '69', 'ante', {'10':5}) == 200
-    assert player_action(game_id, '67', 'ante', {'10':10}) == 200
-
-    # pre-flop
-    assert player_action(game_id, '42', 'call', {'10':10}) == 200
-    assert player_action(game_id, '420', 'call', {'10':10}) == 200
-    assert player_action(game_id, '69', 'call', {'10':5}) == 200
-    assert player_action(game_id, '67', 'check', {}) == 200
-
-    # flop
-    assert player_action(game_id, '69', 'check', {}) == 200
-    assert player_action(game_id, '67', 'check', {}) == 200
-    assert player_action(game_id, '42', 'check', {}) == 200
-    assert player_action(game_id, '420', 'check', {}) == 200
-
-    # turn
-    assert player_action(game_id, '69', 'check', {}) == 200
-    assert player_action(game_id, '67', 'check', {}) == 200
-    assert player_action(game_id, '42', 'check', {}) == 200
-    assert player_action(game_id, '420', 'check', {}) == 200
-
-    # river
-    assert player_action(game_id, '69', 'check', {}) == 200
-    assert player_action(game_id, '67', 'check', {}) == 200
-    assert player_action(game_id, '42', 'check', {}) == 200
-    assert player_action(game_id, '420', 'check', {}) == 200
-
-    print(game_id)
-
-def test_hand_eval():
-    assert EvaluateHand(['As', 'Ac', 'Ah', 'Ad', 'Ks']) == 11
-    assert EvaluateHand(['As', 'Ks', 'Qs', 'Js', 'Ts']) == 1
-    assert EvaluateHand(['As', 'As', 'Qs', 'Js', 'Ts']) == -1
-
-def GetUser(user_id: str):
-    url = f'{base_url}/user/{user_id}'
-
-    response = requests.get(url)
-    if response.status_code == 200:
-        return response.json()['data']['display_name']
-    else:
-        print(response.status_code)
-        print(response.json())
-        return ""
-
-def create_user(username: str, twitch_id: str, usertype: str = 'test'):
-    url = f'{base_url}/user'
-    payload = {
-        'username': username,
-        'user_type': usertype,
-        'twitch_id': twitch_id
-    }
-
-    return requests.post(url, json=payload)
-
-def EvaluateHand(hand: List[str]):
-    url = f'{base_url}/utility/hand-eval'
-    payload = [{'rank': ord(c[0]), 'suit': ord(c[1])} for c in hand]
-    print(json.dumps(payload))
-    response = requests.post(url, json=payload)
-    if response.status_code != 200:
-        return -1
-
-    return response.json()['data']
-
-if __name__ == '__main__':
-    args = parser.parse_args()
-
-    if (args.new_user):
-        resp = create_user(args.new_user)
-        print(json.dumps(resp, indent=2))
-
-    if (args.test_all):
-        test_all_check()
-        test_all_in()
-        test_raise_once()
-        test_player_fold()
-
-    if (args.all_check):
-        test_all_check()
-
-    if (args.all_in):
-        test_all_in()
-
-    if (args.one_raise):
-        test_raise_once()
-
-    if (args.player_fold):
-        test_player_fold()
-
-    if (args.hand):
-        EvaluateHand(args.hand)
-
-    if (args.get_user):
-        GetUser(args.get_user)
-"""
+    def send_action(self, intent: str, bet: Dict[str, int] | None):
+        dto = poker_api.GamePlayerActionDTO(chips=bet, intent=intent)
+        req = poker_api.GameGameIdActionPostRequest(dto)
+        self._game_api.game_game_id_action_post(self._game_id, req)

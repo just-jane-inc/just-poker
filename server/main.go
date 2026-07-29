@@ -120,7 +120,7 @@ func main() {
 	)
 
 	apiMux.HandleFunc(
-		"POST /game/{game_id}/rack/exchange",
+		"POST /game/{game_id}/chip/exchange",
 		game.OnExchangeChips,
 	)
 
@@ -152,6 +152,11 @@ func main() {
 		user.OnDeleteUser,
 	)
 
+	apiMux.Handle(
+		"POST /hand-evaluator/evaluate",
+		http.RedirectHandler("https://game.bahms.org/poker/hand-evaluator/evaluate", http.StatusMovedPermanently),
+	)
+
 	rootMux := http.NewServeMux()
 
 	rootMux.HandleFunc(
@@ -172,8 +177,8 @@ func main() {
 		Addr:    ":" + just.Env.Port,
 		Handler: rootMux,
 	}
-    
-    just.Logger.Info("just__started")
+
+	just.Logger.Info("just__started")
 
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)
