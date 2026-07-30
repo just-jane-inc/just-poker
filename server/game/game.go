@@ -62,7 +62,10 @@ func CreateGameFromConfig(config NewGameConfigDTO) (*game, error) {
 	g.table.players = make([]*player, 0)
 	g.table.deck = &deck{}
 
-	conn, err := just.DBConnPool.Acquire(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	conn, err := just.DBConnPool.Acquire(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +73,7 @@ func CreateGameFromConfig(config NewGameConfigDTO) (*game, error) {
 
 	var id int
 	stmt := `insert into just_poker_game (starting_chips, player_count) values ($1, $2) RETURNING game_id`
-	err = conn.QueryRow(context.Background(), stmt, config.StartingChips, config.PlayerCount).Scan(&id)
+	err = conn.QueryRow(ctx, stmt, config.StartingChips, config.PlayerCount).Scan(&id)
 	if err != nil {
 		return nil, err
 	}
@@ -83,12 +86,6 @@ func CreateGameFromConfig(config NewGameConfigDTO) (*game, error) {
 // a response channel really?
 func (g *game) TryJoinGame(username, userID string) error {
 	just.Logger.Debugf("%s trying to join game %s", username, g.id)
-	g.joinGameLock.Lock()
-	defer func() {
-		just.Logger.Debugf("unlocking the lock")
-		g.joinGameLock.Unlock()
-		just.Logger.Debugf("lock is unlocked yippie")
-	}()
 
 	if g.started_at != nil {
 		return just.NewPokerError("table does not exist", just.GameAlreadyStarted)
@@ -123,18 +120,18 @@ func (g *game) TryJoinGame(username, userID string) error {
 }
 
 func (g *game) TryStartGame() error {
-	g.joinGameLock.Lock()
-	defer g.joinGameLock.Unlock()
-
 	if g.started_at != nil {
 		return fmt.Errorf("game already started")
 	}
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	conn, err := just.DBConnPool.Acquire(ctx)
 	if err != nil {
 		return err
 	}
+	defer conn.Release()
 
 	stmt := `
 	UPDATE public.just_poker_game 

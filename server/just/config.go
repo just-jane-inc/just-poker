@@ -13,7 +13,7 @@ import (
 
 type Config struct {
 	Port         string `env:"JUST_POKER_PORT,required"`
-	DbConnString string `env:"PG_URL,required"`
+	DBConnString string `env:"PG_URL,required"`
 	PokerEvalURL string `env:"HAND_EVAL_ROUTE,required"`
 	Pepper       []byte
 
@@ -37,7 +37,7 @@ func init() {
 
 	Env.Pepper = []byte(Env.pepper)
 
-	DBConnPool, err = pgxpool.New(context.Background(), Env.DbConnString)
+	DBConnPool, err = pgxpool.New(context.Background(), Env.DBConnString)
 	if err != nil {
 		panic(err)
 	}

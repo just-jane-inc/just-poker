@@ -29,8 +29,6 @@ func GetAuthorizedUser(r *http.Request) (string, string, error) {
 	token := r.Header.Get("Authorization")
 	splitToken := strings.Split(token, "Bearer ")
 
-	Logger.Debug(token)
-
 	if len(splitToken) != 2 {
 		return "", "", NewPokerError("invalid token format", Unknown)
 	}
@@ -53,6 +51,7 @@ func GetAuthorizedUser(r *http.Request) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
+	defer conn.Release()
 
 	stmt := `select user_id, username, mac from poker_api_keys where key_id=$1 and revoked_at is null`
 
@@ -74,19 +73,19 @@ func GetAuthorizedUser(r *http.Request) (string, string, error) {
 	return userID, username, nil
 }
 
-func DeleteApiKey(conn *pgxpool.Conn, userID string) error {
+func DeleteAPIKey(conn *pgxpool.Conn, ctx context.Context, userID string) error {
 	stmt := `delete from poker_api_keys where user_id=$1`
-	_, err := conn.Exec(context.Background(), stmt, userID)
+	_, err := conn.Exec(ctx, stmt, userID)
 	return err
 }
 
-func CreateApiKey(conn *pgxpool.Conn, userID, username string) (keyID string, token string, err error) {
+func CreateAPIKey(conn *pgxpool.Conn, ctx context.Context, userID, username string) (keyID string, token string, err error) {
 	keyID = randomString(12)
 	secret := randomString(32)
 	mac := getMAC(secret, Env.Pepper)
 
 	stmt := `insert into poker_api_keys (key_id, user_id, username, mac) values ($1, $2, $3, $4)`
-	_, err = conn.Exec(context.Background(), stmt, keyID, userID, username, mac)
+	_, err = conn.Exec(ctx, stmt, keyID, userID, username, mac)
 	if err != nil {
 		return "", "", err
 	}

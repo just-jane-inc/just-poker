@@ -50,7 +50,17 @@ func OnJoinGameRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = g.TryJoinGame(username, userid); err != nil {
+	just.Logger.Debugf("taking game lock for user request [%s]", username)
+	g.joinGameLock.Lock()
+	just.Logger.Debugf("game lock take for user request [%s]", username)
+
+	err = g.TryJoinGame(username, userid)
+
+	just.Logger.Debugf("releasing game lock for user request [%s]", username)
+	g.joinGameLock.Unlock()
+	just.Logger.Debugf("game lock released for user request [%s]", username)
+
+	if err != nil {
 		var pokerErr *just.PokerError
 		if errors.As(err, &pokerErr) {
 			just.BadRequest(pokerErr.Message, int(pokerErr.Code)).WriteJSONResponse(w)
@@ -70,7 +80,7 @@ func OnJoinGameRequest(w http.ResponseWriter, r *http.Request) {
 // @Tags         Game
 // @Accept       json
 // @Produce      json
-// @Param game_id path int true "ID of the Game to get the state of"
+// @Param game_id path string true "ID of the Game to get the state of"
 // @Success      200 {object} just.ResponseMessage[GameDTO]
 // @Router       /game/{game_id}/state [get]
 func OnGetCurrentGameState(w http.ResponseWriter, r *http.Request) {
@@ -129,7 +139,7 @@ func OnCreateGame(w http.ResponseWriter, r *http.Request) {
 // @Accept       json
 // @Produce      json
 // @Param request body ChipExchangeDTO true "a specification for the chips to exchange"
-// @Param game_id path int true "ID of the Game exchange chips in"
+// @Param game_id path string true "ID of the Game exchange chips in"
 // @Success      200 {object} just.ResponseMessage[any]
 // @Security BearerAuth
 // @Router       /game/{game_id}/chip/exchange [post]
@@ -183,7 +193,7 @@ func OnExchangeChips(w http.ResponseWriter, r *http.Request) {
 // @Tags         Game
 // @Accept       json
 // @Produce      json
-// @Param game_id path int true "the id of the game to start"
+// @Param game_id path string true "the id of the game to start"
 // @Success      200 {object} just.ResponseMessage[any]
 // @Security BearerAuth
 // @Router       /game/{game_id}/started [post]
@@ -196,22 +206,24 @@ func OnStartGame(w http.ResponseWriter, r *http.Request) {
 
 	just.Logger.Debugf("start game request received from [%s]", userID)
 	gameIDString := r.PathValue("game_id")
-	game, ok := CurrentGames[gameIDString]
+	g, ok := CurrentGames[gameIDString]
 	if !ok {
 		just.NotFound("game id does not exist", 0).WriteJSONResponse(w)
 		return
 	}
 
-	err = game.TryStartGame()
+	g.joinGameLock.Lock()
+	err = g.TryStartGame()
+	g.joinGameLock.Unlock()
 	if err != nil {
 		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
 		return
 	}
 
-	go game.ProccessPlayerActions(make(chan any))
+	go g.ProccessPlayerActions(make(chan any))
 
 	just.OK("game_started", struct{}{}).WriteJSONResponse(w)
-	just.Logger.Debugf("started game with id [%s]", game.id)
+	just.Logger.Debugf("started game with id [%s]", g.id)
 }
 
 // OnPlayerAction godoc
@@ -220,7 +232,7 @@ func OnStartGame(w http.ResponseWriter, r *http.Request) {
 // @Tags         Game
 // @Accept       json
 // @Produce      json
-// @Param game_id path int true "the id of the game"
+// @Param game_id path string true "the id of the game"
 // @Param request body PlayerActionDTO true "the action the player is preforming"
 // @Success      200 {object} just.ResponseMessage[any]
 // @Security BearerAuth

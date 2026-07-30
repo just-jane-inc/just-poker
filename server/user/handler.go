@@ -2,10 +2,13 @@ package user
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/just-jane-inc/just-poker/server/just"
 )
@@ -34,26 +37,36 @@ func OnCreateUser(w http.ResponseWriter, r *http.Request) {
 	just.Logger.Debugf("create user request received...")
 	var dto UserDTO
 	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
-		just.BadRequest(err.Error(), 0)
+		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
+		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	conn, err := just.DBConnPool.Acquire(ctx)
 	if err != nil {
-		panic(err)
+		just.Logger.Errorf("error acquiring db conn: %v", err)
+		just.InternalError("internal server error").WriteJSONResponse(w)
+		return
 	}
+	defer conn.Release()
 
 	var userID string
 	stmt := `insert into poker_users (username, twitch_user) values ($1, $2) returning id`
 	if err = conn.QueryRow(ctx, stmt, dto.DisplayName, dto.TwitchID).Scan(&userID); err != nil {
-		panic(err)
+		just.Logger.Errorf("error getting user id after insert: %v", err)
+		just.InternalError("internal server error").WriteJSONResponse(w)
+		return
 	}
 
 	just.Logger.Debugf("user [%s] created", userID)
 
-	keyID, token, err := just.CreateApiKey(conn, userID, dto.DisplayName)
+	keyID, token, err := just.CreateAPIKey(conn, ctx, userID, dto.DisplayName)
 	if err != nil {
-		panic(err)
+		just.Logger.Errorf("error acquiring api key: %v", err)
+		just.InternalError("internal server error").WriteJSONResponse(w)
+		return
 	}
 
 	just.OK("new_user", ApiKey{KeyID: keyID, Token: token, UserID: userID}).WriteJSONResponse(w)
@@ -80,11 +93,13 @@ func OnDeleteMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 	conn, err := just.DBConnPool.Acquire(ctx)
 	if err != nil {
 		panic(err)
 	}
+	defer conn.Release()
 
 	userID, err := strconv.Atoi(userIDStr)
 	if err != nil {
@@ -110,7 +125,10 @@ func OnGetUserRequest(w http.ResponseWriter, r *http.Request) {
 		just.BadRequest("userID is empty", 0).WriteJSONResponse(w)
 	}
 
-	conn, err := just.DBConnPool.Acquire(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	conn, err := just.DBConnPool.Acquire(ctx)
 	if err != nil {
 		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
 		return
@@ -133,26 +151,37 @@ func OnGetUserRequest(w http.ResponseWriter, r *http.Request) {
 func OnGetUsers(w http.ResponseWriter, r *http.Request) {
 	twitchID := r.PathValue("twitch_id")
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	conn, err := just.DBConnPool.Acquire(ctx)
 	if err != nil {
-		panic(err)
+		just.Logger.Errorf("encountered error acquiring db conn: %v", err)
+		just.InternalError("error with database").WriteJSONResponse(w)
+		return
 	}
+	defer conn.Release()
 
 	stmt := `select username, id from poker_users where twitch_user=$1`
 	rows, err := conn.Query(ctx, stmt, twitchID)
+	just.Logger.Debugf("querying rows")
 	if err != nil {
-		panic(err)
+		just.Logger.Errorf("encountered error acquiring db conn: %v", err)
+		just.InternalError("error with database").WriteJSONResponse(w)
+		return
 	}
 
 	defer rows.Close()
+	just.Logger.Debugf("row query success")
 
 	users := make([]UserDTO, 0)
 	for rows.Next() {
 		var user UserDTO
 		err := rows.Scan(&user.DisplayName, &user.UserID)
 		if err != nil {
-			panic(err)
+			just.Logger.Errorf("error scanning row when getting users: %v", err)
+			just.InternalError("internal server error").WriteJSONResponse(w)
+			return
 		}
 
 		users = append(users, user)
@@ -163,25 +192,42 @@ func OnGetUsers(w http.ResponseWriter, r *http.Request) {
 
 func OnRenewKey(w http.ResponseWriter, r *http.Request) {
 	userID := r.PathValue("user_id")
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 	conn, err := just.DBConnPool.Acquire(ctx)
 	if err != nil {
-		// TODO: dont panic
-		panic(err)
+		just.Logger.Errorf("error acquiring db con: %v", err)
+		just.InternalError("internal server errror").WriteJSONResponse(w)
+		return
 	}
+	defer conn.Release()
 
 	var username string
 	stmt := `select username from poker_users where id=$1`
 	if err = conn.QueryRow(ctx, stmt, userID).Scan(&username); err != nil {
-		// TODO: dont panic
-		panic(err)
+		if errors.Is(err, sql.ErrNoRows) {
+			just.NotFound("user not found", int(just.UserNotFound)).WriteJSONResponse(w)
+		} else {
+			just.Logger.Errorf("error getting row: %v", err)
+			just.InternalError("internal server errror").WriteJSONResponse(w)
+		}
+
+		return
 	}
 
-	if err = just.DeleteApiKey(conn, userID); err != nil {
-		panic(err)
+	if err = just.DeleteAPIKey(conn, ctx, userID); err != nil {
+		just.Logger.Errorf("error acquiring db con: %v", err)
+		just.InternalError("internal server errror").WriteJSONResponse(w)
+		return
 	}
 
-	keyID, token, err := just.CreateApiKey(conn, userID, username)
+	keyID, token, err := just.CreateAPIKey(conn, ctx, userID, username)
+	if err != nil {
+		just.Logger.Errorf("error acquiring db con: %v", err)
+		just.InternalError("internal server errror").WriteJSONResponse(w)
+		return
+	}
+
 	just.OK("new_key", ApiKey{KeyID: keyID, Token: token, UserID: userID}).WriteJSONResponse(w)
 }
 
@@ -193,11 +239,15 @@ func OnRenewKey(w http.ResponseWriter, r *http.Request) {
 
 func OnDeleteUser(w http.ResponseWriter, r *http.Request) {
 	userIDStr := r.PathValue("user_id")
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 	conn, err := just.DBConnPool.Acquire(ctx)
 	if err != nil {
-		panic(err)
+		just.Logger.Errorf("error acquiring db con: %v", err)
+		just.InternalError("internal server errror").WriteJSONResponse(w)
+		return
 	}
+	defer conn.Release()
 
 	userID, err := strconv.Atoi(userIDStr)
 	if err != nil {
