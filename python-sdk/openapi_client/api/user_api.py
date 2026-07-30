@@ -11,20 +11,18 @@
 
 
 import warnings
-from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
 from typing import Any, Dict, List, Optional, Tuple, Union
-from typing_extensions import Annotated
-
-from pydantic import Field
-from typing import Any, Dict, Optional
-from typing_extensions import Annotated
-from openapi_client.models.just_response_message_any import JustResponseMessageAny
-from openapi_client.models.just_response_message_user_api_key import JustResponseMessageUserApiKey
-from openapi_client.models.user_post_request import UserPostRequest
 
 from openapi_client.api_client import ApiClient, RequestSerialized
 from openapi_client.api_response import ApiResponse
+from openapi_client.models.just_response_message_any import \
+    JustResponseMessageAny
+from openapi_client.models.just_response_message_user_api_key import \
+    JustResponseMessageUserApiKey
+from openapi_client.models.user_post_request import UserPostRequest
 from openapi_client.rest import RESTResponseType
+from pydantic import Field, StrictFloat, StrictInt, StrictStr, validate_call
+from typing_extensions import Annotated
 
 
 class UserApi:
@@ -41,7 +39,7 @@ class UserApi:
 
 
     @validate_call
-    def user_me_delete(
+    async def user_me_delete(
         self,
         body: Optional[Dict[str, Any]] = None,
         _request_timeout: Union[
@@ -101,11 +99,11 @@ class UserApi:
             '404': "JustResponseMessageJustErrorDTO",
             '500': "JustResponseMessageJustErrorDTO",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
@@ -113,7 +111,7 @@ class UserApi:
 
 
     @validate_call
-    def user_me_delete_with_http_info(
+    async def user_me_delete_with_http_info(
         self,
         body: Optional[Dict[str, Any]] = None,
         _request_timeout: Union[
@@ -173,11 +171,11 @@ class UserApi:
             '404': "JustResponseMessageJustErrorDTO",
             '500': "JustResponseMessageJustErrorDTO",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
@@ -185,7 +183,7 @@ class UserApi:
 
 
     @validate_call
-    def user_me_delete_without_preload_content(
+    async def user_me_delete_without_preload_content(
         self,
         body: Optional[Dict[str, Any]] = None,
         _request_timeout: Union[
@@ -245,7 +243,7 @@ class UserApi:
             '404': "JustResponseMessageJustErrorDTO",
             '500': "JustResponseMessageJustErrorDTO",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
@@ -330,7 +328,7 @@ class UserApi:
 
 
     @validate_call
-    def user_post(
+    async def user_post(
         self,
         user_post_request: Annotated[UserPostRequest, Field(description="user")],
         _request_timeout: Union[
@@ -390,11 +388,11 @@ class UserApi:
             '404': "JustResponseMessageJustErrorDTO",
             '500': "JustResponseMessageJustErrorDTO",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
@@ -402,7 +400,7 @@ class UserApi:
 
 
     @validate_call
-    def user_post_with_http_info(
+    async def user_post_with_http_info(
         self,
         user_post_request: Annotated[UserPostRequest, Field(description="user")],
         _request_timeout: Union[
@@ -462,11 +460,11 @@ class UserApi:
             '404': "JustResponseMessageJustErrorDTO",
             '500': "JustResponseMessageJustErrorDTO",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
@@ -474,7 +472,7 @@ class UserApi:
 
 
     @validate_call
-    def user_post_without_preload_content(
+    async def user_post_without_preload_content(
         self,
         user_post_request: Annotated[UserPostRequest, Field(description="user")],
         _request_timeout: Union[
@@ -534,7 +532,7 @@ class UserApi:
             '404': "JustResponseMessageJustErrorDTO",
             '500': "JustResponseMessageJustErrorDTO",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )

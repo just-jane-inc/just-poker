@@ -12,8 +12,6 @@
 
 
 import datetime
-from dateutil.parser import parse
-from enum import Enum
 import decimal
 import json
 import mimetypes
@@ -21,24 +19,21 @@ import os
 import re
 import tempfile
 import uuid
-
+from enum import Enum
+from typing import Dict, List, Optional, Tuple, Union
 from urllib.parse import quote
-from typing import Tuple, Optional, List, Dict, Union
-from pydantic import SecretStr
 
-from openapi_client.configuration import Configuration
-from openapi_client.api_response import ApiResponse, T as ApiResponseT
 import openapi_client.models
+from dateutil.parser import parse
 from openapi_client import rest
-from openapi_client.exceptions import (
-    ApiValueError,
-    ApiException,
-    BadRequestException,
-    UnauthorizedException,
-    ForbiddenException,
-    NotFoundException,
-    ServiceException
-)
+from openapi_client.api_response import ApiResponse
+from openapi_client.api_response import T as ApiResponseT
+from openapi_client.configuration import Configuration
+from openapi_client.exceptions import (ApiException, ApiValueError,
+                                       BadRequestException, ForbiddenException,
+                                       NotFoundException, ServiceException,
+                                       UnauthorizedException)
+from pydantic import SecretStr
 
 RequestSerialized = Tuple[str, str, Dict[str, str], Optional[str], List[str]]
 
@@ -94,11 +89,14 @@ class ApiClient:
         self.user_agent = 'OpenAPI-Generator/1.0.0/python'
         self.client_side_validation = configuration.client_side_validation
 
-    def __enter__(self):
+    async def __aenter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        pass
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        await self.close()
+
+    async def close(self):
+        await self.rest_client.close()
 
     @property
     def user_agent(self):
@@ -248,7 +246,7 @@ class ApiClient:
         return method, url, header_params, body, post_params
 
 
-    def call_api(
+    async def call_api(
         self,
         method,
         url,
@@ -271,7 +269,7 @@ class ApiClient:
 
         try:
             # perform request and return response
-            response_data = self.rest_client.request(
+            response_data = await self.rest_client.request(
                 method, url,
                 headers=header_params,
                 body=body, post_params=post_params,

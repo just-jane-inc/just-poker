@@ -11,24 +11,26 @@
 
 
 import warnings
-from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
 from typing import Any, Dict, List, Optional, Tuple, Union
-from typing_extensions import Annotated
-
-from pydantic import Field, StrictInt, StrictStr
-from typing import Any, Dict, Optional
-from typing_extensions import Annotated
-from openapi_client.models.game_game_id_action_post_request import GameGameIdActionPostRequest
-from openapi_client.models.game_game_id_chip_exchange_post_request import GameGameIdChipExchangePostRequest
-from openapi_client.models.game_post_request import GamePostRequest
-from openapi_client.models.hand_evaluator_evaluate_post_request import HandEvaluatorEvaluatePostRequest
-from openapi_client.models.just_response_message_any import JustResponseMessageAny
-from openapi_client.models.just_response_message_game_game_dto import JustResponseMessageGameGameDTO
-from openapi_client.models.just_response_message_string import JustResponseMessageString
 
 from openapi_client.api_client import ApiClient, RequestSerialized
 from openapi_client.api_response import ApiResponse
+from openapi_client.models.game_game_id_action_post_request import \
+    GameGameIdActionPostRequest
+from openapi_client.models.game_game_id_chip_exchange_post_request import \
+    GameGameIdChipExchangePostRequest
+from openapi_client.models.game_post_request import GamePostRequest
+from openapi_client.models.hand_evaluator_evaluate_post_request import \
+    HandEvaluatorEvaluatePostRequest
+from openapi_client.models.just_response_message_any import \
+    JustResponseMessageAny
+from openapi_client.models.just_response_message_game_game_dto import \
+    JustResponseMessageGameGameDTO
+from openapi_client.models.just_response_message_string import \
+    JustResponseMessageString
 from openapi_client.rest import RESTResponseType
+from pydantic import Field, StrictFloat, StrictInt, StrictStr, validate_call
+from typing_extensions import Annotated
 
 
 class GameApi:
@@ -45,9 +47,9 @@ class GameApi:
 
 
     @validate_call
-    def game_game_id_action_post(
+    async def game_game_id_action_post(
         self,
-        game_id: Annotated[StrictInt, Field(description="the id of the game")],
+        game_id: Annotated[StrictStr, Field(description="the id of the game")],
         game_game_id_action_post_request: Annotated[GameGameIdActionPostRequest, Field(description="the action the player is preforming")],
         _request_timeout: Union[
             None,
@@ -67,7 +69,7 @@ class GameApi:
         post the action preformed by a player
 
         :param game_id: the id of the game (required)
-        :type game_id: int
+        :type game_id: str
         :param game_game_id_action_post_request: the action the player is preforming (required)
         :type game_game_id_action_post_request: GameGameIdActionPostRequest
         :param _request_timeout: timeout setting for this request. If one
@@ -104,11 +106,11 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageAny",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
@@ -116,9 +118,9 @@ class GameApi:
 
 
     @validate_call
-    def game_game_id_action_post_with_http_info(
+    async def game_game_id_action_post_with_http_info(
         self,
-        game_id: Annotated[StrictInt, Field(description="the id of the game")],
+        game_id: Annotated[StrictStr, Field(description="the id of the game")],
         game_game_id_action_post_request: Annotated[GameGameIdActionPostRequest, Field(description="the action the player is preforming")],
         _request_timeout: Union[
             None,
@@ -138,7 +140,7 @@ class GameApi:
         post the action preformed by a player
 
         :param game_id: the id of the game (required)
-        :type game_id: int
+        :type game_id: str
         :param game_game_id_action_post_request: the action the player is preforming (required)
         :type game_game_id_action_post_request: GameGameIdActionPostRequest
         :param _request_timeout: timeout setting for this request. If one
@@ -175,11 +177,11 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageAny",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
@@ -187,9 +189,9 @@ class GameApi:
 
 
     @validate_call
-    def game_game_id_action_post_without_preload_content(
+    async def game_game_id_action_post_without_preload_content(
         self,
-        game_id: Annotated[StrictInt, Field(description="the id of the game")],
+        game_id: Annotated[StrictStr, Field(description="the id of the game")],
         game_game_id_action_post_request: Annotated[GameGameIdActionPostRequest, Field(description="the action the player is preforming")],
         _request_timeout: Union[
             None,
@@ -209,7 +211,7 @@ class GameApi:
         post the action preformed by a player
 
         :param game_id: the id of the game (required)
-        :type game_id: int
+        :type game_id: str
         :param game_game_id_action_post_request: the action the player is preforming (required)
         :type game_game_id_action_post_request: GameGameIdActionPostRequest
         :param _request_timeout: timeout setting for this request. If one
@@ -246,7 +248,7 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageAny",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
@@ -334,9 +336,9 @@ class GameApi:
 
 
     @validate_call
-    def game_game_id_chip_exchange_post(
+    async def game_game_id_chip_exchange_post(
         self,
-        game_id: Annotated[StrictInt, Field(description="ID of the Game exchange chips in")],
+        game_id: Annotated[StrictStr, Field(description="ID of the Game exchange chips in")],
         game_game_id_chip_exchange_post_request: Annotated[GameGameIdChipExchangePostRequest, Field(description="a specification for the chips to exchange")],
         _request_timeout: Union[
             None,
@@ -356,7 +358,7 @@ class GameApi:
         exchange chips in the players stack with the tables rack
 
         :param game_id: ID of the Game exchange chips in (required)
-        :type game_id: int
+        :type game_id: str
         :param game_game_id_chip_exchange_post_request: a specification for the chips to exchange (required)
         :type game_game_id_chip_exchange_post_request: GameGameIdChipExchangePostRequest
         :param _request_timeout: timeout setting for this request. If one
@@ -393,11 +395,11 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageAny",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
@@ -405,9 +407,9 @@ class GameApi:
 
 
     @validate_call
-    def game_game_id_chip_exchange_post_with_http_info(
+    async def game_game_id_chip_exchange_post_with_http_info(
         self,
-        game_id: Annotated[StrictInt, Field(description="ID of the Game exchange chips in")],
+        game_id: Annotated[StrictStr, Field(description="ID of the Game exchange chips in")],
         game_game_id_chip_exchange_post_request: Annotated[GameGameIdChipExchangePostRequest, Field(description="a specification for the chips to exchange")],
         _request_timeout: Union[
             None,
@@ -427,7 +429,7 @@ class GameApi:
         exchange chips in the players stack with the tables rack
 
         :param game_id: ID of the Game exchange chips in (required)
-        :type game_id: int
+        :type game_id: str
         :param game_game_id_chip_exchange_post_request: a specification for the chips to exchange (required)
         :type game_game_id_chip_exchange_post_request: GameGameIdChipExchangePostRequest
         :param _request_timeout: timeout setting for this request. If one
@@ -464,11 +466,11 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageAny",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
@@ -476,9 +478,9 @@ class GameApi:
 
 
     @validate_call
-    def game_game_id_chip_exchange_post_without_preload_content(
+    async def game_game_id_chip_exchange_post_without_preload_content(
         self,
-        game_id: Annotated[StrictInt, Field(description="ID of the Game exchange chips in")],
+        game_id: Annotated[StrictStr, Field(description="ID of the Game exchange chips in")],
         game_game_id_chip_exchange_post_request: Annotated[GameGameIdChipExchangePostRequest, Field(description="a specification for the chips to exchange")],
         _request_timeout: Union[
             None,
@@ -498,7 +500,7 @@ class GameApi:
         exchange chips in the players stack with the tables rack
 
         :param game_id: ID of the Game exchange chips in (required)
-        :type game_id: int
+        :type game_id: str
         :param game_game_id_chip_exchange_post_request: a specification for the chips to exchange (required)
         :type game_game_id_chip_exchange_post_request: GameGameIdChipExchangePostRequest
         :param _request_timeout: timeout setting for this request. If one
@@ -535,7 +537,7 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageAny",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
@@ -623,7 +625,7 @@ class GameApi:
 
 
     @validate_call
-    def game_game_id_listener_listener_id_get(
+    async def game_game_id_listener_listener_id_get(
         self,
         listener_id: Annotated[StrictStr, Field(description="the id of the game")],
         game_id: Annotated[StrictStr, Field(description="the id of the listener")],
@@ -686,11 +688,11 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageAny",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
@@ -698,7 +700,7 @@ class GameApi:
 
 
     @validate_call
-    def game_game_id_listener_listener_id_get_with_http_info(
+    async def game_game_id_listener_listener_id_get_with_http_info(
         self,
         listener_id: Annotated[StrictStr, Field(description="the id of the game")],
         game_id: Annotated[StrictStr, Field(description="the id of the listener")],
@@ -761,11 +763,11 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageAny",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
@@ -773,7 +775,7 @@ class GameApi:
 
 
     @validate_call
-    def game_game_id_listener_listener_id_get_without_preload_content(
+    async def game_game_id_listener_listener_id_get_without_preload_content(
         self,
         listener_id: Annotated[StrictStr, Field(description="the id of the game")],
         game_id: Annotated[StrictStr, Field(description="the id of the listener")],
@@ -836,7 +838,7 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageAny",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
@@ -926,7 +928,7 @@ class GameApi:
 
 
     @validate_call
-    def game_game_id_listener_post(
+    async def game_game_id_listener_post(
         self,
         game_id: Annotated[StrictStr, Field(description="the id of the game to create a listener in")],
         body: Optional[Dict[str, Any]] = None,
@@ -985,11 +987,11 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageString",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
@@ -997,7 +999,7 @@ class GameApi:
 
 
     @validate_call
-    def game_game_id_listener_post_with_http_info(
+    async def game_game_id_listener_post_with_http_info(
         self,
         game_id: Annotated[StrictStr, Field(description="the id of the game to create a listener in")],
         body: Optional[Dict[str, Any]] = None,
@@ -1056,11 +1058,11 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageString",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
@@ -1068,7 +1070,7 @@ class GameApi:
 
 
     @validate_call
-    def game_game_id_listener_post_without_preload_content(
+    async def game_game_id_listener_post_without_preload_content(
         self,
         game_id: Annotated[StrictStr, Field(description="the id of the game to create a listener in")],
         body: Optional[Dict[str, Any]] = None,
@@ -1127,7 +1129,7 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageString",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
@@ -1214,7 +1216,7 @@ class GameApi:
 
 
     @validate_call
-    def game_game_id_player_post(
+    async def game_game_id_player_post(
         self,
         game_id: Annotated[StrictStr, Field(description="ID of the Game to join")],
         body: Optional[Dict[str, Any]] = None,
@@ -1273,11 +1275,11 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageAny",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
@@ -1285,7 +1287,7 @@ class GameApi:
 
 
     @validate_call
-    def game_game_id_player_post_with_http_info(
+    async def game_game_id_player_post_with_http_info(
         self,
         game_id: Annotated[StrictStr, Field(description="ID of the Game to join")],
         body: Optional[Dict[str, Any]] = None,
@@ -1344,11 +1346,11 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageAny",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
@@ -1356,7 +1358,7 @@ class GameApi:
 
 
     @validate_call
-    def game_game_id_player_post_without_preload_content(
+    async def game_game_id_player_post_without_preload_content(
         self,
         game_id: Annotated[StrictStr, Field(description="ID of the Game to join")],
         body: Optional[Dict[str, Any]] = None,
@@ -1415,7 +1417,7 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageAny",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
@@ -1503,9 +1505,9 @@ class GameApi:
 
 
     @validate_call
-    def game_game_id_started_post(
+    async def game_game_id_started_post(
         self,
-        game_id: Annotated[StrictInt, Field(description="the id of the game to start")],
+        game_id: Annotated[StrictStr, Field(description="the id of the game to start")],
         body: Optional[Dict[str, Any]] = None,
         _request_timeout: Union[
             None,
@@ -1525,7 +1527,7 @@ class GameApi:
         starts a game from a created game lobby, closing it to joins and starting play
 
         :param game_id: the id of the game to start (required)
-        :type game_id: int
+        :type game_id: str
         :param body:
         :type body: object
         :param _request_timeout: timeout setting for this request. If one
@@ -1562,11 +1564,11 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageAny",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
@@ -1574,9 +1576,9 @@ class GameApi:
 
 
     @validate_call
-    def game_game_id_started_post_with_http_info(
+    async def game_game_id_started_post_with_http_info(
         self,
-        game_id: Annotated[StrictInt, Field(description="the id of the game to start")],
+        game_id: Annotated[StrictStr, Field(description="the id of the game to start")],
         body: Optional[Dict[str, Any]] = None,
         _request_timeout: Union[
             None,
@@ -1596,7 +1598,7 @@ class GameApi:
         starts a game from a created game lobby, closing it to joins and starting play
 
         :param game_id: the id of the game to start (required)
-        :type game_id: int
+        :type game_id: str
         :param body:
         :type body: object
         :param _request_timeout: timeout setting for this request. If one
@@ -1633,11 +1635,11 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageAny",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
@@ -1645,9 +1647,9 @@ class GameApi:
 
 
     @validate_call
-    def game_game_id_started_post_without_preload_content(
+    async def game_game_id_started_post_without_preload_content(
         self,
-        game_id: Annotated[StrictInt, Field(description="the id of the game to start")],
+        game_id: Annotated[StrictStr, Field(description="the id of the game to start")],
         body: Optional[Dict[str, Any]] = None,
         _request_timeout: Union[
             None,
@@ -1667,7 +1669,7 @@ class GameApi:
         starts a game from a created game lobby, closing it to joins and starting play
 
         :param game_id: the id of the game to start (required)
-        :type game_id: int
+        :type game_id: str
         :param body:
         :type body: object
         :param _request_timeout: timeout setting for this request. If one
@@ -1704,7 +1706,7 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageAny",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
@@ -1792,9 +1794,9 @@ class GameApi:
 
 
     @validate_call
-    def game_game_id_state_get(
+    async def game_game_id_state_get(
         self,
-        game_id: Annotated[StrictInt, Field(description="ID of the Game to get the state of")],
+        game_id: Annotated[StrictStr, Field(description="ID of the Game to get the state of")],
         body: Optional[Dict[str, Any]] = None,
         _request_timeout: Union[
             None,
@@ -1814,7 +1816,7 @@ class GameApi:
         gets the current state of the game from the perspective of the requesting user
 
         :param game_id: ID of the Game to get the state of (required)
-        :type game_id: int
+        :type game_id: str
         :param body:
         :type body: object
         :param _request_timeout: timeout setting for this request. If one
@@ -1851,11 +1853,11 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageGameGameDTO",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
@@ -1863,9 +1865,9 @@ class GameApi:
 
 
     @validate_call
-    def game_game_id_state_get_with_http_info(
+    async def game_game_id_state_get_with_http_info(
         self,
-        game_id: Annotated[StrictInt, Field(description="ID of the Game to get the state of")],
+        game_id: Annotated[StrictStr, Field(description="ID of the Game to get the state of")],
         body: Optional[Dict[str, Any]] = None,
         _request_timeout: Union[
             None,
@@ -1885,7 +1887,7 @@ class GameApi:
         gets the current state of the game from the perspective of the requesting user
 
         :param game_id: ID of the Game to get the state of (required)
-        :type game_id: int
+        :type game_id: str
         :param body:
         :type body: object
         :param _request_timeout: timeout setting for this request. If one
@@ -1922,11 +1924,11 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageGameGameDTO",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
@@ -1934,9 +1936,9 @@ class GameApi:
 
 
     @validate_call
-    def game_game_id_state_get_without_preload_content(
+    async def game_game_id_state_get_without_preload_content(
         self,
-        game_id: Annotated[StrictInt, Field(description="ID of the Game to get the state of")],
+        game_id: Annotated[StrictStr, Field(description="ID of the Game to get the state of")],
         body: Optional[Dict[str, Any]] = None,
         _request_timeout: Union[
             None,
@@ -1956,7 +1958,7 @@ class GameApi:
         gets the current state of the game from the perspective of the requesting user
 
         :param game_id: ID of the Game to get the state of (required)
-        :type game_id: int
+        :type game_id: str
         :param body:
         :type body: object
         :param _request_timeout: timeout setting for this request. If one
@@ -1993,7 +1995,7 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageGameGameDTO",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
@@ -2080,7 +2082,7 @@ class GameApi:
 
 
     @validate_call
-    def game_post(
+    async def game_post(
         self,
         game_post_request: Annotated[GamePostRequest, Field(description="an object defining configuration information for the new game")],
         _request_timeout: Union[
@@ -2135,11 +2137,11 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageString",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
@@ -2147,7 +2149,7 @@ class GameApi:
 
 
     @validate_call
-    def game_post_with_http_info(
+    async def game_post_with_http_info(
         self,
         game_post_request: Annotated[GamePostRequest, Field(description="an object defining configuration information for the new game")],
         _request_timeout: Union[
@@ -2202,11 +2204,11 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageString",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
@@ -2214,7 +2216,7 @@ class GameApi:
 
 
     @validate_call
-    def game_post_without_preload_content(
+    async def game_post_without_preload_content(
         self,
         game_post_request: Annotated[GamePostRequest, Field(description="an object defining configuration information for the new game")],
         _request_timeout: Union[
@@ -2269,7 +2271,7 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageString",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
@@ -2354,7 +2356,7 @@ class GameApi:
 
 
     @validate_call
-    def hand_evaluator_evaluate_post(
+    async def hand_evaluator_evaluate_post(
         self,
         hand_evaluator_evaluate_post_request: Annotated[Optional[HandEvaluatorEvaluatePostRequest], Field(description="hand to evaluate, either 5 or 7 cards")],
         _request_timeout: Union[
@@ -2409,11 +2411,11 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
@@ -2421,7 +2423,7 @@ class GameApi:
 
 
     @validate_call
-    def hand_evaluator_evaluate_post_with_http_info(
+    async def hand_evaluator_evaluate_post_with_http_info(
         self,
         hand_evaluator_evaluate_post_request: Annotated[Optional[HandEvaluatorEvaluatePostRequest], Field(description="hand to evaluate, either 5 or 7 cards")],
         _request_timeout: Union[
@@ -2476,11 +2478,11 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
@@ -2488,7 +2490,7 @@ class GameApi:
 
 
     @validate_call
-    def hand_evaluator_evaluate_post_without_preload_content(
+    async def hand_evaluator_evaluate_post_without_preload_content(
         self,
         hand_evaluator_evaluate_post_request: Annotated[Optional[HandEvaluatorEvaluatePostRequest], Field(description="hand to evaluate, either 5 or 7 cards")],
         _request_timeout: Union[
@@ -2543,7 +2545,7 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )

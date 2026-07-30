@@ -13,15 +13,16 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt
-from typing import Any, ClassVar, Dict, List, Optional
-from typing import Optional, Set
-from typing_extensions import Self
 from pydantic_core import to_jsonable_python
+from typing_extensions import Self
+
 
 class GameNewGameConfigDTO(BaseModel):
     """
