@@ -1,3 +1,4 @@
+from argparse import Action
 import asyncio
 import logging
 from enum import Enum
@@ -6,6 +7,12 @@ from openapi_client import *
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("helpers")
+
+
+async def get_game_state(client: ApiClient, game_id: str) -> GameGameDTO | None:
+    game_api = GameApi(client)
+    resp = await game_api.game_game_id_state_get(game_id)
+    return resp.data
 
 
 def create_connection(base_url: str, token: str = "") -> ApiClient:
@@ -43,13 +50,9 @@ async def create_game(
         logger.error(f"encountered error creating game: {e}")
 
 
-async def create_user(
-    base_url: str, twitch_id: str, display_name: str
-) -> UserApiKey | None:
+async def create_user(base_url: str, twitch_id: str, display_name: str) -> UserApiKey | None:
     api = UserApi(create_connection(base_url))
-    dto = UserUserDTO(
-        display_name=display_name, twitch_id=twitch_id, user_type="test-user"
-    )
+    dto = UserUserDTO(display_name=display_name, twitch_id=twitch_id, user_type="test-user")
     resp = await api.user_post(UserPostRequest(dto))
     return resp.data
 
@@ -69,25 +72,36 @@ async def delete_user(base_url: str, token: str) -> str | None:
 
 class CardSuit(Enum):
     SPADE = ord("s")
-    CLUB = ord("c")
     HEART = ord("h")
     DIAMOND = ord("d")
+    CLUB = ord("c")
 
 
 class CardRank(Enum):
     ACE = ord("A")
-    KING = ord("K")
-    QUEEN = ord("Q")
-    JACK = ord("J")
-    TEN = ord("T")
-    NINE = ord("9")
-    EIGHT = ord("8")
-    SEVEN = ord("7")
-    SIX = ord("6")
-    FIVE = ord("5")
-    FOUR = ord("4")
-    THREE = ord("3")
     TWO = ord("2")
+    THREE = ord("3")
+    FOUR = ord("4")
+    FIVE = ord("5")
+    SIX = ord("6")
+    SEVEN = ord("7")
+    EIGHT = ord("8")
+    NINE = ord("9")
+    TEN = ord("T")
+    JACK = ord("J")
+    QUEEN = ord("Q")
+    KING = ord("K")
+
+
+def get_unicode_mapping():
+    mapping = dict()
+    offset = 0x1F0A1 - 16
+    for suit in CardSuit:
+        offset += 16
+        mapping[suit] = dict()
+        for i, rank in enumerate(CardRank):
+            mapping[suit][rank] = chr(offset + i)
+    return mapping
 
 
 class Card:

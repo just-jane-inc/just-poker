@@ -18,10 +18,11 @@ import json
 import pprint
 from typing import Any, Dict, List, Optional, Set, Union
 
-from openapi_client.models.game_new_game_config_dto import GameNewGameConfigDTO
 from pydantic import (BaseModel, ConfigDict, Field, StrictStr, ValidationError,
                       field_validator)
 from typing_extensions import Literal, Self
+
+from openapi_client.models.game_new_game_config_dto import GameNewGameConfigDTO
 
 GAMEPOSTREQUEST_ONE_OF_SCHEMAS = ["GameNewGameConfigDTO", "object"]
 

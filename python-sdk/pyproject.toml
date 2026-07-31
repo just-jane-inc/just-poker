@@ -7,5 +7,4 @@ ignore = ["E501", "F401"]
 [tool.pyright]
 executionEnvironments = []
 typeCheckingMode = "standard"
-reportOptionalMemberAccess = false
-
+reportOptionalMemberAccess = "none"

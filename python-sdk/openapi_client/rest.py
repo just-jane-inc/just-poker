@@ -19,6 +19,7 @@ import ssl
 from typing import Optional, Union
 
 import httpx
+
 from openapi_client.exceptions import ApiException, ApiValueError
 
 RESTResponseType = httpx.Response

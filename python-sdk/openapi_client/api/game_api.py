@@ -13,6 +13,9 @@
 import warnings
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from pydantic import Field, StrictFloat, StrictInt, StrictStr, validate_call
+from typing_extensions import Annotated
+
 from openapi_client.api_client import ApiClient, RequestSerialized
 from openapi_client.api_response import ApiResponse
 from openapi_client.models.game_game_id_action_post_request import \
@@ -29,8 +32,6 @@ from openapi_client.models.just_response_message_game_game_dto import \
 from openapi_client.models.just_response_message_string import \
     JustResponseMessageString
 from openapi_client.rest import RESTResponseType
-from pydantic import Field, StrictFloat, StrictInt, StrictStr, validate_call
-from typing_extensions import Annotated
 
 
 class GameApi:

@@ -18,10 +18,11 @@ import json
 import pprint
 from typing import Any, Dict, List, Optional, Set, Union
 
-from openapi_client.models.game_chip_exchange_dto import GameChipExchangeDTO
 from pydantic import (BaseModel, ConfigDict, Field, StrictStr, ValidationError,
                       field_validator)
 from typing_extensions import Literal, Self
+
+from openapi_client.models.game_chip_exchange_dto import GameChipExchangeDTO
 
 GAMEGAMEIDCHIPEXCHANGEPOSTREQUEST_ONE_OF_SCHEMAS = ["GameChipExchangeDTO", "object"]
 

@@ -23,8 +23,10 @@ from enum import Enum
 from typing import Dict, List, Optional, Tuple, Union
 from urllib.parse import quote
 
-import openapi_client.models
 from dateutil.parser import parse
+from pydantic import SecretStr
+
+import openapi_client.models
 from openapi_client import rest
 from openapi_client.api_response import ApiResponse
 from openapi_client.api_response import T as ApiResponseT
@@ -33,7 +35,6 @@ from openapi_client.exceptions import (ApiException, ApiValueError,
                                        BadRequestException, ForbiddenException,
                                        NotFoundException, ServiceException,
                                        UnauthorizedException)
-from pydantic import SecretStr
 
 RequestSerialized = Tuple[str, str, Dict[str, str], Optional[str], List[str]]
 

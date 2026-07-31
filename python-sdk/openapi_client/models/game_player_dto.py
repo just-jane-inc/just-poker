@@ -19,10 +19,11 @@ import pprint
 import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from openapi_client.models.game_card_dto import GameCardDTO
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from pydantic_core import to_jsonable_python
 from typing_extensions import Self
+
+from openapi_client.models.game_card_dto import GameCardDTO
 
 
 class GamePlayerDTO(BaseModel):

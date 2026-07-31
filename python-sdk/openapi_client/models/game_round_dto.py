@@ -19,10 +19,11 @@ import pprint
 import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from openapi_client.models.game_round_type import GameRoundType
 from pydantic import BaseModel, ConfigDict, Field, StrictInt
 from pydantic_core import to_jsonable_python
 from typing_extensions import Self
+
+from openapi_client.models.game_round_type import GameRoundType
 
 
 class GameRoundDTO(BaseModel):
