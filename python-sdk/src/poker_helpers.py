@@ -5,7 +5,7 @@ from enum import Enum
 
 from openapi_client import *
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger("helpers")
 
 
@@ -31,6 +31,7 @@ async def create_game(
     bb: int = 100,
     sb: int = 50,
     chips: dict[str, int] | None = None,
+    player_count: int = 5,
 ) -> str | None:
     if not chips:
         chips = {"10": 10, "50": 5, "100": 2, "500": 1}
@@ -40,7 +41,7 @@ async def create_game(
         big_blind=bb,
         small_blind=sb,
         starting_chips=chips,
-        player_count=5,
+        player_count=player_count,
     )
 
     try:

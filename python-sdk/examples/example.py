@@ -32,7 +32,7 @@ async def main():
 
     bots: list[PokerBot] = []
     for user in users:
-        bot = PokerBot(base_url, user.Token, int(game_id))
+        bot = PokerBot(base_url, user.Token, user.UserID, game_id)
         bots.append(bot)
         await bot.join_game()
 
@@ -43,8 +43,6 @@ async def main():
 
     state = await bots[0].get_game_state()
     assert state
-
-    print(json.dumps(state.dict(), indent=2))
 
 
 if __name__ == "__main__":
