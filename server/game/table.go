@@ -42,8 +42,8 @@ func (t table) AsDTO() TableDTO {
 		CurrentRound:       t.currentRound.AsDto(),
 		CurrentHand:        t.currentHand,
 		ButtonPosition:     t.currentHand.Button,
-		SmallBlindPosition: t.NextPosition(t.currentHand.Button + 1),
-		BigBlindPosition:   t.NextPosition(t.currentHand.Button + 2),
+		SmallBlindPosition: t.NextPosition(t.currentHand.Button),
+		BigBlindPosition:   t.NextPosition(t.currentHand.Button + 1),
 	}
 
 	for i, player := range t.players {
@@ -59,12 +59,27 @@ func (t table) AsDTO() TableDTO {
 	return dto
 }
 
+// NextPosition godoc
+//
+// Gets the next position from a provided position that has a valid
+// player. When a game starts the players at the table are immutable,
+// when computing the "next" player we need to ensure that:
+//
+// 1. we loop around the table (circular array)
+// 2. we skip players with the "out" state, they are no longer able to play
 func (t table) NextPosition(position int) int {
 	if len(t.players) == 0 {
 		return 0
 	}
 
-	return (position + 1) % len(t.players)
+	for offset := range len(t.players) {
+		nextPosition := (position + offset + 1) % len(t.players)
+		if t.players[nextPosition].state != player_state_out {
+			return nextPosition
+		}
+	}
+
+	return -1
 }
 
 // returns the player after offset in turn order
@@ -85,18 +100,6 @@ func (t *table) NextRound() {
 	// at the begining of a round all active players
 	// need to be set to inactive?
 	for _, p := range t.players {
-		switch p.state {
-		case "":
-			p.state = player_state_inactive
-		case player_state_active:
-			p.state = player_state_inactive
-		case player_state_inactive:
-		case player_state_folded:
-		case player_state_all_in:
-		default:
-			just.Logger.Errorf("encountered player [%s] in unknown state: %s", p.UserID, p.state)
-		}
-
 		if p.state == player_state_active {
 			p.state = player_state_inactive
 		}
@@ -111,8 +114,10 @@ func (t *table) NextRound() {
 		t.currentRound.currentRoundType = round_type_setup
 		// this is the first time we enter the next round thing, this is fine?
 		// we might handle this in new haand?
-		t.currentRound.currentPlayerPosition = t.NextPosition(t.currentHand.Button)
-		t.currentRound.bet = 0
+		p := t.NextInactivePlayer(t.currentHand.Button)
+		p.state = player_state_active
+		t.currentRound.currentPlayerPosition = p.position
+		t.currentRound.bet = t.currentHand.SmallBlind
 
 	case round_type_setup: // GOTO pre-flop
 		t.currentRound.currentRoundType = round_type_pre_flop

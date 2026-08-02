@@ -84,6 +84,8 @@ func OnJoinGameRequest(w http.ResponseWriter, r *http.Request) {
 // @Success      200 {object} just.ResponseMessage[GameDTO]
 // @Router       /game/{game_id}/state [get]
 func OnGetCurrentGameState(w http.ResponseWriter, r *http.Request) {
+	//	userID, _, _ := just.GetAuthorizedUser(r)
+
 	just.Logger.Debug("getting game state")
 	gameIDString := r.PathValue("game_id")
 	g, ok := CurrentGames[gameIDString]
@@ -92,7 +94,17 @@ func OnGetCurrentGameState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	just.OK("game_state", g.AsDTO()).WriteJSONResponse(w)
+	dto := g.AsDTO()
+	/*
+			for _, p := range dto.Table.Players {
+			if p.UserID != userID {
+				p.Hole[0] = CardDTO{Rank: 'x', Suit: 'x'}
+				p.Hole[1] = CardDTO{Rank: 'x', Suit: 'x'}
+			}
+		}
+	*/
+
+	just.OK("game_state", dto).WriteJSONResponse(w)
 }
 
 // OnCreateGame godoc

@@ -2,6 +2,7 @@ package game
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"maps"
 	"strconv"
@@ -12,6 +13,16 @@ import (
 )
 
 type JoinGameError error
+
+func (g *game) LogGameState(msg string) {
+	s, err := json.Marshal(g.AsDTO())
+	if err != nil {
+		just.Logger.Errorf("encountered error marshaling game: %v", err)
+		return
+	}
+
+	just.Logger.Debugf("%s \n %s", msg, s)
+}
 
 func (this stack) MergeWith(that stack) stack {
 	result := make(stack)
@@ -182,10 +193,21 @@ func (g *game) TryStartNewHand() error {
 	t.deck.Reset()
 	t.street = make([]*card, 0)
 	t.pot = make(map[int]int)
-
 	t.currentRound.currentRoundType = round_type_unset
+
+	for _, p := range t.players {
+		// if a player is out we do not want to include them in the hand,
+		// this state should be locked in place by everything which updates
+		// player state.
+		if p.state == player_state_out {
+			continue
+		}
+
+		p.state = player_state_inactive
+	}
+
 	t.NextRound()
-	t.currentRound.currentAggressor = t.NextPosition(t.currentHand.Button + 2)
+	t.currentRound.currentAggressor = t.NextInactivePlayer(t.currentHand.Button + 2).position
 
 	deck := make([]CardDTO, len(g.table.deck.cards))
 	for i, card := range g.table.deck.cards {
@@ -347,7 +369,7 @@ same hand, the pot is split evenly between them. After each hand, the button mov
 left, as do the responsibilities of posting the small and big blinds.
 */
 func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
-	just.Logger.Debugf("handling action attempt for player [%s]", action.ToString())
+	just.Logger.Debugf("current round type [%s] received action [%s]", g.table.currentRound.currentRoundType, action.ToString())
 	p := g.table.players[g.table.currentRound.currentPlayerPosition]
 
 	// we need to first ensure that it is this players turn
@@ -358,12 +380,10 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 		}
 	}
 
-	// the comment below is the truth.
-	// the comment above is a lie. This totally works ;)
-	// - Goblinz181
-	switch action.Intent {
-	case player_intent_ante:
-		if g.table.currentRound.currentRoundType != round_type_setup {
+	// the setup 'round' has unique logic and should not mix
+	// with the other round types
+	if g.table.currentRound.currentRoundType == round_type_setup {
+		if action.Intent != player_intent_ante {
 			return &just.PokerError{
 				Message: "during this phase only ante actions can be accepted",
 				Code:    just.InvalidActionType,
@@ -382,6 +402,8 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 			if err := g.TryCoverBet(p, action.Bet); err != nil {
 				return err
 			}
+
+			g.table.currentRound.bet = g.table.currentHand.BigBlind
 
 		} else if p.position == g.table.NextPosition(g.table.currentHand.Button+1) {
 			if betAmount != g.table.currentHand.BigBlind {
@@ -410,73 +432,89 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 
 		p.currentBet = p.currentBet.MergeWith(action.Bet.AsStack())
 		g.table.currentRound.bet = g.config.BigBlind
-
-	case player_intent_check:
-		if p.currentBet.Sum() != g.table.currentRound.bet {
-			return &just.PokerError{
-				Message: fmt.Sprintf(
-					"you must call the current bet of %d with %d chips",
-					g.table.currentRound.bet,
-					g.table.currentRound.bet-p.currentBet.Sum(),
-				),
-				Code: just.InvalidBetAmount,
+	} else {
+		// the comment below is the truth.
+		// the comment above is a lie. This totally works ;)
+		// - Goblinz181
+		switch action.Intent {
+		case player_intent_ante:
+			if g.table.currentRound.currentRoundType != round_type_setup {
+				return &just.PokerError{
+					Message: "during this phase only ante actions can be accepted",
+					Code:    just.InvalidActionType,
+				}
 			}
-		}
 
-	case player_intent_call:
-		totalBet := p.currentBet.MergeWith(action.Bet.AsStack())
-		if totalBet.Sum() != g.table.currentRound.bet {
-			return &just.PokerError{
-				Message: fmt.Sprintf(
-					"%d is not valid to call the current amount of %d",
-					totalBet.Sum(),
-					g.table.currentRound.bet,
-				),
-				Code: just.InvalidBetAmount,
+			// the happy path of the ante intent will have already been handled by this point
+			// we do not need to do anything else here.
+
+		case player_intent_check:
+			if p.currentBet.Sum() != g.table.currentRound.bet {
+				return &just.PokerError{
+					Message: fmt.Sprintf(
+						"you must call the current bet of %d with %d chips",
+						g.table.currentRound.bet,
+						g.table.currentRound.bet-p.currentBet.Sum(),
+					),
+					Code: just.InvalidBetAmount,
+				}
 			}
-		}
 
-		p.currentBet = totalBet
-
-	case player_intent_raise:
-		totalBet := p.currentBet.MergeWith(action.Bet.AsStack())
-		if totalBet.Sum() <= g.table.currentRound.bet {
-			return &just.PokerError{
-				Message: fmt.Sprintf(
-					"%d is not valid to raise the current amount of %d",
-					g.table.currentRound.bet,
-					g.table.currentRound.bet,
-				),
-				Code: just.InvalidBetAmount,
+		case player_intent_call:
+			totalBet := p.currentBet.MergeWith(action.Bet.AsStack())
+			if totalBet.Sum() != g.table.currentRound.bet {
+				return &just.PokerError{
+					Message: fmt.Sprintf(
+						"%d is not valid to call the current amount of %d",
+						totalBet.Sum(),
+						g.table.currentRound.bet,
+					),
+					Code: just.InvalidBetAmount,
+				}
 			}
-		}
 
-		if err := g.TryCoverBet(p, action.Bet); err != nil {
-			return err
-		}
+			p.currentBet = totalBet
 
-		p.currentBet = totalBet
-		g.table.currentRound.bet = p.currentBet.Sum()
-		g.table.currentRound.currentAggressor = p.position
+		case player_intent_raise:
+			totalBet := p.currentBet.MergeWith(action.Bet.AsStack())
+			if totalBet.Sum() <= g.table.currentRound.bet {
+				return &just.PokerError{
+					Message: fmt.Sprintf(
+						"%d is not valid to raise the current amount of %d",
+						g.table.currentRound.bet,
+						g.table.currentRound.bet,
+					),
+					Code: just.InvalidBetAmount,
+				}
+			}
 
-	case player_intent_all_in:
-		p.currentBet = p.currentBet.MergeWith(p.chips)
-		g.table.currentRound.bet += p.chips.Sum()
+			if err := g.TryCoverBet(p, action.Bet); err != nil {
+				return err
+			}
 
-		// check if this all in would actually make the player thhe aggressor,
-		// it could be that they just don't have the chips to cover the current
-		// round bet
-		if p.currentBet.Sum() > g.table.currentRound.bet {
+			p.currentBet = totalBet
+			g.table.currentRound.bet = p.currentBet.Sum()
 			g.table.currentRound.currentAggressor = p.position
+
+		case player_intent_all_in:
+			p.currentBet = p.currentBet.MergeWith(p.chips)
+			g.table.currentRound.bet += p.chips.Sum()
+
+			// check if this all in would actually make the player thhe aggressor,
+			// it could be that they just don't have the chips to cover the current
+			// round bet
+			if p.currentBet.Sum() > g.table.currentRound.bet {
+				g.table.currentRound.currentAggressor = p.position
+			}
+
+			p.state = player_state_all_in
+
+		case player_intent_fold:
+			p.state = player_state_folded
+
+		default:
+			return fmt.Errorf("erm dunno what %s means, sorry", action.Intent)
 		}
-
-		p.state = player_state_all_in
-
-	case player_intent_fold:
-		p.state = player_state_folded
-
-	default:
-		return fmt.Errorf("erm dunno what %s means, sorry", action.Intent)
 	}
 
 	just.Logger.Debugf("accepted action [%s] for player with id [%s]", action.Intent, action.PlayerID)
@@ -503,16 +541,16 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 		// note that it is possible to terminate this loop without matching to a player.
 		// this will occurr when all players are all in. we still want to go through
 		// all rounds in order to produce cards for the river/turn
-		var p *player
-		for p == nil && g.table.currentRound.currentRoundType != round_type_completed {
+		var nextRoundFirstPlayer *player
+		for nextRoundFirstPlayer == nil && g.table.currentRound.currentRoundType != round_type_completed {
 			// recording the previous round here for logging
 			prevRoundType := g.table.currentRound.currentRoundType
 
 			g.table.NextRound()
 			if g.table.currentRound.currentRoundType == round_type_pre_flop {
-				p = g.table.NextInactivePlayer(g.table.currentHand.Button + 2)
+				nextRoundFirstPlayer = g.table.NextInactivePlayer(g.table.currentHand.Button + 2)
 			} else {
-				p = g.table.NextInactivePlayer(g.table.currentHand.Button)
+				nextRoundFirstPlayer = g.table.NextInactivePlayer(g.table.currentHand.Button)
 			}
 
 			just.Logger.Debugf(
@@ -523,23 +561,37 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 			)
 		}
 
-		if p != nil {
-			g.table.currentRound.currentPlayerPosition = p.position
-			if g.table.currentRound.currentRoundType == round_type_pre_flop {
-				g.table.currentRound.currentAggressor = g.table.NextPosition(g.table.currentHand.Button + 2)
-			} else {
-				g.table.currentRound.currentAggressor = p.position
-			}
+		if nextRoundFirstPlayer != nil {
+			g.table.currentRound.currentAggressor = nextRoundFirstPlayer.position
 		}
 
-		// TODO should we set next player (active) here?
-
-	} else {
-		g.table.currentRound.currentPlayerPosition = nextPlayer.position
+		nextPlayer = nextRoundFirstPlayer
 	}
 
-	p.state = player_state_inactive
+	if g.table.currentRound.currentRoundType == round_type_completed {
+		err := g.TryStartNewHand()
+		if err != nil {
+			return err
+		}
+	}
+
+	if nextPlayer == nil {
+		just.Logger.Errorf("failed to find a next player...")
+		return just.NewPokerError("failed to find a player...", 67)
+	}
+
+	g.table.currentRound.currentPlayerPosition = nextPlayer.position
+
+	// the player state should only change back to inactive if it
+	// is still active. the player may have gone all in or folded
+	// and that state should not be overwritten
+	if p.state == player_state_active {
+		p.state = player_state_inactive
+	}
+
 	nextPlayer.state = player_state_active
+
+	just.Logger.Debugf("[%s] [%d] -> [%d]", g.table.currentRound.currentRoundType, p.position, nextPlayer.position)
 
 	msg := just.ResponseMessage[any]{
 		Type: "player_update",
@@ -552,13 +604,6 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 
 	g.sendToListeners(msg)
 	g.table.currentTurn.StartedAt = time.Now()
-
-	if g.table.currentRound.currentRoundType == round_type_completed {
-		err := g.TryStartNewHand()
-		if err != nil {
-			return err
-		}
-	}
 
 	return nil
 }
