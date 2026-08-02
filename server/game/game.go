@@ -196,6 +196,7 @@ func (g *game) TryStartNewHand() error {
 	t.currentRound.currentRoundType = round_type_unset
 
 	for _, p := range t.players {
+		p.pocket = make([]*card, 0)
 		// if a player is out we do not want to include them in the hand,
 		// this state should be locked in place by everything which updates
 		// player state.
@@ -473,6 +474,10 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 				}
 			}
 
+			if err := g.TryCoverBet(p, action.Bet); err != nil {
+				return err
+			}
+
 			p.currentBet = totalBet
 
 		case player_intent_raise:
@@ -499,6 +504,10 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 		case player_intent_all_in:
 			p.currentBet = p.currentBet.MergeWith(p.chips)
 			g.table.currentRound.bet += p.chips.Sum()
+
+			if err := g.TryCoverBet(p, p.chips.AsDto()); err != nil {
+				return err
+			}
 
 			// check if this all in would actually make the player thhe aggressor,
 			// it could be that they just don't have the chips to cover the current
@@ -566,12 +575,13 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 		}
 
 		nextPlayer = nextRoundFirstPlayer
-	}
+		if g.table.currentRound.currentRoundType == round_type_completed {
+			err := g.TryStartNewHand()
+			if err != nil {
+				return err
+			}
 
-	if g.table.currentRound.currentRoundType == round_type_completed {
-		err := g.TryStartNewHand()
-		if err != nil {
-			return err
+			nextPlayer = g.table.players[g.table.currentRound.currentPlayerPosition]
 		}
 	}
 
@@ -581,6 +591,7 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 	}
 
 	g.table.currentRound.currentPlayerPosition = nextPlayer.position
+	nextPlayer.state = player_state_active
 
 	// the player state should only change back to inactive if it
 	// is still active. the player may have gone all in or folded
@@ -588,8 +599,6 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 	if p.state == player_state_active {
 		p.state = player_state_inactive
 	}
-
-	nextPlayer.state = player_state_active
 
 	just.Logger.Debugf("[%s] [%d] -> [%d]", g.table.currentRound.currentRoundType, p.position, nextPlayer.position)
 
@@ -604,6 +613,11 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 
 	g.sendToListeners(msg)
 	g.table.currentTurn.StartedAt = time.Now()
+
+	if g.table.currentRound.currentRoundType == round_type_completed {
+		// TODO: maybe we should wait for a signal from the outside before starting new hands
+		g.TryStartNewHand()
+	}
 
 	return nil
 }

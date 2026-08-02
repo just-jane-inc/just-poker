@@ -82,11 +82,16 @@ func OnJoinGameRequest(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param game_id path string true "ID of the Game to get the state of"
 // @Success      200 {object} just.ResponseMessage[GameDTO]
+// @Security BearerAuth
 // @Router       /game/{game_id}/state [get]
 func OnGetCurrentGameState(w http.ResponseWriter, r *http.Request) {
-	//	userID, _, _ := just.GetAuthorizedUser(r)
+	userID, _, _ := just.GetAuthorizedUser(r)
+	if userID != "" {
+		just.Logger.Debugf("getting game state for user with ID %s", userID)
+	} else {
+		just.Logger.Debug("getting game state")
+	}
 
-	just.Logger.Debug("getting game state")
 	gameIDString := r.PathValue("game_id")
 	g, ok := CurrentGames[gameIDString]
 	if !ok {
@@ -95,14 +100,12 @@ func OnGetCurrentGameState(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dto := g.AsDTO()
-	/*
-			for _, p := range dto.Table.Players {
-			if p.UserID != userID {
-				p.Hole[0] = CardDTO{Rank: 'x', Suit: 'x'}
-				p.Hole[1] = CardDTO{Rank: 'x', Suit: 'x'}
-			}
+	for _, p := range dto.Table.Players {
+		if len(p.Hole) == 2 && p.UserID != userID {
+			p.Hole[0] = CardDTO{Rank: 'x', Suit: 'x'}
+			p.Hole[1] = CardDTO{Rank: 'x', Suit: 'x'}
 		}
-	*/
+	}
 
 	just.OK("game_state", dto).WriteJSONResponse(w)
 }
@@ -251,7 +254,11 @@ func OnStartGame(w http.ResponseWriter, r *http.Request) {
 // @Router       /game/{game_id}/action [post]
 func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 	// TODO: assert that the player producing the action dto is the one in the auth token
-	userID, _, err := just.GetAuthorizedUser(r)
+
+	var err error
+	var userID string
+
+	userID, _, err = just.GetAuthorizedUser(r)
 	if err != nil {
 		just.MissingToken().WriteJSONResponse(w)
 		return
@@ -266,6 +273,10 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 
 	playerAction.PlayerID = userID
 
+	defer func() {
+		just.RecordingHub.OnPlayerAction(playerAction, err)
+	}()
+
 	gameID := r.PathValue("game_id")
 	g, ok := CurrentGames[gameID]
 	if !ok {
@@ -278,6 +289,11 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 		log.Println(err.Error())
 		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
 		return
+	}
+
+	err = just.RecordingHub.OnGameUpdate(g.AsDTO())
+	if err != nil {
+		just.Logger.Errorf("error updating game state in elastic: %v", err)
 	}
 
 	just.OK("action_accepted", struct{}{}).WriteJSONResponse(w)

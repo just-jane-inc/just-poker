@@ -13,16 +13,14 @@
 
 
 from __future__ import annotations
-
 import json
 import pprint
-from typing import Any, Dict, List, Optional, Set, Union
-
-from pydantic import (BaseModel, ConfigDict, Field, StrictStr, ValidationError,
-                      field_validator)
-from typing_extensions import Literal, Self
-
+from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, field_validator
+from typing import Any, Dict, List, Optional
 from openapi_client.models.game_chip_exchange_dto import GameChipExchangeDTO
+from pydantic import StrictStr, Field
+from typing import Union, List, Set, Optional, Dict
+from typing_extensions import Literal, Self
 
 GAMEGAMEIDCHIPEXCHANGEPOSTREQUEST_ONE_OF_SCHEMAS = ["GameChipExchangeDTO", "object"]
 

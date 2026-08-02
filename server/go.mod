@@ -5,6 +5,7 @@ go 1.25.0
 require (
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/danielgtaylor/huma/v2 v2.39.0
+	github.com/elastic/go-elasticsearch/v8 v8.19.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/joho/godotenv v1.5.1
@@ -13,7 +14,6 @@ require (
 
 require (
 	github.com/elastic/elastic-transport-go/v8 v8.7.0 // indirect
-	github.com/elastic/go-elasticsearch/v8 v8.19.0 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.2 // indirect
 	github.com/go-chi/chi/v5 v5.3.1 // indirect

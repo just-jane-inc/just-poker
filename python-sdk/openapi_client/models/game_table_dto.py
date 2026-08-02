@@ -13,21 +13,19 @@
 
 
 from __future__ import annotations
-
-import json
 import pprint
 import re  # noqa: F401
-from typing import Any, ClassVar, Dict, List, Optional, Set
+import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt
-from pydantic_core import to_jsonable_python
-from typing_extensions import Self
-
+from typing import Any, ClassVar, Dict, List, Optional
 from openapi_client.models.game_card_dto import GameCardDTO
 from openapi_client.models.game_hand_dto import GameHandDTO
 from openapi_client.models.game_player_dto import GamePlayerDTO
 from openapi_client.models.game_round_dto import GameRoundDTO
-
+from typing import Optional, Set
+from typing_extensions import Self
+from pydantic_core import to_jsonable_python
 
 class GameTableDTO(BaseModel):
     """

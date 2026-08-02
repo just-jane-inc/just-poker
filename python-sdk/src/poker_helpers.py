@@ -76,6 +76,7 @@ class CardSuit(Enum):
     HEART = ord("h")
     DIAMOND = ord("d")
     CLUB = ord("c")
+    UNKNOWN = ord("x")
 
 
 class CardRank(Enum):
@@ -92,16 +93,33 @@ class CardRank(Enum):
     JACK = ord("J")
     QUEEN = ord("Q")
     KING = ord("K")
+    UNKNOWN = ord("x")
 
 
 def get_unicode_mapping():
     mapping = dict()
     offset = 0x1F0A1 - 16
     for suit in CardSuit:
+        if suit == CardSuit.UNKNOWN:
+            continue
+
         offset += 16
         mapping[suit] = dict()
         for i, rank in enumerate(CardRank):
+            if rank == CardRank.UNKNOWN:
+                continue
+
+            # operation wtf is the knight of spades
+            if rank == CardRank.QUEEN:
+                offset += 1
+
             mapping[suit][rank] = chr(offset + i)
+
+        # like for real, the KNIGHT of spades?
+        offset -= 1
+
+    mapping[CardSuit.UNKNOWN] = dict()
+    mapping[CardSuit.UNKNOWN][CardRank.UNKNOWN] = chr(0x1F0A0)
     return mapping
 
 

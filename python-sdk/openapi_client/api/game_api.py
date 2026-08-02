@@ -11,26 +11,23 @@
 
 
 import warnings
+from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
 from typing import Any, Dict, List, Optional, Tuple, Union
-
-from pydantic import Field, StrictFloat, StrictInt, StrictStr, validate_call
 from typing_extensions import Annotated
+
+from pydantic import Field, StrictStr
+from typing import Any, Dict, Optional
+from typing_extensions import Annotated
+from openapi_client.models.game_game_id_action_post_request import GameGameIdActionPostRequest
+from openapi_client.models.game_game_id_chip_exchange_post_request import GameGameIdChipExchangePostRequest
+from openapi_client.models.game_post_request import GamePostRequest
+from openapi_client.models.hand_evaluator_evaluate_post_request import HandEvaluatorEvaluatePostRequest
+from openapi_client.models.just_response_message_any import JustResponseMessageAny
+from openapi_client.models.just_response_message_game_game_dto import JustResponseMessageGameGameDTO
+from openapi_client.models.just_response_message_string import JustResponseMessageString
 
 from openapi_client.api_client import ApiClient, RequestSerialized
 from openapi_client.api_response import ApiResponse
-from openapi_client.models.game_game_id_action_post_request import \
-    GameGameIdActionPostRequest
-from openapi_client.models.game_game_id_chip_exchange_post_request import \
-    GameGameIdChipExchangePostRequest
-from openapi_client.models.game_post_request import GamePostRequest
-from openapi_client.models.hand_evaluator_evaluate_post_request import \
-    HandEvaluatorEvaluatePostRequest
-from openapi_client.models.just_response_message_any import \
-    JustResponseMessageAny
-from openapi_client.models.just_response_message_game_game_dto import \
-    JustResponseMessageGameGameDTO
-from openapi_client.models.just_response_message_string import \
-    JustResponseMessageString
 from openapi_client.rest import RESTResponseType
 
 
@@ -2062,6 +2059,7 @@ class GameApi:
 
         # authentication setting
         _auth_settings: List[str] = [
+            'BearerAuth'
         ]
 
         return self.api_client.param_serialize(

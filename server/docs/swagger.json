@@ -753,6 +753,11 @@
                         "description": "OK"
                     }
                 },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "summary": "Game State",
                 "tags": [
                     "Game"

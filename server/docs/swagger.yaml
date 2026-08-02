@@ -537,6 +537,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/just.ResponseMessage-game_GameDTO'
           description: OK
+      security:
+      - BearerAuth: []
       summary: Game State
       tags:
       - Game

@@ -1,7 +1,8 @@
-**/tmp/*
 .env
+python-sdk/lib
+
+**/tmp/*
 **/__pycache__/*
 .venv/
-python-sdk/lib
 **/.ipynb_checkpoints/*
 
