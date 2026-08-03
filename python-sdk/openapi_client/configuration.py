@@ -214,7 +214,7 @@ class Configuration:
     ) -> None:
         """Constructor
         """
-        self._base_path = "http://localhost" if host is None else host
+        self._base_path = "https://game.bahms.org/api/poker" if host is None else host
         """Default Base url
         """
         self.server_index = 0 if server_index is None and host is None else server_index
@@ -542,8 +542,8 @@ class Configuration:
         """
         return [
             {
-                'url': "",
-                'description': "No description provided",
+                'url': "https://game.bahms.org/api/poker",
+                'description': "production api idk whatever you want to have the description here......yeaaaaaaah, exactly umm and now the game",
             }
         ]
 

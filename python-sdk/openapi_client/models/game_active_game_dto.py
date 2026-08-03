@@ -23,15 +23,13 @@ from typing import Optional, Set
 from typing_extensions import Self
 from pydantic_core import to_jsonable_python
 
-class UserUserDTO(BaseModel):
+class GameActiveGameDTO(BaseModel):
     """
-    UserUserDTO
+    GameActiveGameDTO
     """ # noqa: E501
-    display_name: Optional[StrictStr] = None
-    twitch_id: Optional[StrictStr] = None
-    user_id: Optional[StrictStr] = None
-    user_type: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = ["display_name", "twitch_id", "user_id", "user_type"]
+    id: Optional[StrictStr] = None
+    player_ids: Optional[List[StrictStr]] = None
+    __properties: ClassVar[List[str]] = ["id", "player_ids"]
 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -51,7 +49,7 @@ class UserUserDTO(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of UserUserDTO from a JSON string"""
+        """Create an instance of GameActiveGameDTO from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -76,7 +74,7 @@ class UserUserDTO(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of UserUserDTO from a dict"""
+        """Create an instance of GameActiveGameDTO from a dict"""
         if obj is None:
             return None
 
@@ -84,10 +82,8 @@ class UserUserDTO(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "display_name": obj.get("display_name"),
-            "twitch_id": obj.get("twitch_id"),
-            "user_id": obj.get("user_id"),
-            "user_type": obj.get("user_type")
+            "id": obj.get("id"),
+            "player_ids": obj.get("player_ids")
         })
         return _obj
 

@@ -216,11 +216,7 @@ func (g *game) TryStartNewHand() error {
 	t.NextRound()
 	t.currentRound.currentAggressor = t.NextInactivePlayer(t.bigBlindPosition).position
 
-	deck := make([]CardDTO, len(g.table.deck.cards))
-	for i, card := range g.table.deck.cards {
-		deck[i] = card.AsDTO()
-	}
-
+	t.currentHand.Count += 1
 	return nil
 }
 
@@ -611,6 +607,7 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 
 	g.sendToListeners(msg)
 	g.table.currentTurn.StartedAt = time.Now()
+	g.table.currentTurn.Count += 1
 
 	if g.table.currentRound.currentRoundType == round_type_completed {
 		// TODO: maybe we should wait for a signal from the outside before starting new hands

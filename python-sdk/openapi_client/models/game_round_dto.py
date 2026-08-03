@@ -29,10 +29,10 @@ class GameRoundDTO(BaseModel):
     the current round
     """ # noqa: E501
     bet: Optional[StrictInt] = Field(default=None, description="the amount of chips required to call (how does this work with split pots?)")
-    current_agressor: Optional[StrictInt] = Field(default=None, description="the player who currently ends the round? the last raise?")
+    current_aggressor: Optional[StrictInt] = Field(default=None, description="the player who currently ends the round? the last raise?")
     current_player_position: Optional[StrictInt] = Field(default=None, description="the index into the play array for the player whose turn it currently is")
     current_round_type: Optional[GameRoundType] = None
-    __properties: ClassVar[List[str]] = ["bet", "current_agressor", "current_player_position", "current_round_type"]
+    __properties: ClassVar[List[str]] = ["bet", "current_aggressor", "current_player_position", "current_round_type"]
 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -86,7 +86,7 @@ class GameRoundDTO(BaseModel):
 
         _obj = cls.model_validate({
             "bet": obj.get("bet"),
-            "current_agressor": obj.get("current_agressor"),
+            "current_aggressor": obj.get("current_aggressor"),
             "current_player_position": obj.get("current_player_position"),
             "current_round_type": obj.get("current_round_type")
         })

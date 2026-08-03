@@ -51,13 +51,6 @@ async def create_game(
         logger.error(f"encountered error creating game: {e}")
 
 
-async def create_user(base_url: str, twitch_id: str, display_name: str) -> UserApiKey | None:
-    api = UserApi(create_connection(base_url))
-    dto = UserUserDTO(display_name=display_name, twitch_id=twitch_id, user_type="test-user")
-    resp = await api.user_post(UserPostRequest(dto))
-    return resp.data
-
-
 async def delete_user(base_url: str, token: str) -> str | None:
     api = UserApi(create_connection(base_url, token))
     try:

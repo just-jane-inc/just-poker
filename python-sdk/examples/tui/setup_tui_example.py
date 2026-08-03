@@ -6,6 +6,7 @@ import asyncio
 
 
 base_url = "http://localhost:7653"
+# base_url = "https://game.bahms.org/api/poker"
 
 
 @dataclass

@@ -12,7 +12,8 @@ from dotenv import load_dotenv
 
 load_dotenv("examples/.env")
 
-base_url = "http://localhost:7653"
+# base_url = "http://localhost:7653"
+base_url = "https://game.bahms.org/api/poker"
 
 
 @pytest.mark.asyncio

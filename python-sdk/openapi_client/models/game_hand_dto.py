@@ -28,12 +28,11 @@ class GameHandDTO(BaseModel):
     the current hand
     """ # noqa: E501
     big_blind: Optional[StrictInt] = Field(default=None, description="the amount of chips for the big blind in this hand")
-    button: Optional[StrictInt] = Field(default=None, description="the index of the position of the player who has the button")
     count: Optional[StrictInt] = Field(default=None, description="the (non decreasing) hand counter")
     id: Optional[StrictStr] = Field(default=None, description="the id of a hand")
     small_blind: Optional[StrictInt] = Field(default=None, description="the amount of chips for the small blind in this hand")
     started_at: Optional[StrictStr] = Field(default=None, description="the time that this hand started")
-    __properties: ClassVar[List[str]] = ["big_blind", "button", "count", "id", "small_blind", "started_at"]
+    __properties: ClassVar[List[str]] = ["big_blind", "count", "id", "small_blind", "started_at"]
 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -87,7 +86,6 @@ class GameHandDTO(BaseModel):
 
         _obj = cls.model_validate({
             "big_blind": obj.get("big_blind"),
-            "button": obj.get("button"),
             "count": obj.get("count"),
             "id": obj.get("id"),
             "small_blind": obj.get("small_blind"),
