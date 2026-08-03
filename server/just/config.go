@@ -17,9 +17,9 @@ type Config struct {
 	DBConnString string `env:"PG_URL,required"`
 	PokerEvalURL string `env:"HAND_EVAL_ROUTE,required"`
 
-	ElasticHost      string `env:"ELASTIC_HOST,required"`
-	ElasticAPIKey    string `env:"ELASTIC_API_KEY,required"`
-	ElasticIndexRoot string `env:"ELASTIC_INDEX_ROOT,required"`
+	ElasticHost      string `env:"ELASTIC_HOST"`
+	ElasticAPIKey    string `env:"ELASTIC_API_KEY"`
+	ElasticIndexRoot string `env:"ELASTIC_INDEX_ROOT"`
 
 	Pepper []byte
 	pepper string `env:"JUST_POKER_PEPPER,required"`
@@ -41,7 +41,6 @@ func init() {
 	}
 
 	Env.Pepper = []byte(Env.pepper)
-
 	DBConnPool, err = pgxpool.New(context.Background(), Env.DBConnString)
 	if err != nil {
 		panic(err)

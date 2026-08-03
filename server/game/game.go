@@ -197,6 +197,11 @@ func (g *game) TryStartNewHand() error {
 
 	for _, p := range t.players {
 		p.pocket = make([]*card, 0)
+
+		if p.chips.Sum() == 0 {
+			p.state = player_state_out
+		}
+
 		// if a player is out we do not want to include them in the hand,
 		// this state should be locked in place by everything which updates
 		// player state.
@@ -441,7 +446,7 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 		case player_intent_ante:
 			if g.table.currentRound.currentRoundType != round_type_setup {
 				return &just.PokerError{
-					Message: "during this phase only ante actions can be accepted",
+					Message: "ante is only accepted during the setup round",
 					Code:    just.InvalidActionType,
 				}
 			}

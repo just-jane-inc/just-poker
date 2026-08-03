@@ -61,25 +61,19 @@ func (t table) AsDTO() TableDTO {
 
 // NextPosition godoc
 //
-// Gets the next position from a provided position that has a valid
-// player. When a game starts the players at the table are immutable,
+// Gets the position for a valid (inactive) player after the provided offset.
+// When a game starts the players at the table are immutable,
 // when computing the "next" player we need to ensure that:
 //
 // 1. we loop around the table (circular array)
 // 2. we skip players with the "out" state, they are no longer able to play
-func (t table) NextPosition(position int) int {
-	if len(t.players) == 0 {
-		return 0
+func (t *table) NextPosition(offset int) int {
+	p := t.NextInactivePlayer(offset)
+	if p == nil {
+		return -1
 	}
 
-	for offset := range len(t.players) {
-		nextPosition := (position + offset + 1) % len(t.players)
-		if t.players[nextPosition].state != player_state_out {
-			return nextPosition
-		}
-	}
-
-	return -1
+	return p.position
 }
 
 // returns the player after offset in turn order
