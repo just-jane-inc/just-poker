@@ -8,8 +8,6 @@ import (
 	"github.com/just-jane-inc/just-poker/server/game"
 	"github.com/just-jane-inc/just-poker/server/just"
 	"github.com/just-jane-inc/just-poker/server/user"
-
-	_ "github.com/danielgtaylor/huma/v2/formats/cbor"
 )
 
 //go:embed docs/swagger.json
@@ -72,6 +70,8 @@ func documentationHandler(
 
 // @title           BAHMS Poker Tournament
 // @version         1.0
+// @servers.url   https://game.bahms.org/api/poker
+// @servers.description	production api idk whatever you want to have the description here......yeaaaaaaah, exactly umm and now the game
 // @description.markdown
 // @termsOfService  http://swagger.io
 // @securityDefinitions.bearerauth BearerAuth
@@ -82,7 +82,6 @@ func documentationHandler(
 // @contact.url    http://swagger.io
 // @license.name  BAHMS
 // @license.url   http://license.bahms.org
-// @host      localhost:8080
 // @BasePath  /api
 func main() {
 	just.Logger.Debug("starting server...")

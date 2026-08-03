@@ -232,34 +232,6 @@ components:
           example: user.created
           type: string
       type: object
-    just.ResponseMessage-user_ApiKey:
-      properties:
-        data:
-          $ref: '#/components/schemas/user.ApiKey'
-        type:
-          example: user.created
-          type: string
-      type: object
-    user.ApiKey:
-      properties:
-        key_id:
-          type: string
-        token:
-          type: string
-        user_id:
-          type: string
-      type: object
-    user.UserDTO:
-      properties:
-        display_name:
-          type: string
-        twitch_id:
-          type: string
-        user_id:
-          type: string
-        user_type:
-          type: string
-      type: object
   securitySchemes:
     BearerAuth:
       description: Type "Bearer" followed by a space and your token (e.g. "Bearer
@@ -567,60 +539,6 @@ paths:
       summary: Evaluate a Hand
       tags:
       - Game
-  /user:
-    post:
-      description: How does this differ from summary...
-      requestBody:
-        content:
-          application/json:
-            schema:
-              oneOf:
-              - type: object
-              - $ref: '#/components/schemas/user.UserDTO'
-                description: user
-                summary: request
-        description: user
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/just.ResponseMessage-user_ApiKey'
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/just.ResponseMessage-just_ErrorDTO'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/just.ResponseMessage-just_ErrorDTO'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/just.ResponseMessage-just_ErrorDTO'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/just.ResponseMessage-just_ErrorDTO'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/just.ResponseMessage-just_ErrorDTO'
-          description: Internal Server Error
-      summary: Creates a user
-      tags:
-      - User
   /user/me:
     delete:
       description: deletes the user associated to the token used to authenticate this
@@ -672,3 +590,7 @@ paths:
       summary: delete requesting user
       tags:
       - User
+servers:
+- description: production api idk whatever you want to have the description here......yeaaaaaaah,
+    exactly umm and now the game
+  url: https://game.bahms.org/api/poker
