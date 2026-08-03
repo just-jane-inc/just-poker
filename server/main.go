@@ -90,11 +90,6 @@ func main() {
 	apiMux := http.NewServeMux()
 
 	apiMux.HandleFunc(
-		"GET /user/{userID}",
-		user.OnGetUserRequest,
-	)
-
-	apiMux.HandleFunc(
 		"POST /game",
 		game.OnCreateGame,
 	)

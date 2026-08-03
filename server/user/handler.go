@@ -118,36 +118,6 @@ func OnDeleteMe(w http.ResponseWriter, r *http.Request) {
 	just.OK("user_deleted", struct{}{}).WriteJSONResponse(w)
 }
 
-func OnGetUserRequest(w http.ResponseWriter, r *http.Request) {
-	just.Logger.Debug("user creation request received")
-	userID := r.PathValue("userID")
-	if userID == "" {
-		just.BadRequest("userID is empty", 0).WriteJSONResponse(w)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	conn, err := just.DBConnPool.Acquire(ctx)
-	if err != nil {
-		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
-		return
-	}
-	defer conn.Release()
-
-	var dto UserDTO
-	dto.UserID = userID
-	stmt := `select display_name, user_type, twitch_id from just_poker_user where user_id = $1`
-	err = conn.QueryRow(context.Background(), stmt, userID).Scan(&dto.DisplayName, &dto.UserType, &dto.TwitchID)
-	if err != nil {
-		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
-		return
-	}
-
-	just.Logger.Debugf("user [%s] fetched succesfully", dto.DisplayName)
-	just.OK("user", dto).WriteJSONResponse(w)
-}
-
 func OnGetUsers(w http.ResponseWriter, r *http.Request) {
 	twitchID := r.PathValue("twitch_id")
 
