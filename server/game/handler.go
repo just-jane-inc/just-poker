@@ -78,7 +78,6 @@ func OnJoinGameRequest(w http.ResponseWriter, r *http.Request) {
 // @Summary      Game State
 // @Description  gets the current state of the game from the perspective of the requesting user
 // @Tags         Game
-// @Accept       json
 // @Produce      json
 // @Param game_id path string true "ID of the Game to get the state of"
 // @Success      200 {object} just.ResponseMessage[GameDTO]
@@ -297,4 +296,39 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 	}
 
 	just.OK("action_accepted", struct{}{}).WriteJSONResponse(w)
+}
+
+type ActiveGameDTO struct {
+	ID      string   `json:"id"`
+	Players []string `json:"player_ids"`
+}
+
+// OnGetCurrentActiveGames godoc
+// @Summary      Gets Active Games
+// @Description  gets all games that are currently being played
+// @Tags         Game
+// @Produce      json
+// @Success      200 {object} []ActiveGameDTO
+// @Router       /game [get]
+func OnGetCurrentActiveGames(w http.ResponseWriter, r *http.Request) {
+	games := make([]ActiveGameDTO, 0)
+	for id, g := range CurrentGames {
+		if g.table == nil {
+			continue
+		}
+
+		playerIDs := make([]string, len(g.table.players))
+		for i, p := range g.table.players {
+			playerIDs[i] = p.UserID
+		}
+
+		obj := ActiveGameDTO{
+			ID:      id,
+			Players: playerIDs,
+		}
+
+		games = append(games, obj)
+	}
+
+	just.WriteJSONResponse(w, 200, games)
 }

@@ -1,5 +1,15 @@
 components:
   schemas:
+    game.ActiveGameDTO:
+      properties:
+        id:
+          type: string
+        player_ids:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+      type: object
     game.CardDTO:
       description: a card
       properties:
@@ -283,6 +293,20 @@ info:
 openapi: 3.1.0
 paths:
   /game:
+    get:
+      description: gets all games that are currently being played
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/game.ActiveGameDTO'
+                type: array
+          description: OK
+      summary: Gets Active Games
+      tags:
+      - Game
     post:
       description: creates a new game from a configuration file
       requestBody:
@@ -416,11 +440,6 @@ paths:
         required: true
         schema:
           type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "200":
           content:
@@ -497,11 +516,6 @@ paths:
         required: true
         schema:
           type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "200":
           content:

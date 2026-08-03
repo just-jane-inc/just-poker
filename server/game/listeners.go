@@ -46,7 +46,6 @@ func (l *Listener) Send(msg just.ResponseMessage[any]) error {
 // @Summary      Get Next Event
 // @Description  gets next event from listener queue
 // @Tags         Game
-// @Accept       json
 // @Produce      json
 // @Param listener_id path string true "the id of the game"
 // @Param game_id path string true "the id of the listener"
