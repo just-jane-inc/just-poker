@@ -119,16 +119,19 @@ func main() {
 		game.OnExchangeChips,
 	)
 
-	// create a new user
-	apiMux.HandleFunc(
-		"POST /user",
-		user.OnCreateUser,
-	)
-
 	// deletes the user who provides the request token
 	apiMux.HandleFunc(
 		"DELETE /user/me",
 		user.OnDeleteMe,
+	)
+
+	// =====Admin Panel=====
+	// These have no auth, internal only.
+
+	// create a new user
+	apiMux.HandleFunc(
+		"POST /user",
+		user.OnCreateUser,
 	)
 
 	// get all bots for a twitch user
@@ -137,15 +140,19 @@ func main() {
 		user.OnGetUsers,
 	)
 
+	// renew a key for a user
 	apiMux.HandleFunc(
 		"DELETE /user/{user_id}/key",
 		user.OnRenewKey,
 	)
 
+	// delete a user
 	apiMux.HandleFunc(
 		"DELETE /user/{user_id}",
 		user.OnDeleteUser,
 	)
+
+	// =====Admin Panel End=====
 
 	apiMux.Handle(
 		"POST /hand-evaluator/evaluate",

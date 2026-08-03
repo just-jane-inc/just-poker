@@ -19,20 +19,8 @@ type ApiKey struct {
 	Token  string `json:"token"`
 }
 
-// OnCreateUser godoc
-// @Summary      Creates a user
-// @Description  How does this differ from summary...
-// @Tags         User
-// @Accept       json
-// @Produce      json
-// @Param        request    body     UserDTO  true  "user"
-// @Success      200  {object}  just.ResponseMessage[ApiKey]
-// @Failure      400  {object}  just.ResponseMessage[just.ErrorDTO]
-// @Failure      401  {object}  just.ResponseMessage[just.ErrorDTO]
-// @Failure      403  {object}  just.ResponseMessage[just.ErrorDTO]
-// @Failure      404  {object}  just.ResponseMessage[just.ErrorDTO]
-// @Failure      500  {object}  just.ResponseMessage[just.ErrorDTO]
-// @Router       /user [post]
+// OnCreateUser Create a user
+// Internal only, unauthenticated
 func OnCreateUser(w http.ResponseWriter, r *http.Request) {
 	just.Logger.Debugf("create user request received...")
 	var dto UserDTO
@@ -118,6 +106,9 @@ func OnDeleteMe(w http.ResponseWriter, r *http.Request) {
 	just.OK("user_deleted", struct{}{}).WriteJSONResponse(w)
 }
 
+// OnGetUsers Get all users
+// Internal only, unauthenticated
+
 func OnGetUsers(w http.ResponseWriter, r *http.Request) {
 	twitchID := r.PathValue("twitch_id")
 
@@ -160,6 +151,9 @@ func OnGetUsers(w http.ResponseWriter, r *http.Request) {
 	just.OK("get_users", users).WriteJSONResponse(w)
 }
 
+// OnRenewKey Renew user key
+// Internal only, unauthenticated
+
 func OnRenewKey(w http.ResponseWriter, r *http.Request) {
 	userID := r.PathValue("user_id")
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -201,11 +195,8 @@ func OnRenewKey(w http.ResponseWriter, r *http.Request) {
 	just.OK("new_key", ApiKey{KeyID: keyID, Token: token, UserID: userID}).WriteJSONResponse(w)
 }
 
-/*
-*
-* Internal Use Endpoints
-*
- */
+// OnDeleteUser Delete user
+// Internal only, unauthenticated
 
 func OnDeleteUser(w http.ResponseWriter, r *http.Request) {
 	userIDStr := r.PathValue("user_id")
