@@ -19,47 +19,6 @@ type ApiKey struct {
 	Token  string `json:"token"`
 }
 
-// OnCreateUser Create a user
-// Internal only, unauthenticated
-func OnCreateUser(w http.ResponseWriter, r *http.Request) {
-	just.Logger.Debugf("create user request received...")
-	var dto UserDTO
-	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
-		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	conn, err := just.DBConnPool.Acquire(ctx)
-	if err != nil {
-		just.Logger.Errorf("error acquiring db conn: %v", err)
-		just.InternalError("internal server error").WriteJSONResponse(w)
-		return
-	}
-	defer conn.Release()
-
-	var userID string
-	stmt := `insert into poker_users (username, twitch_user) values ($1, $2) returning id`
-	if err = conn.QueryRow(ctx, stmt, dto.DisplayName, dto.TwitchID).Scan(&userID); err != nil {
-		just.Logger.Errorf("error getting user id after insert: %v", err)
-		just.InternalError("internal server error").WriteJSONResponse(w)
-		return
-	}
-
-	just.Logger.Debugf("user [%s] created", userID)
-
-	keyID, token, err := just.CreateAPIKey(conn, ctx, userID, dto.DisplayName)
-	if err != nil {
-		just.Logger.Errorf("error acquiring api key: %v", err)
-		just.InternalError("internal server error").WriteJSONResponse(w)
-		return
-	}
-
-	just.OK("new_user", ApiKey{KeyID: keyID, Token: token, UserID: userID}).WriteJSONResponse(w)
-}
-
 // OnDeleteMe godoc
 // @Summary delete requesting user
 // @Description  deletes the user associated to the token used to authenticate this request
@@ -104,6 +63,47 @@ func OnDeleteMe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	just.OK("user_deleted", struct{}{}).WriteJSONResponse(w)
+}
+
+// OnCreateUser Create a user
+// Internal only, unauthenticated
+func OnCreateUser(w http.ResponseWriter, r *http.Request) {
+	just.Logger.Debugf("create user request received...")
+	var dto UserDTO
+	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
+		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	conn, err := just.DBConnPool.Acquire(ctx)
+	if err != nil {
+		just.Logger.Errorf("error acquiring db conn: %v", err)
+		just.InternalError("internal server error").WriteJSONResponse(w)
+		return
+	}
+	defer conn.Release()
+
+	var userID string
+	stmt := `insert into poker_users (username, twitch_user) values ($1, $2) returning id`
+	if err = conn.QueryRow(ctx, stmt, dto.DisplayName, dto.TwitchID).Scan(&userID); err != nil {
+		just.Logger.Errorf("error getting user id after insert: %v", err)
+		just.InternalError("internal server error").WriteJSONResponse(w)
+		return
+	}
+
+	just.Logger.Debugf("user [%s] created", userID)
+
+	keyID, token, err := just.CreateAPIKey(conn, ctx, userID, dto.DisplayName)
+	if err != nil {
+		just.Logger.Errorf("error acquiring api key: %v", err)
+		just.InternalError("internal server error").WriteJSONResponse(w)
+		return
+	}
+
+	just.OK("new_user", ApiKey{KeyID: keyID, Token: token, UserID: userID}).WriteJSONResponse(w)
 }
 
 // OnGetUsers Get all users
