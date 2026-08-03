@@ -41,7 +41,7 @@ func GetUserType(userID string) (string, error) {
 		return "", err
 	}
 
-	return userID, nil
+	return userType, nil
 }
 
 func GetAuthorizedUser(r *http.Request) (string, string, error) {

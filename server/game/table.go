@@ -221,6 +221,14 @@ func (t *table) Showdown() map[int]int {
 			continue
 		}
 
+		if p.state == player_state_out {
+			continue
+		}
+
+		if p.state == player_state_unset {
+			continue
+		}
+
 		remainingPlayers = append(remainingPlayers, p)
 	}
 
