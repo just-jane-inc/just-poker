@@ -6,3 +6,4 @@ python-sdk/lib
 .venv/
 **/.ipynb_checkpoints/*
 
+.idea
