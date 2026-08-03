@@ -525,9 +525,12 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 
 	// after we get to this state we know that the player action
 	// has been accepted and we need to compute what to do next
-	nextPlayer := g.table.NextInactivePlayer(g.table.currentRound.currentPlayerPosition)
-	if nextPlayer == nil {
-		nextPlayer = g.table.players[g.table.currentRound.currentAggressor]
+	nextPlayer := g.table.NextPlayer(g.table.currentRound.currentPlayerPosition)
+	for nextPlayer.state != player_state_inactive && nextPlayer.position != g.table.currentRound.currentAggressor {
+		nextPlayer = g.table.NextInactivePlayer(nextPlayer.position)
+		if nextPlayer == nil {
+			nextPlayer = g.table.players[g.table.currentRound.currentAggressor]
+		}
 	}
 
 	just.Logger.Debugf("next inactive player received: [%d] -> [%d]", p.position, nextPlayer.position)

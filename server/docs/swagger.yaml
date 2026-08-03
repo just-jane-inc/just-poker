@@ -141,7 +141,7 @@ components:
           description: the amount of chips required to call (how does this work with
             split pots?)
           type: integer
-        current_agressor:
+        current_aggressor:
           description: the player who currently ends the round? the last raise?
           type: integer
         current_player_position:

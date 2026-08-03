@@ -27,7 +27,7 @@ type RoundDTO struct {
 	CurrentPlayerPosition int `json:"current_player_position"`
 
 	// the player who currently ends the round? the last raise?
-	CurrentAggressor int `json:"current_agressor"`
+	CurrentAggressor int `json:"current_aggressor"`
 
 	// the type of round
 	CurrentRoundType RoundType `json:"current_round_type"`

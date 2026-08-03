@@ -62,6 +62,18 @@ func (t table) AsDTO() TableDTO {
 	return dto
 }
 
+func (t *table) NextPlayer(offset int) *player {
+	for i := range len(t.players) {
+		idx := (offset + i + 1) % len(t.players)
+		p := t.players[idx]
+		if p.state != player_state_out {
+			return p
+		}
+	}
+
+	return nil
+}
+
 // returns the player after offset in turn order
 // whos turn it would be if offset just ended
 func (t *table) NextInactivePlayer(offset int) *player {
