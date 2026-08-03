@@ -23,6 +23,7 @@ parser.add_argument("--game-id", type=str, required=True, help="game id")
 parser.add_argument("--player-id", type=str, required=False, help="")
 
 base_url = "http://localhost:7653"
+# base_url = "https://game.bahms.org/api/poker"
 
 
 def main():

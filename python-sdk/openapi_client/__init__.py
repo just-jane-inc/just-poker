@@ -29,6 +29,7 @@ __all__ = [
     "ApiKeyError",
     "ApiAttributeError",
     "ApiException",
+    "GameActiveGameDTO",
     "GameCardDTO",
     "GameChipExchangeDTO",
     "GameGameDTO",
@@ -48,10 +49,6 @@ __all__ = [
     "JustResponseMessageGameGameDTO",
     "JustResponseMessageJustErrorDTO",
     "JustResponseMessageString",
-    "JustResponseMessageUserApiKey",
-    "UserApiKey",
-    "UserPostRequest",
-    "UserUserDTO",
 ]
 
 # import apis into sdk package
@@ -70,6 +67,7 @@ from openapi_client.exceptions import ApiAttributeError as ApiAttributeError
 from openapi_client.exceptions import ApiException as ApiException
 
 # import models into sdk package
+from openapi_client.models.game_active_game_dto import GameActiveGameDTO as GameActiveGameDTO
 from openapi_client.models.game_card_dto import GameCardDTO as GameCardDTO
 from openapi_client.models.game_chip_exchange_dto import GameChipExchangeDTO as GameChipExchangeDTO
 from openapi_client.models.game_game_dto import GameGameDTO as GameGameDTO
@@ -89,8 +87,4 @@ from openapi_client.models.just_response_message_any import JustResponseMessageA
 from openapi_client.models.just_response_message_game_game_dto import JustResponseMessageGameGameDTO as JustResponseMessageGameGameDTO
 from openapi_client.models.just_response_message_just_error_dto import JustResponseMessageJustErrorDTO as JustResponseMessageJustErrorDTO
 from openapi_client.models.just_response_message_string import JustResponseMessageString as JustResponseMessageString
-from openapi_client.models.just_response_message_user_api_key import JustResponseMessageUserApiKey as JustResponseMessageUserApiKey
-from openapi_client.models.user_api_key import UserApiKey as UserApiKey
-from openapi_client.models.user_post_request import UserPostRequest as UserPostRequest
-from openapi_client.models.user_user_dto import UserUserDTO as UserUserDTO
 

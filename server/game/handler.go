@@ -98,11 +98,20 @@ func OnGetCurrentGameState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userType, err := just.GetUserType(userID)
+	if err != nil {
+		just.Logger.Errorf("encountered error fetching user type for user with id: %s", userID)
+		userType = "unset"
+	}
+
 	dto := g.AsDTO()
-	for _, p := range dto.Table.Players {
-		if len(p.Hole) == 2 && p.UserID != userID {
-			p.Hole[0] = CardDTO{Rank: 'x', Suit: 'x'}
-			p.Hole[1] = CardDTO{Rank: 'x', Suit: 'x'}
+
+	if userType != "admin" && userType != "game_master" {
+		for _, p := range dto.Table.Players {
+			if len(p.Hole) == 2 && p.UserID != userID {
+				p.Hole[0] = CardDTO{Rank: 'x', Suit: 'x'}
+				p.Hole[1] = CardDTO{Rank: 'x', Suit: 'x'}
+			}
 		}
 	}
 

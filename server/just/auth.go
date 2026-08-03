@@ -33,7 +33,7 @@ func GetUserType(userID string) (string, error) {
 	}
 	defer conn.Release()
 
-	stmt := `select user_type from poker_users where user_id=$1`
+	stmt := `select user_type from poker_users where id=$1`
 	var userType string
 	err = conn.QueryRow(ctx, stmt, userID).Scan(&userType)
 	if err != nil {

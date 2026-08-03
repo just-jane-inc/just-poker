@@ -7,7 +7,8 @@ from src.bot import *
 from src.poker_exceptions import *
 from src.poker_helpers import *
 
-base_url = "http://localhost:7653"
+# base_url = "http://localhost:7653"
+base_url = "https://game.bahms.org/api/poker"
 
 
 @dataclass

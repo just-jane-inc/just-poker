@@ -119,6 +119,11 @@ func (t *table) NextRound() {
 		offset := t.NextInactivePlayer(t.buttonPosition).position
 		for idx := range len(t.players) {
 			p := t.players[(idx+offset)%len(t.players)]
+
+			if p.state == player_state_out {
+				continue
+			}
+
 			p.pocket = make([]*card, 2)
 			p.pocket[0] = t.deck.Draw()
 		}

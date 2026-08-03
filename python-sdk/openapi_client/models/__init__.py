@@ -13,6 +13,7 @@
 """  # noqa: E501
 
 # import models into model package
+from openapi_client.models.game_active_game_dto import GameActiveGameDTO
 from openapi_client.models.game_card_dto import GameCardDTO
 from openapi_client.models.game_chip_exchange_dto import GameChipExchangeDTO
 from openapi_client.models.game_game_dto import GameGameDTO
@@ -32,8 +33,4 @@ from openapi_client.models.just_response_message_any import JustResponseMessageA
 from openapi_client.models.just_response_message_game_game_dto import JustResponseMessageGameGameDTO
 from openapi_client.models.just_response_message_just_error_dto import JustResponseMessageJustErrorDTO
 from openapi_client.models.just_response_message_string import JustResponseMessageString
-from openapi_client.models.just_response_message_user_api_key import JustResponseMessageUserApiKey
-from openapi_client.models.user_api_key import UserApiKey
-from openapi_client.models.user_post_request import UserPostRequest
-from openapi_client.models.user_user_dto import UserUserDTO
 
