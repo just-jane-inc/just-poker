@@ -130,6 +130,11 @@ func (t *table) NextRound() {
 
 		for idx := range len(t.players) {
 			p := t.players[(idx+offset)%len(t.players)]
+
+			if p.state == player_state_out {
+				continue
+			}
+
 			p.pocket[1] = t.deck.Draw()
 		}
 
