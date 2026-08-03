@@ -1,0 +1,19 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="GoUnusedCallResult" enabled="true" level="ERROR" enabled_by_default="true" editorAttributes="ERRORS_ATTRIBUTES">
+      <functions>
+        <function importPath="fmt" name="Sprint" />
+        <function importPath="sort" name="Reverse" />
+        <function importPath="errors" name="New" />
+        <function importPath="fmt" name="Sprintf" />
+        <function importPath="fmt" name="Errorf" />
+        <function importPath="github.com/just-jane-inc/just-poker/server/just" name="NotFound" />
+        <function importPath="github.com/just-jane-inc/just-poker/server/just" name="MissingToken" />
+        <function importPath="github.com/just-jane-inc/just-poker/server/just" name="InternalError" />
+        <function importPath="github.com/just-jane-inc/just-poker/server/just" name="BadRequest" />
+        <function importPath="github.com/just-jane-inc/just-poker/server/just" name="OK" />
+      </functions>
+    </inspection_tool>
+  </profile>
+</component>
