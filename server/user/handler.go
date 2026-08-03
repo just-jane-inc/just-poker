@@ -87,8 +87,8 @@ func OnCreateUser(w http.ResponseWriter, r *http.Request) {
 	defer conn.Release()
 
 	var userID string
-	stmt := `insert into poker_users (username, twitch_user) values ($1, $2) returning id`
-	if err = conn.QueryRow(ctx, stmt, dto.DisplayName, dto.TwitchID).Scan(&userID); err != nil {
+	stmt := `insert into poker_users (username, twitch_user, user_type) values ($1, $2) returning id`
+	if err = conn.QueryRow(ctx, stmt, dto.DisplayName, dto.TwitchID, dto.UserType).Scan(&userID); err != nil {
 		just.Logger.Errorf("error getting user id after insert: %v", err)
 		just.InternalError("internal server error").WriteJSONResponse(w)
 		return

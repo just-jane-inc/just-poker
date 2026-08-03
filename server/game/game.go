@@ -179,21 +179,10 @@ func (g *game) TryStartNewHand() error {
 	just.Logger.Debugf("attempting to start hand [%d]", g.table.currentHand.Count+1)
 
 	t := g.table
-
 	pot := t.pot.Sum()
 	if pot > 0 {
 		return fmt.Errorf("pot still has chips, cannot start new hand until the previous one is resolved")
 	}
-
-	// TODO: growing blinds based on configurations
-	t.currentHand.SmallBlind = g.config.SmallBlind
-	t.currentHand.BigBlind = g.config.BigBlind
-	t.currentHand.Button = (t.currentHand.Button + 1) % len(t.players)
-
-	t.deck.Reset()
-	t.street = make([]*card, 0)
-	t.pot = make(map[int]int)
-	t.currentRound.currentRoundType = round_type_unset
 
 	for _, p := range t.players {
 		p.pocket = make([]*card, 0)
@@ -212,25 +201,26 @@ func (g *game) TryStartNewHand() error {
 		p.state = player_state_inactive
 	}
 
+	// TODO: growing blinds based on configurations
+	t.currentHand.SmallBlind = g.config.SmallBlind
+	t.currentHand.BigBlind = g.config.BigBlind
+	t.buttonPosition = t.NextInactivePlayer(t.buttonPosition).position
+	t.smallBlindPosition = t.NextInactivePlayer(t.buttonPosition).position
+	t.bigBlindPosition = t.NextInactivePlayer(t.smallBlindPosition).position
+
+	t.deck.Reset()
+	t.street = make([]*card, 0)
+	t.pot = make(map[int]int)
+	t.currentRound.currentRoundType = round_type_unset
+
 	t.NextRound()
-	t.currentRound.currentAggressor = t.NextInactivePlayer(t.currentHand.Button + 2).position
+	t.currentRound.currentAggressor = t.NextInactivePlayer(t.bigBlindPosition).position
 
 	deck := make([]CardDTO, len(g.table.deck.cards))
 	for i, card := range g.table.deck.cards {
 		deck[i] = card.AsDTO()
 	}
 
-	msg := just.ResponseMessage[any]{
-		Type: "new.hand",
-		Data: NewHandState{
-			Deck:       deck,
-			Button:     g.table.currentHand.Button,
-			BigBlind:   g.table.NextPosition(g.table.currentHand.Button),
-			SmallBlind: g.table.NextPosition(g.table.currentHand.Button + 1),
-		},
-	}
-
-	g.sendToListeners(msg)
 	return nil
 }
 
@@ -397,7 +387,7 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 		}
 
 		betAmount := action.Bet.Sum()
-		if p.position == g.table.NextPosition(g.table.currentHand.Button) {
+		if p.position == g.table.smallBlindPosition {
 			if betAmount != g.table.currentHand.SmallBlind {
 				return &just.PokerError{
 					Message: fmt.Sprintf("small blind requires exactly %d chips", g.table.currentHand.SmallBlind),
@@ -411,7 +401,7 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 
 			g.table.currentRound.bet = g.table.currentHand.BigBlind
 
-		} else if p.position == g.table.NextPosition(g.table.currentHand.Button+1) {
+		} else if p.position == g.table.bigBlindPosition {
 			if betAmount != g.table.currentHand.BigBlind {
 				return &just.PokerError{
 					Message: fmt.Sprintf("big blind requires exactly %d chips", g.table.currentHand.BigBlind),
@@ -562,9 +552,9 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 
 			g.table.NextRound()
 			if g.table.currentRound.currentRoundType == round_type_pre_flop {
-				nextRoundFirstPlayer = g.table.NextInactivePlayer(g.table.currentHand.Button + 2)
+				nextRoundFirstPlayer = g.table.NextInactivePlayer(g.table.buttonPosition + 2)
 			} else {
-				nextRoundFirstPlayer = g.table.NextInactivePlayer(g.table.currentHand.Button)
+				nextRoundFirstPlayer = g.table.NextInactivePlayer(g.table.buttonPosition)
 			}
 
 			just.Logger.Debugf(

@@ -15,13 +15,16 @@ var (
 )
 
 type table struct {
-	currentHand  HandDTO
-	currentTurn  TurnDTO
-	currentRound round
-	players      []*player
-	pot          stack
-	street       []*card
-	deck         *deck
+	currentHand        HandDTO
+	currentTurn        TurnDTO
+	currentRound       round
+	players            []*player
+	pot                stack
+	street             []*card
+	deck               *deck
+	buttonPosition     int
+	bigBlindPosition   int
+	smallBlindPosition int
 }
 
 func (t table) GetPlayerWithID(playerID string) *player {
@@ -41,9 +44,9 @@ func (t table) AsDTO() TableDTO {
 		Street:             make([]CardDTO, len(t.street)),
 		CurrentRound:       t.currentRound.AsDto(),
 		CurrentHand:        t.currentHand,
-		ButtonPosition:     t.currentHand.Button,
-		SmallBlindPosition: t.NextPosition(t.currentHand.Button),
-		BigBlindPosition:   t.NextPosition(t.currentHand.Button + 1),
+		ButtonPosition:     t.buttonPosition,
+		SmallBlindPosition: t.smallBlindPosition,
+		BigBlindPosition:   t.bigBlindPosition,
 	}
 
 	for i, player := range t.players {
@@ -57,23 +60,6 @@ func (t table) AsDTO() TableDTO {
 	}
 
 	return dto
-}
-
-// NextPosition godoc
-//
-// Gets the position for a valid (inactive) player after the provided offset.
-// When a game starts the players at the table are immutable,
-// when computing the "next" player we need to ensure that:
-//
-// 1. we loop around the table (circular array)
-// 2. we skip players with the "out" state, they are no longer able to play
-func (t *table) NextPosition(offset int) int {
-	p := t.NextInactivePlayer(offset)
-	if p == nil {
-		return -1
-	}
-
-	return p.position
 }
 
 // returns the player after offset in turn order
@@ -108,7 +94,7 @@ func (t *table) NextRound() {
 		t.currentRound.currentRoundType = round_type_setup
 		// this is the first time we enter the next round thing, this is fine?
 		// we might handle this in new haand?
-		p := t.NextInactivePlayer(t.currentHand.Button)
+		p := t.NextInactivePlayer(t.buttonPosition)
 		p.state = player_state_active
 		t.currentRound.currentPlayerPosition = p.position
 		t.currentRound.bet = t.currentHand.SmallBlind
@@ -116,7 +102,9 @@ func (t *table) NextRound() {
 	case round_type_setup: // GOTO pre-flop
 		t.currentRound.currentRoundType = round_type_pre_flop
 
-		offset := t.NextPosition(t.currentHand.Button)
+		// TODO: we really need to stop depending on inactive state
+		// at all times, need a different method
+		offset := t.NextInactivePlayer(t.buttonPosition).position
 		for idx := range len(t.players) {
 			p := t.players[(idx+offset)%len(t.players)]
 			p.pocket = make([]*card, 2)

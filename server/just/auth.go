@@ -25,6 +25,25 @@ func randomString(count int) string {
 	return base64.RawURLEncoding.EncodeToString(val)
 }
 
+func GetUserType(userID string) (string, error) {
+	ctx := context.Background()
+	conn, err := DBConnPool.Acquire(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer conn.Release()
+
+	stmt := `select user_type from poker_users where user_id=$1`
+	var userType string
+	err = conn.QueryRow(ctx, stmt, userID).Scan(&userType)
+	if err != nil {
+		Logger.Debugf("userID not found when querying poker_users for user_type: %s", userID)
+		return "", err
+	}
+
+	return userID, nil
+}
+
 func GetAuthorizedUser(r *http.Request) (string, string, error) {
 	token := r.Header.Get("Authorization")
 	splitToken := strings.Split(token, "Bearer ")

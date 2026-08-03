@@ -75,10 +75,6 @@
                         "description": "the amount of chips for the big blind in this hand",
                         "type": "integer"
                     },
-                    "button": {
-                        "description": "the index of the position of the player who has the button",
-                        "type": "integer"
-                    },
                     "count": {
                         "description": "the (non decreasing) hand counter",
                         "type": "integer"

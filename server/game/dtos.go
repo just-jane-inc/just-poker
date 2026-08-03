@@ -159,9 +159,6 @@ type HandDTO struct {
 	// the (non decreasing) hand counter
 	Count int `json:"count"`
 
-	// the index of the position of the player who has the button
-	Button int `json:"button"`
-
 	// the amount of chips for the big blind in this hand
 	BigBlind int `json:"big_blind"`
 
