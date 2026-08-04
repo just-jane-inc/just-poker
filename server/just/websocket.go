@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var UpdateHub = ServerUpdateHub{
+var UpdateHub = &ServerUpdateHub{
 	Games: make(map[string]*GameUpdateHub),
 }
 
@@ -57,6 +57,7 @@ func (h *ServerUpdateHub) AddPlayerToHub(gameID string, playerID string) *Player
 		Exit:           make(chan any),
 	}
 
+	hub.PlayerConnections[playerID] = playerConnection
 	return playerConnection
 }
 
