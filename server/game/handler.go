@@ -370,7 +370,9 @@ func handleUpdates(dto GameDTO) {
 		just.Logger.Errorf("error updating game state in elastic: %v", err)
 	}
 
+	just.Logger.Debugf("sending updates for game with ID [%s]", dto.ID)
 	for _, conn := range just.UpdateHub.GetChannelsForGame(dto.ID) {
+		just.Logger.Debugf("sending update to player %s", conn.PlayerID)
 		clone := dto
 		for _, p := range clone.Table.Players {
 			if len(p.Hole) == 2 && p.UserID != conn.PlayerID {
@@ -380,5 +382,6 @@ func handleUpdates(dto GameDTO) {
 		}
 
 		conn.MessageChannel <- clone
+		just.Logger.Debugf("send message to player %s success", conn.PlayerID)
 	}
 }
