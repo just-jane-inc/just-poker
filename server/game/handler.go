@@ -338,6 +338,70 @@ func OnGetCurrentActiveGames(w http.ResponseWriter, _ *http.Request) {
 	just.WriteJSONResponse(w, 200, games)
 }
 
+// OnRegisterListener _liiiisten_
+// @Summary     Register Listener
+// @Description  creates a listener that will begin buffering game events that can be queried from an endpoint
+// @Tags         Game
+// @Success      200 {object}
+// @Router       /game/{game_id}/state/listen [post]
+func OnRegisterListener(w http.ResponseWriter, r *http.Request) {
+	userID, _, err := just.GetAuthorizedUser(r)
+	if err != nil {
+		just.MissingToken().WriteJSONResponse(w)
+		return
+	}
+
+	gameID := r.PathValue("game_id")
+	just.Logger.Debugf("received request to connect to game state updates from game [%s] from player [%s]", gameID, userID)
+
+	_, ok := CurrentGames[gameID]
+	if !ok {
+		just.NotFound("game not found", int(just.GameNotFound)).WriteJSONResponse(w)
+		return
+	}
+
+	just.UpdateHub.AddPlayerToHub(gameID, userID)
+}
+
+// OnGetNextListenerEvent _liiiisten_
+// @Summary     Get Listener
+// @Description  creates a listener that will begin buffering game events that can be queried from an endpoint
+// @Tags         Game
+// @Produce      json
+// @Success      200 {object}
+// @Router       /game/{game_id}/state/listen [get]
+func OnGetNextListenerEvent(w http.ResponseWriter, r *http.Request) {
+	userID, _, err := just.GetAuthorizedUser(r)
+	if err != nil {
+		just.MissingToken().WriteJSONResponse(w)
+		return
+	}
+
+	gameID := r.PathValue("game_id")
+	just.Logger.Debugf("received request to connect to game state updates from game [%s] from player [%s]", gameID, userID)
+
+	_, ok := CurrentGames[gameID]
+	if !ok {
+		just.NotFound("game not found", int(just.GameNotFound)).WriteJSONResponse(w)
+		return
+	}
+
+	h, ok := just.UpdateHub.Games[gameID]
+	if !ok {
+		just.NotFound("no listening hub found for game id", 0).WriteJSONResponse(w)
+		return
+	}
+
+	conn, ok := h.PlayerConnections[userID]
+	if !ok {
+		just.NotFound("no listening hub found for user", 0).WriteJSONResponse(w)
+		return
+	}
+
+	msg := <-conn.MessageChannel
+	just.WriteJSONResponse(w, http.StatusOK, msg)
+}
+
 // OnCreateGameConnection godoc
 // @Summary      Connect Updates
 // @Description  gets all game updates
@@ -381,7 +445,11 @@ func handleUpdates(dto GameDTO) {
 			}
 		}
 
-		conn.MessageChannel <- clone
+		conn.MessageChannel <- just.WebsocketMessage[any]{
+			Data:      clone,
+			EventType: "game_state_update",
+		}
+
 		just.Logger.Debugf("send message to player %s success", conn.PlayerID)
 	}
 }

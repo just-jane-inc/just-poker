@@ -9,6 +9,13 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+type WebsocketMessage[T any] struct {
+	ID        int       `json:"id"`
+	TimeSent  time.Time `json:"time_sent"`
+	EventType string    `json:"event_type"`
+	Data      T         `json:"data"`
+}
+
 var UpdateHub = &ServerUpdateHub{
 	Games: make(map[string]*GameUpdateHub),
 }
@@ -54,7 +61,7 @@ func (h *ServerUpdateHub) AddPlayerToHub(gameID string, playerID string) *Player
 	playerConnection = &PlayerUpdateConnection{
 		GameID:         gameID,
 		PlayerID:       playerID,
-		MessageChannel: make(chan any),
+		MessageChannel: make(chan WebsocketMessage[any], 10),
 		Exit:           make(chan any),
 	}
 
@@ -70,9 +77,10 @@ type GameUpdateHub struct {
 type PlayerUpdateConnection struct {
 	GameID         string
 	PlayerID       string
-	MessageChannel chan any
+	MessageChannel chan WebsocketMessage[any]
 	Exit           chan any
 	conn           *websocket.Conn
+	msgIDCounter   int
 }
 
 // upgrader configures the WebSocket upgrade parameters
@@ -127,16 +135,20 @@ func (p *PlayerUpdateConnection) handleMessages() {
 			Logger.Debugf("received exit signal for player [%s] connection, closing", p.PlayerID)
 			p.conn.Close()
 		case msg := <-p.MessageChannel:
-			Logger.Debugf("sending message to player [%s] ws connection", p.PlayerID)
+			Logger.Debugf("sending message [%d] to player [%s] ws connection", p.msgIDCounter, p.PlayerID)
+			msg.ID = p.msgIDCounter
+			msg.TimeSent = time.Now()
 			bytes, err := json.Marshal(msg)
 			if err != nil {
-				Logger.Errorf("error marshalling message in websocket handler: %v", err)
-				continue // TODO: break?
+				Logger.Errorf("error marshalling message [%d] in websocket handler: %v", p.msgIDCounter, err)
+				continue
 			}
 
 			if err = p.conn.WriteMessage(1, bytes); err != nil {
-				Logger.Errorf("error writing message to connection for player [%s]", p.PlayerID)
+				Logger.Errorf("error writing message [%d] to connection for player [%s]", p.msgIDCounter, p.PlayerID)
 			}
+
+			p.msgIDCounter += 1
 		case <-ticker.C:
 			_ = p.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if err := p.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
