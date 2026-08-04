@@ -1,27 +1,20 @@
 # import openapi_client as poker_api
 import argparse
 import asyncio
-import json
-import os
-
-from textual.app import App, ComposeResult
-from textual.containers import Horizontal, Vertical
-from textual.reactive import reactive
-from textual.widgets import Footer, Static
-
-from textual.app import App, ComposeResult
-from textual.screen import ModalScreen
-from textual.widgets import Button, Input, Label, Static
-from textual import on
-
-from openapi_client.models import GameGameDTO, GameTableDTO, GameCardDTO, GamePlayerDTO
-from openapi_client import ApiClient
-import src.poker_helpers as help
-import src.bot as bot
-
-from examples.tui.setup_tui_example import get_test_user, setup
-
 import logging
+
+from textual import on
+from textual.app import App, ComposeResult
+from textual.containers import Horizontal
+from textual.reactive import reactive
+from textual.screen import ModalScreen
+from textual.widgets import Button, Footer, Input, Label, Static
+
+import poker_bot.bot.poker_helpers as help
+from openapi_client import ApiClient
+from openapi_client.models import GamePlayerDTO, GameTableDTO
+from poker_bot.bot.bot import PokerBot
+from poker_bot.tools.tui.setup_tui_example import get_test_user, setup
 
 logging.basicConfig(level=logging.ERROR)
 
@@ -31,12 +24,16 @@ parser.add_argument("--game-id", type=str, required=False, help="game id")
 parser.add_argument("--player-name", type=str, required=False, help="")
 parser.add_argument("--setup", action="store_true", required=False, help="")
 
-# base_url = "http://localhost:7653"
-base_url = "https://game.bahms.org/api/poker"
+base_url = "http://localhost:7653"
+# base_url = "https://game.bahms.org/api/poker"
 
 
 def main():
-    PokerApp(ansi_color=True).run()
+    args = parser.parse_args()
+    if args.setup:
+        asyncio.run(setup(base_url))
+    else:
+        PokerApp(ansi_color=True).run()
 
 
 class InputPopup(ModalScreen[str]):
@@ -112,7 +109,7 @@ class Players(Static):
     players: reactive[list[GamePlayerDTO] | None] = reactive(None)
     current_turn: reactive[int] = reactive(-1)
     card_map = help.get_unicode_mapping()
-    me: bot.PokerBot | reactive[None] = reactive(None)
+    me: PokerBot | reactive[None] = reactive(None)
 
     def render(self) -> str:
         view = ""
@@ -123,10 +120,14 @@ class Players(Static):
             chip_stack = chip_sum(player.stack)
             current_bet = chip_sum(player.current_bet)
 
+            name = player.display_name
+            if player.user_id == self.me._user_id:
+                name = f"{name}<"
+
             if player.state == "active":
-                view += f"* {player.display_name}\t{chip_stack}\t({current_bet})\n"
+                view += f"* {name}\t{chip_stack}\t({current_bet})\n"
             else:
-                view += f"{player.state} {player.display_name}\t{chip_stack}\t({current_bet})\n"
+                view += f"{player.state} {name}\t{chip_stack}\t({current_bet})\n"
 
             if player.hole:
                 rank = help.CardRank(player.hole[0].rank)
@@ -198,7 +199,9 @@ class PokerApp(App):
         self.push_screen(InputPopup(), check_result)
 
     async def on_mount(self) -> None:
-        game_state = None
+        args = parser.parse_args()
+        print(args)
+        self.game_state = None
         user = get_test_user(args.player_name)
 
         table = self.query_one(Table)
@@ -210,7 +213,7 @@ class PokerApp(App):
 
         player = self.query_one(Players)
         player.players = table.table.players
-        player.me = bot.PokerBot(base_url, user.token, user.user_id, args.game_id)
+        player.me = PokerBot(base_url, user.token, user.user_id, args.game_id)
 
     async def tick(self) -> None:
         table = self.query_one(Table)
@@ -246,8 +249,4 @@ class PokerApp(App):
 
 
 if __name__ == "__main__":
-    args = parser.parse_args()
-    if args.setup:
-        asyncio.run(setup(base_url))
-    else:
-        main()
+    main()

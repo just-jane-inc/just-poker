@@ -1,16 +1,9 @@
-import asyncio
-import json
-import os
-
 import pytest
 
-import openapi_client as api
-import src.bot as bot
-import src.poker_helpers as help
+import poker_bot.bot.poker_helpers as help
 from openapi_client.models.game_round_type import GameRoundType
-
-from examples.tui.setup_tui_example import TestUser
-from examples.tui.setup_tui_example import get_test_users
+from poker_bot.bot import bot
+from poker_bot.tools.tui.setup_tui_example import get_test_users
 
 base_url = "http://localhost:7653"
 # base_url = "https://game.bahms.org/api/poker"
@@ -65,7 +58,9 @@ async def test_all_check():
 
     state = await bots[0].get_game_state()
     assert state is not None
-    assert state.table.current_round.current_round_type == GameRoundType.round_type_river
+    assert (
+        state.table.current_round.current_round_type == GameRoundType.round_type_river
+    )
 
     # river
     await bots[2].send_action("check", {})

@@ -1,10 +1,25 @@
-[tool.ruff]
-line-length = 120
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
 
-[tool.ruff.lint]
-ignore = ["E501", "F401"]
+[project]
+name = "poker-bot-sdk"
+version = "0.1.0"
+
+[project.scripts]
+poker-tui = "poker_bot.tools.tui.__main__:main"
+new-game = "poker_bot.tools.create_game.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["poker_bot*", "openapi_client*"]
 
 [tool.pyright]
-executionEnvironments = []
-typeCheckingMode = "standard"
-reportOptionalMemberAccess = "none"
+typeCheckingMode = "off"
+ignore = ["src/openapi_client"]
+
+[tool.ruff]
+extend-exclude = ["src/openapi_client"]
+
+[tool.ruff.lint]
+extend-select = ["I"]
