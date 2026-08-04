@@ -120,15 +120,19 @@ func (p *PlayerUpdateConnection) handleMessages() {
 	for {
 		select {
 		case <-p.Exit:
-			return
+			Logger.Debugf("received exit signal for player [%s] connection, closing", p.PlayerID)
+			p.conn.Close()
 		case msg := <-p.MessageChannel:
+			Logger.Debugf("sending message to player [%s] ws connection", p.PlayerID)
 			bytes, err := json.Marshal(msg)
 			if err != nil {
 				Logger.Errorf("error marshalling message in websocket handler: %v", err)
 				continue // TODO: break?
 			}
 
-			p.conn.WriteMessage(1, bytes)
+			if err = p.conn.WriteMessage(1, bytes); err != nil {
+				Logger.Errorf("error writing message to connection for player [%s]", p.PlayerID)
+			}
 		}
 	}
 }
