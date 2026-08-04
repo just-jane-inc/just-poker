@@ -25,7 +25,7 @@ from pydantic_core import to_jsonable_python
 
 class GameCardDTO(BaseModel):
     """
-    a card
+    GameCardDTO
     """ # noqa: E501
     rank: Optional[StrictInt] = Field(default=None, description="the rank of a card as a rune - int32 ASCII encoding")
     suit: Optional[StrictInt] = Field(default=None, description="the suit of a card as a rune - int32 ASCII encoding")

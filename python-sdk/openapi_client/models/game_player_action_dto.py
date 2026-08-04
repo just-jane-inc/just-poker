@@ -25,7 +25,7 @@ from pydantic_core import to_jsonable_python
 
 class GamePlayerActionDTO(BaseModel):
     """
-    The action that a player has taken...
+    GamePlayerActionDTO
     """ # noqa: E501
     accepted_at: Optional[StrictStr] = Field(default=None, description="a timestamp capturing when a succesful action was accepted by the game")
     chips: Optional[Dict[str, StrictInt]] = Field(default=None, description="an optional mapping of chips that is required by some action types.")

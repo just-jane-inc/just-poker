@@ -27,7 +27,7 @@ from pydantic_core import to_jsonable_python
 
 class GameGameDTO(BaseModel):
     """
-    yeah, the game
+    GameGameDTO
     """ # noqa: E501
     game_config: Optional[GameNewGameConfigDTO] = None
     id: Optional[StrictStr] = Field(default=None, description="the id of the game")

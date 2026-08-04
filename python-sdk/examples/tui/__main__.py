@@ -31,8 +31,8 @@ parser.add_argument("--game-id", type=str, required=False, help="game id")
 parser.add_argument("--player-name", type=str, required=False, help="")
 parser.add_argument("--setup", action="store_true", required=False, help="")
 
-base_url = "http://localhost:7653"
-# base_url = "https://game.bahms.org/api/poker"
+# base_url = "http://localhost:7653"
+base_url = "https://game.bahms.org/api/poker"
 
 
 def main():
@@ -248,6 +248,6 @@ class PokerApp(App):
 if __name__ == "__main__":
     args = parser.parse_args()
     if args.setup:
-        asyncio.run(setup())
+        asyncio.run(setup(base_url))
     else:
         main()

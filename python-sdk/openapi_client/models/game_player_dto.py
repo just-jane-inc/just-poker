@@ -26,11 +26,11 @@ from pydantic_core import to_jsonable_python
 
 class GamePlayerDTO(BaseModel):
     """
-    Detailed information about a registered user.
+    GamePlayerDTO
     """ # noqa: E501
     current_bet: Optional[Dict[str, StrictInt]] = Field(default=None, description="an optional mapping of chips that is required by some action types.")
     display_name: Optional[StrictStr] = Field(default=None, description="the users display name")
-    hole: Optional[List[GameCardDTO]] = Field(default=None, description="the cards current held by this player. the cards are only visible to authorized users. TODO: make the prev statement true, also make an anon card")
+    hole: Optional[List[GameCardDTO]] = Field(default=None, description="the cards current held by this player - only visible for authorized users during a game.")
     position: Optional[StrictInt] = Field(default=None, description="the players position at the table, starting with 0 being the first player sitting clockwise from the dealer")
     pot_contribution: Optional[StrictInt] = Field(default=None, description="the sum total the player has contributed to the pot, note that this does not include chips currently in CurrentBet")
     stack: Optional[Dict[str, StrictInt]] = Field(default=None, description="an optional mapping of chips that is required by some action types.")
