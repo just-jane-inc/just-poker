@@ -1,8 +1,13 @@
 package game
 
-type PlayerIntent string
-type PlayerState string
+type (
+	PlayerIntent string
+	PlayerState  string
+)
 
+// reason: leave me alone, snake case is nice here.
+//
+//goland:noinspection GoSnakeCaseUsage
 const (
 	player_state_unset    PlayerState = "unset"
 	player_state_inactive PlayerState = "inactive"
@@ -13,6 +18,9 @@ const (
 	player_state_out      PlayerState = "out"
 )
 
+// reason: leave me alone, snake case is nice here.
+//
+//goland:noinspection GoSnakeCaseUsage
 const (
 	player_intent_unset  = "unset"
 	player_intent_ante   = "ante"
@@ -35,12 +43,6 @@ type player struct {
 	chips           stack
 	currentBet      stack
 	potContribution int
-}
-
-func (p player) ToString() string {
-	return ""
-	// cards := fmt.Sprintf("[%c%c] [%c%c]", p.pocket[0].rank, p.pocket[0].suite, p.pocket[1].rank, p.pocket[1].suite)
-	// return fmt.Sprintf("%s: %s %s\n", p.DisplayName, cards, ChipsToString(p.chips))
 }
 
 func (s stack) Sum() int {

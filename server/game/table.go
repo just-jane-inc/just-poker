@@ -1,10 +1,8 @@
 package game
 
 import (
-	"fmt"
 	"math"
 	"slices"
-	"strings"
 
 	"github.com/just-jane-inc/just-poker/server/just"
 )
@@ -170,7 +168,7 @@ func (t *table) NextRound() {
 		// Captain_Onosa
 		handEvaluations := t.Showdown()
 
-		var bestHand int = math.MaxInt
+		bestHand := math.MaxInt
 		winners := make([]int, 0)
 		for position, eval := range handEvaluations {
 			if bestHand > eval {
@@ -260,26 +258,4 @@ func (t *table) Showdown() map[int]int {
 func (t *table) GetHand(position int) Hand {
 	hand := slices.Concat(t.street, t.players[position].pocket)
 	return Hand{Cards: hand}
-}
-
-func (s stack) ToString() string {
-	var sb strings.Builder
-	for denomination, count := range s {
-		fmt.Fprintf(&sb, "%d(%d) ", count, denomination)
-	}
-
-	return sb.String()
-}
-
-func (t table) ToString() string {
-	var playerString strings.Builder
-	for _, player := range t.players {
-		playerString.WriteString(player.ToString())
-	}
-
-	return fmt.Sprintf(
-		"players:\n{%s}\npot: [%s]\n",
-		playerString.String(),
-		"unknown",
-	)
 }

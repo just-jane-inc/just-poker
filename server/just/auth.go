@@ -8,7 +8,9 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -21,7 +23,7 @@ func getMAC(secret string, pepper []byte) []byte {
 
 func randomString(count int) string {
 	val := make([]byte, count)
-	rand.Read(val)
+	_, _ = rand.Read(val)
 	return base64.RawURLEncoding.EncodeToString(val)
 }
 
@@ -110,4 +112,32 @@ func CreateAPIKey(conn *pgxpool.Conn, ctx context.Context, userID, username stri
 	}
 
 	return keyID, fmt.Sprintf("bahms.%s.%s", keyID, secret), nil
+}
+
+func DeleteUser(userIDStr string, w http.ResponseWriter) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	conn, err := DBConnPool.Acquire(ctx)
+	if err != nil {
+		Logger.Errorf("error acquiring db con: %v", err)
+		InternalError("internal server errror").WriteJSONResponse(w)
+		return
+	}
+	defer conn.Release()
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		Logger.Errorf("invalid user id returned from GetAuthorizedUser: [%s]", userIDStr)
+		InternalError(fmt.Sprintf("user id [%s] does not parse to an int, invalid id", userIDStr)).WriteJSONResponse(w)
+		return
+	}
+
+	stmt := `delete from poker_users where id=$1`
+	_, err = conn.Exec(ctx, stmt, userID)
+	if err != nil {
+		NotFound("user not found", int(UserNotFound)).WriteJSONResponse(w)
+		return
+	}
+
+	OK("user_deleted", struct{}{}).WriteJSONResponse(w)
 }

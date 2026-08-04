@@ -5,7 +5,8 @@ import (
 	"time"
 )
 
-// a collection of chips with the same denomination
+// ChipCountDTO a dto describing the denomation and count
+// of a single collection of chips
 type ChipCountDTO struct {
 	// the denomination for the chips
 	Denomination int `json:"denomination"`
@@ -13,12 +14,11 @@ type ChipCountDTO struct {
 	Count int `json:"count"`
 }
 
-// a unit of mixed denomination chips that are associated to a shared entity
+// ChipStackDTO a dto that aliases a map[string]int mapping string
+// denominations onto integer counts
 type ChipStackDTO map[string]int
 
-// data related to a betting round
-// @Description Detailed information about a registered user.
-// @name UserAccount
+// RoundDTO a dto describing information about the current round of play
 type RoundDTO struct {
 	// the amount of chips required to call (how does this work with split pots?)
 	Bet int `json:"bet"`
@@ -33,9 +33,7 @@ type RoundDTO struct {
 	CurrentRoundType RoundType `json:"current_round_type"`
 }
 
-// a player (a user that is in a game)
-// @Description Detailed information about a registered user.
-// @name UserAccount
+// PlayerDTO a dto representing a single player
 type PlayerDTO struct {
 	// the is of the user
 	UserID string `json:"user_id"`
@@ -43,15 +41,16 @@ type PlayerDTO struct {
 	// the users display name
 	DisplayName string `json:"display_name"`
 
-	// the type of user TODO: make this an enum
+	// the type of user
+	// TODO: make this an enum
 	UserType string `json:"user_type"`
 
 	// the players position at the table, starting with 0 being the
 	// first player sitting clockwise from the dealer
 	Position int `json:"position"`
 
-	// the cards current held by this player. the cards are only visible
-	// to authorized users. TODO: make the prev statement true, also make an anon card
+	// the cards current held by this player - only visible for authorized users
+	// during a game.
 	Hole []CardDTO `json:"hole"`
 
 	// a map of the chips held by the player where the keys represent
@@ -69,9 +68,7 @@ type PlayerDTO struct {
 	State string `json:"state"`
 }
 
-// the action that a player has taken
-// @Description The action that a player has taken...
-// @name PlayerAction
+// PlayerActionDTO a dto describing the action taken by a player
 type PlayerActionDTO struct {
 	// the id of the player preforming the action
 	PlayerID string `json:"player_id"`
@@ -86,9 +83,7 @@ type PlayerActionDTO struct {
 	AcceptedAt *time.Time `json:"accepted_at"`
 }
 
-// the game
-// @Description yeah, the game
-// @name Game
+// GameDTO a dto describing the current state of an entire game
 type GameDTO struct {
 	// the id of the game
 	ID string `json:"id"`
@@ -103,9 +98,8 @@ type GameDTO struct {
 	Table TableDTO `json:"table"`
 }
 
-// the games configuration
-// @Description yeah, the game
-// @name Game
+// NewGameConfigDTO a dto supplying configuring information
+// for creating a new game.
 type NewGameConfigDTO struct {
 	// the number of players (max) the game supports
 	PlayerCount int `json:"player_count"`
@@ -120,9 +114,7 @@ type NewGameConfigDTO struct {
 	SmallBlind int `json:"small_blind"`
 }
 
-// the table
-// @Description yeah, the table
-// @name Table
+// TableDTO a dto describing the full state of a table
 type TableDTO struct {
 	// An array of players at the table
 	Players []PlayerDTO `json:"players"`
@@ -149,15 +141,10 @@ type TableDTO struct {
 	BigBlindPosition int `json:"big_blind_position"`
 }
 
-// a hand
-// @Description yeah, the game
-// @name Hand
+// HandDTO a dto containing meta-data about a hand
 type HandDTO struct {
-	// the id of a hand
-	ID string `json:"id"`
-
 	// the (non decreasing) hand counter
-	Count int `json:"count"`
+	ID int `json:"id"`
 
 	// the amount of chips for the big blind in this hand
 	BigBlind int `json:"big_blind"`
@@ -169,29 +156,19 @@ type HandDTO struct {
 	StartedAt time.Time `json:"started_at"`
 }
 
-// an individual turn
-// @Description a turn
-// @name Turn
+// TurnDTO a dto encoding meta data related to a specific turn of a hand
 type TurnDTO struct {
-	// the id of the turn
-	ID string `json:"id"`
-
-	// the (non decreasing) turn counter
-	Count int `json:"count"`
+	// the id of a turn
+	ID int `json:"id"`
 
 	// the time that the turn started
 	StartedAt time.Time `json:"started_at"`
 
 	// the id of the player whose turn it is
 	PlayerID string `json:"player_id"`
-
-	// the index of the position of the player whose turn it is
-	PlayerPosition int `json:"player_position"`
 }
 
-// an individual card
-// @Description a card
-// @name Card
+// CardDTO a dto encoding an individual card
 type CardDTO struct {
 	// the rank of a card as a rune - int32 ASCII encoding
 	Rank rune `json:"rank"`
@@ -200,9 +177,9 @@ type CardDTO struct {
 	Suit rune `json:"suit"`
 }
 
-func (c ChipStackDTO) Sum() int {
+func (s ChipStackDTO) Sum() int {
 	total := 0
-	for d, count := range c {
+	for d, count := range s {
 		denomination, err := strconv.Atoi(d)
 		if err != nil {
 			continue

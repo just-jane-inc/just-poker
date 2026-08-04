@@ -5,9 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/just-jane-inc/just-poker/server/just"
@@ -40,29 +38,7 @@ func OnDeleteMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	conn, err := just.DBConnPool.Acquire(ctx)
-	if err != nil {
-		panic(err)
-	}
-	defer conn.Release()
-
-	userID, err := strconv.Atoi(userIDStr)
-	if err != nil {
-		just.Logger.Errorf("invalid user id returned from GetAuthorizedUser: [%s]", userIDStr)
-		just.InternalError(fmt.Sprintf("user id [%s] does not parse to an int, invalid id", userIDStr)).WriteJSONResponse(w)
-		return
-	}
-
-	stmt := `delete from poker_users where id=$1`
-	_, err = conn.Exec(ctx, stmt, userID)
-	if err != nil {
-		just.NotFound("user not found", int(just.UserNotFound)).WriteJSONResponse(w)
-		return
-	}
-
-	just.OK("user_deleted", struct{}{}).WriteJSONResponse(w)
+	just.DeleteUser(userIDStr, w)
 }
 
 // OnCreateUser Create a user
@@ -197,32 +173,7 @@ func OnRenewKey(w http.ResponseWriter, r *http.Request) {
 
 // OnDeleteUser Delete user
 // Internal only, unauthenticated
-
 func OnDeleteUser(w http.ResponseWriter, r *http.Request) {
 	userIDStr := r.PathValue("user_id")
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	conn, err := just.DBConnPool.Acquire(ctx)
-	if err != nil {
-		just.Logger.Errorf("error acquiring db con: %v", err)
-		just.InternalError("internal server errror").WriteJSONResponse(w)
-		return
-	}
-	defer conn.Release()
-
-	userID, err := strconv.Atoi(userIDStr)
-	if err != nil {
-		just.Logger.Errorf("invalid user id returned from GetAuthorizedUser: [%s]", userIDStr)
-		just.InternalError(fmt.Sprintf("user id [%s] does not parse to an int, invalid id", userIDStr)).WriteJSONResponse(w)
-		return
-	}
-
-	stmt := `delete from poker_users where id=$1`
-	_, err = conn.Exec(ctx, stmt, userID)
-	if err != nil {
-		just.NotFound("user not found", int(just.UserNotFound)).WriteJSONResponse(w)
-		return
-	}
-
-	just.OK("user_deleted", struct{}{}).WriteJSONResponse(w)
+	just.DeleteUser(userIDStr, w)
 }

@@ -11,7 +11,6 @@ components:
           uniqueItems: false
       type: object
     game.CardDTO:
-      description: a card
       properties:
         rank:
           description: the rank of a card as a rune - int32 ASCII encoding
@@ -33,7 +32,6 @@ components:
       description: an optional mapping of chips that is required by some action types.
       type: object
     game.GameDTO:
-      description: yeah, the game
       properties:
         game_config:
           $ref: '#/components/schemas/game.NewGameConfigDTO'
@@ -52,12 +50,9 @@ components:
         big_blind:
           description: the amount of chips for the big blind in this hand
           type: integer
-        count:
+        id:
           description: the (non decreasing) hand counter
           type: integer
-        id:
-          description: the id of a hand
-          type: string
         small_blind:
           description: the amount of chips for the small blind in this hand
           type: integer
@@ -81,7 +76,6 @@ components:
           $ref: '#/components/schemas/game.ChipStackDTO'
       type: object
     game.PlayerActionDTO:
-      description: The action that a player has taken...
       properties:
         accepted_at:
           description: a timestamp capturing when a succesful action was accepted
@@ -97,7 +91,6 @@ components:
           type: string
       type: object
     game.PlayerDTO:
-      description: Detailed information about a registered user.
       properties:
         current_bet:
           $ref: '#/components/schemas/game.ChipStackDTO'
@@ -106,8 +99,8 @@ components:
           type: string
         hole:
           description: |-
-            the cards current held by this player. the cards are only visible
-            to authorized users. TODO: make the prev statement true, also make an anon card
+            the cards current held by this player - only visible for authorized users
+            during a game.
           items:
             $ref: '#/components/schemas/game.CardDTO'
           type: array
@@ -131,7 +124,9 @@ components:
           description: the is of the user
           type: string
         user_type:
-          description: 'the type of user TODO: make this an enum'
+          description: |-
+            the type of user
+            TODO: make this an enum
           type: string
       type: object
     game.RoundDTO:

@@ -12,7 +12,7 @@ type ChipExchangeDTO struct {
 	Receive ChipStackDTO
 }
 
-func (s ChipStackDTO) AsStack() stack {
+func (s ChipStackDTO) asStack() stack {
 	createStack := make(map[int]int)
 	for d, c := range s {
 		denomination, err := strconv.Atoi(d)
@@ -26,11 +26,11 @@ func (s ChipStackDTO) AsStack() stack {
 	return createStack
 }
 
-func (this stack) Contains(that stack) bool {
+func (s stack) Contains(that stack) bool {
 	for d, c := range that {
 		// get the number of chips with the provided denomination
 		// available to this stack
-		count, ok := this[d]
+		count, ok := s[d]
 		if !ok {
 			return false
 		}
@@ -61,7 +61,7 @@ func (g *game) ExchangeChips(playerID string, exchange ChipExchangeDTO) error {
 		}
 	}
 
-	if !p.chips.Contains(exchange.Give.AsStack()) {
+	if !p.chips.Contains(exchange.Give.asStack()) {
 		return &just.PokerError{
 			Message: "player stack does not have enough chips to cover requested exchange",
 			Code:    just.InvalidChipExchange,

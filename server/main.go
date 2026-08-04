@@ -88,6 +88,8 @@ func main() {
 
 	apiMux := http.NewServeMux()
 
+	http.HandleFunc("/game/{game_id}/state/ws", game.OnCreateGameConnection)
+
 	apiMux.HandleFunc(
 		"GET /game",
 		game.OnGetCurrentActiveGames,

@@ -1,3 +1,5 @@
+// Package game provides you know, the game stuff
+// behold, game, packaged for your pleasure
 package game
 
 import (
@@ -24,13 +26,13 @@ func (g *game) LogGameState(msg string) {
 	just.Logger.Debugf("%s \n %s", msg, s)
 }
 
-func (this stack) MergeWith(that stack) stack {
+func (s stack) MergeWith(other stack) stack {
 	result := make(stack)
-	for d, c := range that {
+	for d, c := range other {
 		result[d] += c
 	}
 
-	for d, c := range this {
+	for d, c := range s {
 		result[d] += c
 	}
 
@@ -44,7 +46,7 @@ type PlayerActionThing struct {
 }
 
 type game struct {
-	started_at          *time.Time
+	startedAt           *time.Time
 	id                  string
 	joinGameLock        sync.Mutex
 	config              NewGameConfigDTO
@@ -55,14 +57,14 @@ type game struct {
 
 func (g *game) AsDTO() GameDTO {
 	return GameDTO{
-		StartedAt: g.started_at,
+		StartedAt: g.startedAt,
 		ID:        g.id,
 		Config:    g.config,
 		Table:     g.table.AsDTO(),
 	}
 }
 
-func CreateGameFromConfig(config NewGameConfigDTO) (*game, error) {
+func createGameFromConfig(config NewGameConfigDTO) (*game, error) {
 	g := &game{
 		joinGameLock:        sync.Mutex{},
 		config:              config,
@@ -98,7 +100,7 @@ func CreateGameFromConfig(config NewGameConfigDTO) (*game, error) {
 func (g *game) TryJoinGame(username, userID string) error {
 	just.Logger.Debugf("%s trying to join game %s", username, g.id)
 
-	if g.started_at != nil {
+	if g.startedAt != nil {
 		return just.NewPokerError("table does not exist", just.GameAlreadyStarted)
 	}
 
@@ -124,14 +126,14 @@ func (g *game) TryJoinGame(username, userID string) error {
 	}
 
 	p.chips = make(stack)
-	maps.Copy(p.chips, g.config.StartingChips.AsStack())
+	maps.Copy(p.chips, g.config.StartingChips.asStack())
 
 	g.table.players = append(g.table.players, p)
 	return nil
 }
 
 func (g *game) TryStartGame() error {
-	if g.started_at != nil {
+	if g.startedAt != nil {
 		return fmt.Errorf("game already started")
 	}
 
@@ -171,12 +173,12 @@ func (g *game) TryStartGame() error {
 	}
 
 	t := time.Now()
-	g.started_at = &t
+	g.startedAt = &t
 	return nil
 }
 
 func (g *game) TryStartNewHand() error {
-	just.Logger.Debugf("attempting to start hand [%d]", g.table.currentHand.Count+1)
+	just.Logger.Debugf("attempting to start hand [%d]", g.table.currentHand.ID+1)
 
 	t := g.table
 	pot := t.pot.Sum()
@@ -216,18 +218,9 @@ func (g *game) TryStartNewHand() error {
 	t.NextRound()
 	t.currentRound.currentAggressor = t.NextInactivePlayer(t.bigBlindPosition).position
 
-	t.currentHand.Count += 1
+	t.currentHand.ID += 1
+	t.currentTurn.ID = 0
 	return nil
-}
-
-func (g *game) sendToListeners(msg just.ResponseMessage[any]) {
-	// TODO: listener collection can change during iteration must lock
-	// TODO: also need to lock this method, order must be guaranteed on all channels
-	for id, listener := range g.listeners {
-		if err := listener.Send(msg); err != nil {
-			just.Logger.Errorf("encountered error sending to listener [%s]", id)
-		}
-	}
 }
 
 func (g *game) TryPlayerAction(action PlayerActionDTO) error {
@@ -241,7 +234,7 @@ func (g *game) TryPlayerAction(action PlayerActionDTO) error {
 
 	g.playerActionChannel <- playerAction
 	select {
-	case _ = <-successChannel:
+	case <-successChannel:
 		return nil
 	case err := <-errorChannel:
 		return err
@@ -251,7 +244,7 @@ func (g *game) TryPlayerAction(action PlayerActionDTO) error {
 func (g *game) ProccessPlayerActions(exit chan any) {
 	for {
 		select {
-		case _ = <-exit:
+		case <-exit:
 			just.Logger.Debug("exit signal received while processing player actions")
 			return
 		case action := <-g.playerActionChannel:
@@ -270,11 +263,11 @@ func (g *game) TryCoverBet(p *player, chips ChipStackDTO) error {
 	// first we go through and ensure that the player can cover
 	// every chip they want to bet, we do this before changing any chips
 	// in case there is an error (we dont want to unwind)
-	stack := chips.AsStack()
+	stack := chips.asStack()
 	for d, c := range stack {
-		player_count, ok := p.chips[d]
+		playerCount, ok := p.chips[d]
 		if !ok {
-			just.Logger.Errorf("invalid denomination %d %s", d, p.chips.ToString())
+			just.Logger.Errorf("invalid denomination %d", d)
 			return &just.PokerError{
 				Message: fmt.Sprintf("player has no chips with %d denomination", d),
 				Code:    just.NotEnoughChips,
@@ -288,13 +281,13 @@ func (g *game) TryCoverBet(p *player, chips ChipStackDTO) error {
 			}
 		}
 
-		if player_count < c {
+		if playerCount < c {
 			return &just.PokerError{
 				Message: fmt.Sprintf(
 					"player cannot cover %d of %d chips with their current count of %d",
 					c,
 					d,
-					player_count,
+					playerCount,
 				),
 				Code: just.NotEnoughChips,
 			}
@@ -375,146 +368,99 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 	// the setup 'round' has unique logic and should not mix
 	// with the other round types
 	if g.table.currentRound.currentRoundType == round_type_setup {
-		if action.Intent != player_intent_ante {
+		if err := g.handleSetup(action, p); err != nil {
+			return err
+		}
+	}
+
+	// the comment below is the truth.
+	// the comment above is a lie. This totally works ;)
+	// - Goblinz181
+	switch action.Intent {
+	case player_intent_ante:
+		// the happy path of the ante intent will have already been handled by this point
+		// we do not need to do anything else here, simply ensure that this intent
+		// was applied during the setup round.
+		if g.table.currentRound.currentRoundType != round_type_setup {
 			return &just.PokerError{
-				Message: "during this phase only ante actions can be accepted",
+				Message: "ante is only accepted during the setup round",
 				Code:    just.InvalidActionType,
 			}
 		}
-
-		betAmount := action.Bet.Sum()
-		if p.position == g.table.smallBlindPosition {
-			if betAmount != g.table.currentHand.SmallBlind {
-				return &just.PokerError{
-					Message: fmt.Sprintf("small blind requires exactly %d chips", g.table.currentHand.SmallBlind),
-					Code:    just.InvalidBetAmount,
-				}
-			}
-
-			if err := g.TryCoverBet(p, action.Bet); err != nil {
-				return err
-			}
-
-			g.table.currentRound.bet = g.table.currentHand.BigBlind
-
-		} else if p.position == g.table.bigBlindPosition {
-			if betAmount != g.table.currentHand.BigBlind {
-				return &just.PokerError{
-					Message: fmt.Sprintf("big blind requires exactly %d chips", g.table.currentHand.BigBlind),
-					Code:    just.InvalidBetAmount,
-				}
-			}
-
-			if err := g.TryCoverBet(p, action.Bet); err != nil {
-				return err
-			}
-
-		} else {
-			just.Logger.Errorf(
-				"play is currently at %d turn during setup round however they are neither the big nor small blind. game is deadlocked. game state: %v",
-				p.position,
-				g.AsDTO(),
-			)
-
+	case player_intent_check:
+		if p.currentBet.Sum() != g.table.currentRound.bet {
 			return &just.PokerError{
-				Message: "critical error - game state cannot progress - alert game master",
-				Code:    just.Unknown,
+				Message: fmt.Sprintf(
+					"you must call the current bet of %d with %d chips",
+					g.table.currentRound.bet,
+					g.table.currentRound.bet-p.currentBet.Sum(),
+				),
+				Code: just.InvalidBetAmount,
 			}
 		}
 
-		p.currentBet = p.currentBet.MergeWith(action.Bet.AsStack())
-		g.table.currentRound.bet = g.config.BigBlind
-	} else {
-		// the comment below is the truth.
-		// the comment above is a lie. This totally works ;)
-		// - Goblinz181
-		switch action.Intent {
-		case player_intent_ante:
-			if g.table.currentRound.currentRoundType != round_type_setup {
-				return &just.PokerError{
-					Message: "ante is only accepted during the setup round",
-					Code:    just.InvalidActionType,
-				}
+	case player_intent_call:
+		totalBet := p.currentBet.MergeWith(action.Bet.asStack())
+		if totalBet.Sum() != g.table.currentRound.bet {
+			return &just.PokerError{
+				Message: fmt.Sprintf(
+					"%d is not valid to call the current amount of %d",
+					totalBet.Sum(),
+					g.table.currentRound.bet,
+				),
+				Code: just.InvalidBetAmount,
 			}
+		}
 
-			// the happy path of the ante intent will have already been handled by this point
-			// we do not need to do anything else here.
+		if err := g.TryCoverBet(p, action.Bet); err != nil {
+			return err
+		}
 
-		case player_intent_check:
-			if p.currentBet.Sum() != g.table.currentRound.bet {
-				return &just.PokerError{
-					Message: fmt.Sprintf(
-						"you must call the current bet of %d with %d chips",
-						g.table.currentRound.bet,
-						g.table.currentRound.bet-p.currentBet.Sum(),
-					),
-					Code: just.InvalidBetAmount,
-				}
+		p.currentBet = totalBet
+
+	case player_intent_raise:
+		totalBet := p.currentBet.MergeWith(action.Bet.asStack())
+		if totalBet.Sum() <= g.table.currentRound.bet {
+			return &just.PokerError{
+				Message: fmt.Sprintf(
+					"%d is not valid to raise the current amount of %d",
+					g.table.currentRound.bet,
+					g.table.currentRound.bet,
+				),
+				Code: just.InvalidBetAmount,
 			}
+		}
 
-		case player_intent_call:
-			totalBet := p.currentBet.MergeWith(action.Bet.AsStack())
-			if totalBet.Sum() != g.table.currentRound.bet {
-				return &just.PokerError{
-					Message: fmt.Sprintf(
-						"%d is not valid to call the current amount of %d",
-						totalBet.Sum(),
-						g.table.currentRound.bet,
-					),
-					Code: just.InvalidBetAmount,
-				}
-			}
+		if err := g.TryCoverBet(p, action.Bet); err != nil {
+			return err
+		}
 
-			if err := g.TryCoverBet(p, action.Bet); err != nil {
-				return err
-			}
+		p.currentBet = totalBet
+		g.table.currentRound.bet = p.currentBet.Sum()
+		g.table.currentRound.currentAggressor = p.position
 
-			p.currentBet = totalBet
+	case player_intent_all_in:
+		p.currentBet = p.currentBet.MergeWith(p.chips)
+		g.table.currentRound.bet += p.chips.Sum()
 
-		case player_intent_raise:
-			totalBet := p.currentBet.MergeWith(action.Bet.AsStack())
-			if totalBet.Sum() <= g.table.currentRound.bet {
-				return &just.PokerError{
-					Message: fmt.Sprintf(
-						"%d is not valid to raise the current amount of %d",
-						g.table.currentRound.bet,
-						g.table.currentRound.bet,
-					),
-					Code: just.InvalidBetAmount,
-				}
-			}
+		if err := g.TryCoverBet(p, p.chips.AsDto()); err != nil {
+			return err
+		}
 
-			if err := g.TryCoverBet(p, action.Bet); err != nil {
-				return err
-			}
-
-			p.currentBet = totalBet
-			g.table.currentRound.bet = p.currentBet.Sum()
+		// check if this all in would actually make the player thhe aggressor,
+		// it could be that they just don't have the chips to cover the current
+		// round bet
+		if p.currentBet.Sum() > g.table.currentRound.bet {
 			g.table.currentRound.currentAggressor = p.position
-
-		case player_intent_all_in:
-			p.currentBet = p.currentBet.MergeWith(p.chips)
-			g.table.currentRound.bet += p.chips.Sum()
-
-			if err := g.TryCoverBet(p, p.chips.AsDto()); err != nil {
-				return err
-			}
-
-			// check if this all in would actually make the player thhe aggressor,
-			// it could be that they just don't have the chips to cover the current
-			// round bet
-			if p.currentBet.Sum() > g.table.currentRound.bet {
-				g.table.currentRound.currentAggressor = p.position
-			}
-
-			p.state = player_state_all_in
-
-		case player_intent_fold:
-			p.state = player_state_folded
-
-		default:
-			return fmt.Errorf("erm dunno what %s means, sorry", action.Intent)
 		}
+
+		p.state = player_state_all_in
+
+	case player_intent_fold:
+		p.state = player_state_folded
+
+	default:
+		return fmt.Errorf("erm dunno what %s means, sorry", action.Intent)
 	}
 
 	just.Logger.Debugf("accepted action [%s] for player with id [%s]", action.Intent, action.PlayerID)
@@ -596,23 +542,81 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 
 	just.Logger.Debugf("[%s] [%d] -> [%d]", g.table.currentRound.currentRoundType, p.position, nextPlayer.position)
 
-	msg := just.ResponseMessage[any]{
-		Type: "player_update",
-		Data: PlayerUpdateMessage{
-			Position: p.position,
-			Chips:    action.Bet,
-			Intent:   action.Intent,
-		},
-	}
-
-	g.sendToListeners(msg)
 	g.table.currentTurn.StartedAt = time.Now()
-	g.table.currentTurn.Count += 1
+	g.table.currentTurn.ID += 1
 
 	if g.table.currentRound.currentRoundType == round_type_completed {
 		// TODO: maybe we should wait for a signal from the outside before starting new hands
-		g.TryStartNewHand()
+		if err := g.TryStartNewHand(); err != nil {
+			just.Logger.Errorf("encountered error starting new hand: %v", err)
+		}
 	}
 
+	return nil
+}
+
+// handleSetup handles provided player action for the setup round type
+//
+// returns an error if the game is not actually in this round type
+// or if the provided action is invalid in some way.
+//
+// it is assumed that the provided player (p) preforms the provided action.
+func (g *game) handleSetup(action PlayerActionDTO, p *player) error {
+	if g.table.currentRound.currentRoundType != round_type_setup {
+		errorMessage := fmt.Sprintf(
+			"internal error, setup handler invoked when round type was [ %s ]",
+			g.table.currentRound.currentRoundType,
+		)
+
+		// TODO: make error type for internal/server
+		return just.NewPokerError(errorMessage, just.InvalidActionType)
+	}
+
+	if action.Intent != player_intent_ante {
+		return &just.PokerError{
+			Message: "during this phase only ante actions can be accepted",
+			Code:    just.InvalidActionType,
+		}
+	}
+
+	betAmount := action.Bet.Sum()
+	switch p.position {
+	case g.table.smallBlindPosition:
+		if betAmount != g.table.currentHand.SmallBlind {
+			return &just.PokerError{
+				Message: fmt.Sprintf("small blind requires exactly %d chips", g.table.currentHand.SmallBlind),
+				Code:    just.InvalidBetAmount,
+			}
+		}
+
+		// just need to ensure that the current round bet is set to the big blind
+		// before exiting this phase of play.
+		g.table.currentRound.bet = g.config.BigBlind
+
+	case g.table.bigBlindPosition:
+		if betAmount != g.table.currentHand.BigBlind {
+			return &just.PokerError{
+				Message: fmt.Sprintf("big blind requires exactly %d chips", g.table.currentHand.BigBlind),
+				Code:    just.InvalidBetAmount,
+			}
+		}
+
+	default:
+		just.Logger.Errorf(
+			"play is currently at %d turn during setup round however they are neither the big nor small blind. game is deadlocked.",
+			p.position,
+		)
+
+		return &just.PokerError{
+			Message: "critical error - game state cannot progress - alert game master",
+			Code:    just.Unknown,
+		}
+	}
+
+	if err := g.TryCoverBet(p, action.Bet); err != nil {
+		return err
+	}
+
+	p.currentBet = p.currentBet.MergeWith(action.Bet.asStack())
 	return nil
 }

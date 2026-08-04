@@ -21,7 +21,7 @@ var CurrentGames = make(map[string]*game)
 // @Param hand body []CardDTO true "hand to evaluate, either 5 or 7 cards"
 // @Success      200
 // @Router       /hand-evaluator/evaluate [post]
-func OnEvalHand(w http.ResponseWriter, r *http.Request) {}
+func OnEvalHand() {}
 
 // OnJoinGameRequest godoc
 // @Summary      Join a Game
@@ -144,7 +144,7 @@ func OnCreateGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	g, err := CreateGameFromConfig(config)
+	g, err := createGameFromConfig(config)
 	if err != nil {
 		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
 		return
@@ -299,11 +299,7 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = just.RecordingHub.OnGameUpdate(g.AsDTO())
-	if err != nil {
-		just.Logger.Errorf("error updating game state in elastic: %v", err)
-	}
-
+	go handleUpdates(g.AsDTO())
 	just.OK("action_accepted", struct{}{}).WriteJSONResponse(w)
 }
 
@@ -319,7 +315,7 @@ type ActiveGameDTO struct {
 // @Produce      json
 // @Success      200 {object} []ActiveGameDTO
 // @Router       /game [get]
-func OnGetCurrentActiveGames(w http.ResponseWriter, r *http.Request) {
+func OnGetCurrentActiveGames(w http.ResponseWriter, _ *http.Request) {
 	games := make([]ActiveGameDTO, 0)
 	for id, g := range CurrentGames {
 		if g.table == nil {
@@ -340,4 +336,49 @@ func OnGetCurrentActiveGames(w http.ResponseWriter, r *http.Request) {
 	}
 
 	just.WriteJSONResponse(w, 200, games)
+}
+
+// OnCreateGameConnection godoc
+// @Summary      Connect Updates
+// @Description  gets all game updates
+// @Tags         Game
+// @Produce      json
+// @Success      200 {object}
+// @Router       /game/{game_id}/state/ws [get]
+func OnCreateGameConnection(w http.ResponseWriter, r *http.Request) {
+	userID, _, err := just.GetAuthorizedUser(r)
+	if err != nil {
+		just.MissingToken().WriteJSONResponse(w)
+		return
+	}
+
+	gameID := r.PathValue("game_id")
+	just.Logger.Debugf("received request to connect to game state updates from game [%s] from player [%s]", gameID, userID)
+
+	_, ok := CurrentGames[gameID]
+	if !ok {
+		just.NotFound("game not found", int(just.GameNotFound)).WriteJSONResponse(w)
+		return
+	}
+
+	just.HandleWebSocket(w, r, gameID, userID)
+}
+
+func handleUpdates(dto GameDTO) {
+	err := just.RecordingHub.OnGameUpdate(dto)
+	if err != nil {
+		just.Logger.Errorf("error updating game state in elastic: %v", err)
+	}
+
+	for _, conn := range just.UpdateHub.GetChannelsForGame(dto.ID) {
+		clone := dto
+		for _, p := range clone.Table.Players {
+			if len(p.Hole) == 2 && p.UserID != conn.PlayerID {
+				p.Hole[0] = CardDTO{Rank: 'x', Suit: 'x'}
+				p.Hole[1] = CardDTO{Rank: 'x', Suit: 'x'}
+			}
+		}
+
+		conn.MessageChannel <- clone
+	}
 }

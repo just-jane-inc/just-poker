@@ -63,26 +63,26 @@ type Hand struct {
 	Cards []*card
 }
 
-func (this Hand) GetHandStrings() []string {
-	thisHand := make([]string, len(this.Cards))
-	for i, card := range this.Cards {
+func (h Hand) GetHandStrings() []string {
+	thisHand := make([]string, len(h.Cards))
+	for i, card := range h.Cards {
 		thisHand[i] = card.ToString()
 	}
 
 	return thisHand
 }
 
-// this > that -> 1
-// this == that -> 0
-// this < that -> -1
-func (this Hand) CompareTo(that Hand) int {
-	thisHand := make([]just.Card, len(this.Cards))
-	for i, card := range this.Cards {
+// CompareTo compares two poker hands (of 5 or 7 cards) to determine which is better
+//
+// returns 1 if h is better then other, returns 0 if the hands are equal and -1 if other is better
+func (h Hand) CompareTo(other Hand) int {
+	thisHand := make([]just.Card, len(h.Cards))
+	for i, card := range h.Cards {
 		thisHand[i] = just.Card{Rank: card.rank, Suit: card.suit}
 	}
 
-	thatHand := make([]just.Card, len(that.Cards))
-	for i, card := range that.Cards {
+	thatHand := make([]just.Card, len(other.Cards))
+	for i, card := range other.Cards {
 		thatHand[i] = just.Card{Rank: card.rank, Suit: card.suit}
 	}
 
@@ -102,7 +102,7 @@ func (this Hand) CompareTo(that Hand) int {
 		return 1
 	} else if thisScore > thatScore {
 		return -1
-	} else {
-		return 0
 	}
+
+	return 0
 }

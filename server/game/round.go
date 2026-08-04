@@ -4,6 +4,9 @@ import "strconv"
 
 type RoundType string
 
+// reason: we use snake case for enumerated constants
+//
+//goland:noinspection GoSnakeCaseUsage
 const (
 	round_type_unset     RoundType = "unset"
 	round_type_setup     RoundType = "setup"
