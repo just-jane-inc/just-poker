@@ -1,9 +1,18 @@
-from argparse import Action
-import asyncio
 import logging
 from enum import Enum
 
-from openapi_client import *
+from openapi_client import (
+    ApiClient,
+    ApiException,
+    Configuration,
+    GameApi,
+    GameCardDTO,
+    GameGameDTO,
+    GameNewGameConfigDTO,
+    GamePostRequest,
+    UserApi,
+)
+from poker_bot.bot.poker_exceptions import CustomException
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger("helpers")
@@ -61,7 +70,7 @@ async def delete_user(base_url: str, token: str) -> str | None:
 
     if resp.type == "error":
         print(resp.data)
-        raise ex.CustomException(resp.data)
+        raise CustomException(resp.data)
 
 
 class CardSuit(Enum):

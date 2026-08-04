@@ -1,8 +1,7 @@
 from dataclasses import dataclass
 
-from src.bot import PokerBot
-import src.poker_helpers as help
-import asyncio
+import poker_bot.bot.poker_helpers as help
+from poker_bot.bot.bot import PokerBot
 
 
 @dataclass
@@ -34,7 +33,7 @@ def get_test_user(username: str) -> TestUser | None:
 
 def get_test_users() -> list[TestUser]:
     users: list[TestUser] = []
-    with open("examples/test_users.csv", "r") as f:
+    with open("test-tokens/test_users.csv", "r") as f:
         for user in f:
             user = user.rstrip()
             username, userid, token = user.split(",")
@@ -53,10 +52,9 @@ async def get_test_setup(base_url: str) -> TestSetup:
     for user in get_test_users():
         bot = PokerBot(base_url, user.token, user.user_id, game_id)
         await bot.join_game()
-        return None
         bots[user.username] = TestBot(user, bot)
 
-    #    await bots["jane"].bot.start_game()
+    await bots["jane"].bot.start_game()
 
     return TestSetup(bots, game_id)
 

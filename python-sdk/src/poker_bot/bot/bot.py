@@ -1,12 +1,18 @@
 import asyncio
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
 
-import httpx
-
-import src.poker_exceptions as ex
-import src.poker_helpers as help
-from openapi_client import *
+import poker_bot.bot.poker_exceptions as ex
+import poker_bot.bot.poker_helpers as help
+from openapi_client import (
+    GameApi,
+    GameChipExchangeDTO,
+    GameGameDTO,
+    GameGameIdActionPostRequest,
+    GameGameIdChipExchangePostRequest,
+    GamePlayerActionDTO,
+    UserApi,
+)
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger("bot")
@@ -98,7 +104,9 @@ class PokerBot:
             if player.user_id == self._user_id:
                 self._player = player
                 self._current_stack = sorted(
-                    convert_stack(self._player.stack), key=lambda i: i.denomination, reverse=True
+                    convert_stack(self._player.stack),
+                    key=lambda i: i.denomination,
+                    reverse=True,
                 )
                 break
 
@@ -159,7 +167,9 @@ class PokerBot:
             if amount_needed == 0:
                 return
 
-        for s in sorted(self._current_stack, key=lambda q: q.denomination, reverse=True):
+        for s in sorted(
+            self._current_stack, key=lambda q: q.denomination, reverse=True
+        ):
             if s.denomination > 0 and s.denomination > amount_needed:
                 logger.debug(f"exchanging 1x{s.denomination} for smaller chips")
                 s.count -= 1
