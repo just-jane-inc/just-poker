@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -118,6 +119,8 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request, gameID string, play
 }
 
 func (p *PlayerUpdateConnection) handleMessages() {
+	ticker := time.NewTicker(time.Duration(5) * time.Second)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-p.Exit:
@@ -133,6 +136,11 @@ func (p *PlayerUpdateConnection) handleMessages() {
 
 			if err = p.conn.WriteMessage(1, bytes); err != nil {
 				Logger.Errorf("error writing message to connection for player [%s]", p.PlayerID)
+			}
+		case <-ticker.C:
+			_ = p.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			if err := p.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
 			}
 		}
 	}
