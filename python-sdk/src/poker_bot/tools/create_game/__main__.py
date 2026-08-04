@@ -1,7 +1,13 @@
 import argparse
 import asyncio
+import os
+
+from dotenv import load_dotenv
 
 from poker_bot.bot.poker_helpers import create_game
+
+load_dotenv("config/.env")
+base_url = os.getenv("BASE_URL")
 
 parser = argparse.ArgumentParser("poker bot tool CLI")
 parser.add_argument(
@@ -17,16 +23,11 @@ parser.add_argument(
 parser.add_argument(
     "--sb", type=int, required=False, default=50, help="the small blind to configure"
 )
-parser.add_argument(
-    "--local", action="store_true", default=False, help="the small blind to configure"
-)
 
 
 async def new_game(
     player_count: int, big_blind: int, small_blind: int, local: bool, token: str
 ):
-    base_url = "http://localhost:7653" if local else "https://game.bahms.org/api/poker"
-    print(base_url)
     resp = await create_game(
         base_url, token, big_blind, small_blind, player_count=player_count
     )
@@ -35,7 +36,7 @@ async def new_game(
 
 def main():
     print("starting thing")
-    with open("test-tokens/api-token", "r") as f:
+    with open("config/api-token", "r") as f:
         token = str(f.read()).strip("\n")
         print(token)
 

@@ -1,12 +1,15 @@
+import os
+
 import pytest
+from dotenv import load_dotenv
 
 import poker_bot.bot.poker_helpers as help
 from openapi_client.models.game_round_type import GameRoundType
 from poker_bot.bot import bot
 from poker_bot.tools.tui.setup_tui_example import get_test_users
 
-base_url = "http://localhost:7653"
-# base_url = "https://game.bahms.org/api/poker"
+load_dotenv("config/.env")
+base_url = os.getenv("BASE_URL")
 
 
 # TODO: make some test users to re-use rather than making them each time

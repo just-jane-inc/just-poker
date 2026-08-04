@@ -33,7 +33,7 @@ def get_test_user(username: str) -> TestUser | None:
 
 def get_test_users() -> list[TestUser]:
     users: list[TestUser] = []
-    with open("test-tokens/test_users.csv", "r") as f:
+    with open("config/test_users.csv", "r") as f:
         for user in f:
             user = user.rstrip()
             username, userid, token = user.split(",")

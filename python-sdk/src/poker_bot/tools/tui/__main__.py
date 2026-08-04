@@ -2,7 +2,9 @@
 import argparse
 import asyncio
 import logging
+import os
 
+from dotenv import load_dotenv
 from textual import on
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal
@@ -16,16 +18,15 @@ from openapi_client.models import GamePlayerDTO, GameTableDTO
 from poker_bot.bot.bot import PokerBot
 from poker_bot.tools.tui.setup_tui_example import get_test_user, setup
 
-logging.basicConfig(level=logging.ERROR)
+load_dotenv("config/.env")
+base_url = os.getenv("BASE_URL")
 
+logging.basicConfig(level=logging.ERROR)
 
 parser = argparse.ArgumentParser(prog="test tui")
 parser.add_argument("--game-id", type=str, required=False, help="game id")
 parser.add_argument("--player-name", type=str, required=False, help="")
 parser.add_argument("--setup", action="store_true", required=False, help="")
-
-base_url = "http://localhost:7653"
-# base_url = "https://game.bahms.org/api/poker"
 
 
 def main():
