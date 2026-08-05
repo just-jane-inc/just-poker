@@ -1,7 +1,6 @@
 # import openapi_client as poker_api
 import argparse
 import asyncio
-import logging
 import os
 
 from dotenv import load_dotenv
@@ -20,8 +19,6 @@ from poker_bot.tools.tui.setup_tui_example import get_test_user, setup
 
 load_dotenv("config/.env")
 base_url = os.getenv("BASE_URL")
-
-logging.basicConfig(level=logging.ERROR)
 
 parser = argparse.ArgumentParser(prog="test tui")
 parser.add_argument("--game-id", type=str, required=False, help="game id")
