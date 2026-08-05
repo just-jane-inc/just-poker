@@ -616,10 +616,6 @@ func (g *game) handleSetup(action PlayerActionDTO, p *player) error {
 			}
 		}
 
-		// just need to ensure that the current round bet is set to the big blind
-		// before exiting this phase of play.
-		g.table.currentRound.bet = g.config.BigBlind
-
 	case g.table.bigBlindPosition:
 		if betAmount != g.table.currentHand.BigBlind {
 			return &just.PokerError{
@@ -644,6 +640,7 @@ func (g *game) handleSetup(action PlayerActionDTO, p *player) error {
 		return err
 	}
 
+	g.table.currentRound.bet = g.config.BigBlind
 	p.currentBet = p.currentBet.MergeWith(action.Bet.asStack())
 	return nil
 }
