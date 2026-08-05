@@ -13,6 +13,7 @@ from openapi_client import (
     GamePlayerActionDTO,
     UserApi,
 )
+from poker_bot.bot.websocket_events import WebSocketListener, WebSocketStream, WebSocketEvent
 
 logging.basicConfig(
     filename="app.log",  # Name of the file
@@ -79,6 +80,8 @@ class PokerBot:
             raise ex.CustomException("user id not provided")
 
         self._game_id = game_id
+        self._base_url = base_url
+        self._token = token
         self._api_client = help.create_connection(base_url, token)
         self._user_api = UserApi(self._api_client)
         self._game_api = GameApi(self._api_client)
@@ -102,11 +105,15 @@ class PokerBot:
         if resp.data is None:
             return None
 
+        self._ingest_state(resp.data)
+        return resp.data
+
+    def _ingest_state(self, state: GameGameDTO):
         # TODO: get the LSP to stop being insane
-        if resp.data.table is None or resp.data.table.players is None:
+        if state.table is None or state.table.players is None:
             raise ex.CustomException("what")
 
-        for player in resp.data.table.players:
+        for player in state.table.players:
             if player.user_id == self._user_id:
                 self._player = player
                 self._current_stack = sorted(
@@ -116,7 +123,16 @@ class PokerBot:
                 )
                 break
 
-        return resp.data
+    def _ingest_update(self, event: WebSocketEvent):
+        # Note: not doing anything else from data stream atm, mainly placeholder
+        if event.data is not None and isinstance(event.data, GameGameDTO):
+            self._ingest_state(event.data)
+
+    def websocket_stream(self, **kwargs) -> WebSocketStream:
+        return WebSocketStream(self._base_url, self._token, self._game_id, on_state=self._ingest_update, **kwargs)
+
+    def websocket_listener(self, **kwargs) -> WebSocketListener:
+        return WebSocketListener(self._base_url, self._token, self._game_id, on_game_state=self._ingest_state, **kwargs)
 
     async def exchange_chips(self, give: list[Chips], receive: list[Chips]):
         give_stack = {str(s.denomination): s.count for s in give}
