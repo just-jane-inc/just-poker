@@ -425,6 +425,22 @@ func OnCreateGameConnection(w http.ResponseWriter, r *http.Request) {
 	just.HandleWebSocket(w, r, gameID, userID, dto)
 }
 
+func sendMessageToConnections(gameID string, eventType string, data any) {
+	msg := just.WebsocketMessage[any]{
+		Data:      data,
+		EventType: eventType,
+	}
+
+	for _, conn := range just.UpdateHub.GetChannelsForGame(gameID) {
+		select {
+		case conn.MessageChannel <- msg:
+		default:
+		}
+
+		just.Logger.Debugf("send message to player %s success", conn.PlayerID)
+	}
+}
+
 func handleUpdates(dto GameDTO) {
 	err := just.RecordingHub.OnGameUpdate(dto)
 	if err != nil {
@@ -436,9 +452,14 @@ func handleUpdates(dto GameDTO) {
 		just.Logger.Debugf("sending update to player %s", conn.PlayerID)
 		dtoNew := dto.DeepCopy()
 		dtoNew.MaskCards(conn.PlayerID)
-		conn.MessageChannel <- just.WebsocketMessage[any]{
+		msg := just.WebsocketMessage[any]{
 			Data:      dtoNew,
 			EventType: "game_state_update",
+		}
+
+		select {
+		case conn.MessageChannel <- msg:
+		default:
 		}
 
 		just.Logger.Debugf("send message to player %s success", conn.PlayerID)

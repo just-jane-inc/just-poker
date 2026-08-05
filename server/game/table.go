@@ -23,6 +23,7 @@ type table struct {
 	buttonPosition     int
 	bigBlindPosition   int
 	smallBlindPosition int
+	gameID             string
 }
 
 func (t table) GetPlayerWithID(playerID string) *player {
@@ -186,29 +187,36 @@ func (t *table) NextRound() {
 			return
 		}
 
-		// we have one or more winners and a mapping
-		// of chip denominations to chips.
-		//
-		// we need to split the chips evenly among the winners.
-		// this may require changing denominations of chips..
-		if len(winners) == 1 {
-			p := t.players[winners[0]]
-			for denomination, count := range t.pot {
-				p.chips[denomination] += count
-			}
-		} else {
-			sum := t.pot.Sum()
-			sum = sum / len(winners)
-
-			for _, winner := range winners {
-				t.players[winner].chips[10] += sum / 10
-			}
+		p := t.players[winners[0]]
+		for denomination, count := range t.pot {
+			p.chips[denomination] += count
 		}
 
+		msg := PayoutEventDTO{
+			PlayerID: p.UserID,
+			Chips:    t.pot.AsDto(),
+		}
+
+		sendMessageToConnections(t.gameID, "payout", msg)
 		t.pot = make(map[int]int)
 		just.Logger.Debugf("the winner maybe is: [%v]", winners)
 		t.currentRound.currentRoundType = round_type_completed // blow up?
 	}
+
+	switch t.currentRound.currentRoundType {
+	case round_type_unset:
+		return
+	case round_type_completed:
+		return
+	case round_type_setup:
+		return
+	}
+
+	msg := RoundStartEventDTO{
+		Type: t.currentRound.currentRoundType,
+	}
+
+	sendMessageToConnections(t.gameID, "round_start", msg)
 }
 
 func (t *table) Showdown() map[int]int {

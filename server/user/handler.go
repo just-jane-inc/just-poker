@@ -84,7 +84,6 @@ func OnCreateUser(w http.ResponseWriter, r *http.Request) {
 
 // OnGetUsers Get all users
 // Internal only, unauthenticated
-
 func OnGetUsers(w http.ResponseWriter, r *http.Request) {
 	twitchID := r.PathValue("twitch_id")
 
@@ -129,7 +128,6 @@ func OnGetUsers(w http.ResponseWriter, r *http.Request) {
 
 // OnRenewKey Renew user key
 // Internal only, unauthenticated
-
 func OnRenewKey(w http.ResponseWriter, r *http.Request) {
 	userID := r.PathValue("user_id")
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)

@@ -52,7 +52,6 @@ type game struct {
 	config              NewGameConfigDTO
 	table               *table
 	playerActionChannel chan PlayerActionThing
-	listeners           map[string]*Listener
 }
 
 func (g *GameDTO) MaskCards(userID string) {
@@ -108,6 +107,7 @@ func createGameFromConfig(config NewGameConfigDTO) (*game, error) {
 	}
 
 	g.id = strconv.Itoa(id)
+	g.table.gameID = g.id
 	return g, nil
 }
 
@@ -236,6 +236,17 @@ func (g *game) TryStartNewHand() error {
 
 	t.currentHand.ID += 1
 	t.currentTurn.ID = 0
+
+	msg := HandStartEventDTO{
+		ID:                 t.currentHand.ID,
+		BigBlindCost:       t.currentHand.BigBlind,
+		BigBlindPosition:   t.bigBlindPosition,
+		SmallBlindCost:     t.currentHand.SmallBlind,
+		SmallBlindPosition: t.smallBlindPosition,
+		ButtonPosition:     t.buttonPosition,
+	}
+
+	sendMessageToConnections(g.id, "hand_started", msg)
 	return nil
 }
 

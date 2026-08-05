@@ -176,7 +176,7 @@ func (p *PlayerUpdateConnection) handleMessages() {
 		case <-ticker.C:
 			_ = p.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if err := p.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				Logger.Warnf("encountered error sending ping frame to [%s]: %v", p.PlayerID, err)
+				p.SignalExit()
 				return
 			}
 		}
