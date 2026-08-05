@@ -440,6 +440,7 @@ func handleUpdates(dto GameDTO) {
 		clone := dto
 		for _, p := range clone.Table.Players {
 			if len(p.Hole) == 2 && p.UserID != conn.PlayerID {
+				just.Logger.Debugf("masking cards, [%s] != [%s]", p.UserID, conn.PlayerID)
 				p.Hole[0] = CardDTO{Rank: 'x', Suit: 'x'}
 				p.Hole[1] = CardDTO{Rank: 'x', Suit: 'x'}
 			}

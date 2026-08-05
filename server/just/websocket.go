@@ -55,18 +55,19 @@ func (h *ServerUpdateHub) AddPlayerToHub(gameID string, playerID string) *Player
 
 	playerConnection, ok := hub.PlayerConnections[playerID]
 	if ok {
-		playerConnection.Exit <- true
+		playerConnection.SignalExit()
+		delete(hub.PlayerConnections, playerID)
 	}
 
-	playerConnection = &PlayerUpdateConnection{
+	p := &PlayerUpdateConnection{
 		GameID:         gameID,
 		PlayerID:       playerID,
 		MessageChannel: make(chan WebsocketMessage[any], 10),
 		Exit:           make(chan any),
 	}
 
-	hub.PlayerConnections[playerID] = playerConnection
-	return playerConnection
+	hub.PlayerConnections[playerID] = p
+	return p
 }
 
 type GameUpdateHub struct {
@@ -107,6 +108,15 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request, gameID string, play
 
 	playerConn := UpdateHub.AddPlayerToHub(gameID, playerID)
 	defer playerConn.SignalExit()
+	defer func() {
+		gameHub, ok := UpdateHub.Games[gameID]
+		if !ok {
+			return
+		}
+
+		delete(gameHub.PlayerConnections, playerID)
+	}()
+
 	playerConn.conn = conn
 	playerConn.MessageChannel <- WebsocketMessage[any]{
 		EventType: "welcome",
