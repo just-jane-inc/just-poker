@@ -437,8 +437,10 @@ func handleUpdates(dto GameDTO) {
 	just.Logger.Debugf("sending updates for game with ID [%s]", dto.ID)
 	for _, conn := range just.UpdateHub.GetChannelsForGame(dto.ID) {
 		just.Logger.Debugf("sending update to player %s", conn.PlayerID)
-		clone := dto
-		for _, p := range clone.Table.Players {
+		copyData, _ := json.Marshal(dto)
+		var dtoNew GameDTO
+		_ = json.Unmarshal(copyData, &dtoNew)
+		for _, p := range dtoNew.Table.Players {
 			if len(p.Hole) == 2 && p.UserID != conn.PlayerID {
 				just.Logger.Debugf("masking cards, [%s] != [%s]", p.UserID, conn.PlayerID)
 				p.Hole[0] = CardDTO{Rank: 'x', Suit: 'x'}
@@ -447,7 +449,7 @@ func handleUpdates(dto GameDTO) {
 		}
 
 		conn.MessageChannel <- just.WebsocketMessage[any]{
-			Data:      clone,
+			Data:      dtoNew,
 			EventType: "game_state_update",
 		}
 
