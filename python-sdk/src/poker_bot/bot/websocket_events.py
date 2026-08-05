@@ -4,13 +4,14 @@ import json
 import logging
 
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any, AsyncGenerator, AsyncIterator, Awaitable, Callable
 from urllib.parse import urlsplit, urlunsplit
 
 import websockets
 
 import poker_bot.bot.poker_exceptions as ex
-from openapi_client import GameGameDTO
+from openapi_client import GameGameDTO, GameRoundDTO, GamePlayerActionDTO
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger("websocket")
@@ -18,17 +19,71 @@ logger = logging.getLogger("websocket")
 GameStateCallback = Callable[[GameGameDTO], Awaitable[None] | None]
 EventCallback = Callable[["WebSocketEvent"], Awaitable[None] | None]
 
-# Note: this is the only state now
-GAME_STATE_EVENT = "game_state_update"
-VALID_STATES = [ GAME_STATE_EVENT ]
+
+
+class UnknownWebSocketEventType:
+    """Unknown event holder to retain original string type"""
+    def __init__(self, value: str):
+        self.value = value
+        self.dto_type = dict
+        self.name = "UNKNOWN"
+
+    def __repr__(self):
+        return f"UnknownWebSocketEventType({self.value!r})"
+
+
+class WebSocketEventType(Enum):
+    """Known Websocket Events with their associated DTO if available"""
+    def __new__(cls, value: str, obj_type):
+        obj = object.__new__(cls)
+        obj._value_ = value
+        obj.obj_type = obj_type
+        return obj
+
+    UNKNOWN = "", dict
+    WELCOME = "welcome", GameGameDTO
+    GAME_STATE_EVENT = "game_state_update", GameGameDTO
+    PLAYER_ACTION = "player_action", GamePlayerActionDTO
+    PAYOUT = "payout", dict
+    ROUND_START = "round_start", GameRoundDTO
+    HAND_STARTED = "hand_started", dict
+
+    @property
+    def data_class(self):
+        return self.obj_type
+
+    @classmethod
+    def from_str(cls, event_type: str) -> "WebSocketEventType | UnknownWebSocketEventType":
+        try:
+            return cls(event_type)
+        except ValueError:
+            return UnknownWebSocketEventType(event_type)
+
+    def __str__(self) -> str:
+        if self._value_ == "":
+            return "Unknown"
+        return self._value_
+
 
 @dataclass(frozen=True)
 class WebSocketEvent:
-    event_type: str
-    data: Any | GameGameDTO | None # only game dto for now
+    event_type: WebSocketEventType | UnknownWebSocketEventType
+    _data: dict | None
     id: int = 0
     time_sent: str = ""
     raw: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def data(self) -> Any:
+        if isinstance(self.event_type, WebSocketEventType):
+            if self.event_type.data_class == dict:
+                return self._data
+            if hasattr(self.event_type.data_class, "from_dict"):
+                try:
+                    return self.event_type.data_class.from_dict(self._data)
+                except Exception as e:
+                    raise ex.CustomException(f"could not parse event data: {e}")
+        return self._data
 
 
 def build_state_ws_url(base_url: str, game_id: str) -> str:
@@ -45,6 +100,7 @@ def build_state_ws_url(base_url: str, game_id: str) -> str:
 
 
 def parse_event(message: str | bytes) -> WebSocketEvent:
+    """Parse websocket event data"""
     if isinstance(message, (bytes, bytearray)):
         message = message.decode("utf-8")
 
@@ -57,10 +113,9 @@ def parse_event(message: str | bytes) -> WebSocketEvent:
         raise ex.CustomException("received non object message on update feed")
 
     if recv_data := payload.get("data", {}):
-        event_type = payload.get("event_type", "")
+        _event_type = payload.get("event_type", "")
 
-        if event_type == "welcome": # Note: Only value as it is the only ws message at the moment. On join response
-            event_type = GAME_STATE_EVENT
+        event_type = WebSocketEventType.from_str(_event_type)
 
         time_sent = payload.get("time_sent", "")
         try:
@@ -70,20 +125,16 @@ def parse_event(message: str | bytes) -> WebSocketEvent:
     else:
         raise ex.CustomException(f"unexpected data received: {payload}")
 
-    if event_type not in VALID_STATES:
-        raise ex.CustomException(f"could not find valid model for event type: {event_type}")
+    if event_type == WebSocketEventType.UNKNOWN or isinstance(event_type, UnknownWebSocketEventType):
+        logger.debug(f"unknown event type from websocket: {_event_type}")
 
     state = None
     if isinstance(recv_data, dict):
-        try:
-            if event_type == GAME_STATE_EVENT: # Note: Only game dto for now
-                state = GameGameDTO.from_dict(recv_data)
-        except Exception as e:
-            raise ex.CustomException(f"could not parse game state from update: {e}")
+        state = recv_data
 
     return WebSocketEvent(
         event_type=event_type,
-        data=state,
+        _data=state,
         id=event_id,
         time_sent=str(time_sent),
         raw=payload,
@@ -91,6 +142,7 @@ def parse_event(message: str | bytes) -> WebSocketEvent:
 
 
 class GameStateStream:
+    """Stream of GameState Update Events. Blocking"""
     def __init__(self, base_url: str, token: str, game_id: str,
         *,
         reconnect: bool = True,
@@ -156,7 +208,7 @@ class GameStateStream:
                         logger.error(f"dropping bad update message: {e}")
                         continue
 
-                    if event.event_type != GAME_STATE_EVENT:
+                    if not isinstance(event.event_type, WebSocketEventType) or event.event_type.data_class != GameGameDTO:
                         continue
 
                     if event.data is not None and self._on_state is not None:
@@ -217,6 +269,7 @@ class GameStateStream:
 
 
 class GameStateListener:
+    """Listener for GameState Updates. Non-blocking, assign a callback function to run whenever an update is received"""
     def __init__(self, base_url: str, token: str, game_id: str, **kwargs):
         self._stream = GameStateStream(base_url, token, game_id, **kwargs)
         self._state_handlers: list[GameStateCallback] = []
@@ -275,7 +328,7 @@ class GameStateListener:
             for handler in self._event_handlers.get("*", []):
                 handlers.append((handler, event))
 
-            for handler in self._event_handlers.get(event.event_type, []):
+            for handler in self._event_handlers.get(str(event.event_type), []):
                 handlers.append((handler, event))
 
             if event.data is not None:
