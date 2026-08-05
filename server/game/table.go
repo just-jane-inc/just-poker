@@ -125,7 +125,6 @@ func (t *table) NextRound() {
 			p.pocket = make([]*card, 2)
 			p.pocket[0] = t.deck.Draw()
 		}
-
 		for idx := range len(t.players) {
 			p := t.players[(idx+offset)%len(t.players)]
 

@@ -55,6 +55,22 @@ type game struct {
 	listeners           map[string]*Listener
 }
 
+func (g *GameDTO) MaskCards(userID string) {
+	for _, p := range g.Table.Players {
+		if len(p.Hole) == 2 && p.UserID != userID {
+			p.Hole[0] = CardDTO{'x', 'x'}
+			p.Hole[1] = CardDTO{'x', 'x'}
+		}
+	}
+}
+
+func (g *GameDTO) DeepCopy() GameDTO {
+	serialized, _ := json.Marshal(g)
+	var dto GameDTO
+	_ = json.Unmarshal(serialized, &dto)
+	return dto
+}
+
 func (g *game) AsDTO() GameDTO {
 	return GameDTO{
 		StartedAt: g.startedAt,

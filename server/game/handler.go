@@ -107,12 +107,7 @@ func OnGetCurrentGameState(w http.ResponseWriter, r *http.Request) {
 	dto := g.AsDTO()
 
 	if userType != "admin" && userType != "game_master" {
-		for _, p := range dto.Table.Players {
-			if len(p.Hole) == 2 && p.UserID != userID {
-				p.Hole[0] = CardDTO{Rank: 'x', Suit: 'x'}
-				p.Hole[1] = CardDTO{Rank: 'x', Suit: 'x'}
-			}
-		}
+		dto.MaskCards(userID)
 	}
 
 	just.OK("game_state", dto).WriteJSONResponse(w)
@@ -425,7 +420,9 @@ func OnCreateGameConnection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	just.HandleWebSocket(w, r, gameID, userID, g.AsDTO())
+	dto := g.AsDTO()
+	dto.MaskCards(userID)
+	just.HandleWebSocket(w, r, gameID, userID, dto)
 }
 
 func handleUpdates(dto GameDTO) {
@@ -437,17 +434,8 @@ func handleUpdates(dto GameDTO) {
 	just.Logger.Debugf("sending updates for game with ID [%s]", dto.ID)
 	for _, conn := range just.UpdateHub.GetChannelsForGame(dto.ID) {
 		just.Logger.Debugf("sending update to player %s", conn.PlayerID)
-		copyData, _ := json.Marshal(dto)
-		var dtoNew GameDTO
-		_ = json.Unmarshal(copyData, &dtoNew)
-		for _, p := range dtoNew.Table.Players {
-			if len(p.Hole) == 2 && p.UserID != conn.PlayerID {
-				just.Logger.Debugf("masking cards, [%s] != [%s]", p.UserID, conn.PlayerID)
-				p.Hole[0] = CardDTO{Rank: 'x', Suit: 'x'}
-				p.Hole[1] = CardDTO{Rank: 'x', Suit: 'x'}
-			}
-		}
-
+		dtoNew := dto.DeepCopy()
+		dtoNew.MaskCards(conn.PlayerID)
 		conn.MessageChannel <- just.WebsocketMessage[any]{
 			Data:      dtoNew,
 			EventType: "game_state_update",
