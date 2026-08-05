@@ -9,6 +9,7 @@ version = "0.1.0"
 [project.scripts]
 poker-tui = "poker_bot.tools.tui.__main__:main"
 new-game = "poker_bot.tools.create_game.__main__:main"
+get-game = "poker_bot.tools.game_state.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

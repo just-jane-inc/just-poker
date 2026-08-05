@@ -52,7 +52,22 @@ type game struct {
 	config              NewGameConfigDTO
 	table               *table
 	playerActionChannel chan PlayerActionThing
-	listeners           map[string]*Listener
+}
+
+func (g *GameDTO) MaskCards(userID string) {
+	for _, p := range g.Table.Players {
+		if len(p.Hole) == 2 && p.UserID != userID {
+			p.Hole[0] = CardDTO{'x', 'x'}
+			p.Hole[1] = CardDTO{'x', 'x'}
+		}
+	}
+}
+
+func (g *GameDTO) DeepCopy() GameDTO {
+	serialized, _ := json.Marshal(g)
+	var dto GameDTO
+	_ = json.Unmarshal(serialized, &dto)
+	return dto
 }
 
 func (g *game) AsDTO() GameDTO {
@@ -92,6 +107,7 @@ func createGameFromConfig(config NewGameConfigDTO) (*game, error) {
 	}
 
 	g.id = strconv.Itoa(id)
+	g.table.gameID = g.id
 	return g, nil
 }
 
@@ -220,6 +236,17 @@ func (g *game) TryStartNewHand() error {
 
 	t.currentHand.ID += 1
 	t.currentTurn.ID = 0
+
+	msg := HandStartEventDTO{
+		ID:                 t.currentHand.ID,
+		BigBlindCost:       t.currentHand.BigBlind,
+		BigBlindPosition:   t.bigBlindPosition,
+		SmallBlindCost:     t.currentHand.SmallBlind,
+		SmallBlindPosition: t.smallBlindPosition,
+		ButtonPosition:     t.buttonPosition,
+	}
+
+	sendMessageToConnections(g.id, "hand_started", msg)
 	return nil
 }
 
@@ -589,10 +616,6 @@ func (g *game) handleSetup(action PlayerActionDTO, p *player) error {
 			}
 		}
 
-		// just need to ensure that the current round bet is set to the big blind
-		// before exiting this phase of play.
-		g.table.currentRound.bet = g.config.BigBlind
-
 	case g.table.bigBlindPosition:
 		if betAmount != g.table.currentHand.BigBlind {
 			return &just.PokerError{
@@ -617,6 +640,7 @@ func (g *game) handleSetup(action PlayerActionDTO, p *player) error {
 		return err
 	}
 
+	g.table.currentRound.bet = g.config.BigBlind
 	p.currentBet = p.currentBet.MergeWith(action.Bet.asStack())
 	return nil
 }

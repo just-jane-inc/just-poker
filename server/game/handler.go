@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/just-jane-inc/just-poker/server/just"
 )
@@ -107,12 +108,7 @@ func OnGetCurrentGameState(w http.ResponseWriter, r *http.Request) {
 	dto := g.AsDTO()
 
 	if userType != "admin" && userType != "game_master" {
-		for _, p := range dto.Table.Players {
-			if len(p.Hole) == 2 && p.UserID != userID {
-				p.Hole[0] = CardDTO{Rank: 'x', Suit: 'x'}
-				p.Hole[1] = CardDTO{Rank: 'x', Suit: 'x'}
-			}
-		}
+		dto.MaskCards(userID)
 	}
 
 	just.OK("game_state", dto).WriteJSONResponse(w)
@@ -299,7 +295,7 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go handleUpdates(g.AsDTO())
+	go handleUpdates(playerAction, g.AsDTO())
 	just.OK("action_accepted", struct{}{}).WriteJSONResponse(w)
 }
 
@@ -399,6 +395,9 @@ func OnGetNextListenerEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	msg := <-conn.MessageChannel
+	msg.TimeSent = time.Now()
+	msg.ID = conn.MsgIDCounter
+	conn.MsgIDCounter += 1
 	just.WriteJSONResponse(w, http.StatusOK, msg)
 }
 
@@ -425,29 +424,56 @@ func OnCreateGameConnection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	just.HandleWebSocket(w, r, gameID, userID, g.AsDTO())
+	dto := g.AsDTO()
+	dto.MaskCards(userID)
+	just.HandleWebSocket(w, r, gameID, userID, dto)
 }
 
-func handleUpdates(dto GameDTO) {
+func sendMessageToConnections(gameID string, eventType string, data any) {
+	msg := just.WebsocketMessage[any]{
+		Data:      data,
+		EventType: eventType,
+	}
+
+	for _, conn := range just.UpdateHub.GetChannelsForGame(gameID) {
+		select {
+		case conn.MessageChannel <- msg:
+		default:
+		}
+
+		just.Logger.Debugf("send message to player %s success", conn.PlayerID)
+	}
+}
+
+func handleUpdates(action PlayerActionDTO, dto GameDTO) {
 	err := just.RecordingHub.OnGameUpdate(dto)
 	if err != nil {
 		just.Logger.Errorf("error updating game state in elastic: %v", err)
 	}
 
+	actionUpdate := just.WebsocketMessage[any]{
+		EventType: "player_action",
+		Data:      action,
+	}
+
 	just.Logger.Debugf("sending updates for game with ID [%s]", dto.ID)
 	for _, conn := range just.UpdateHub.GetChannelsForGame(dto.ID) {
 		just.Logger.Debugf("sending update to player %s", conn.PlayerID)
-		clone := dto
-		for _, p := range clone.Table.Players {
-			if len(p.Hole) == 2 && p.UserID != conn.PlayerID {
-				p.Hole[0] = CardDTO{Rank: 'x', Suit: 'x'}
-				p.Hole[1] = CardDTO{Rank: 'x', Suit: 'x'}
-			}
+		dtoNew := dto.DeepCopy()
+		dtoNew.MaskCards(conn.PlayerID)
+		msg := just.WebsocketMessage[any]{
+			Data:      dtoNew,
+			EventType: "game_state_update",
 		}
 
-		conn.MessageChannel <- just.WebsocketMessage[any]{
-			Data:      clone,
-			EventType: "game_state_update",
+		select {
+		case conn.MessageChannel <- msg:
+		default:
+		}
+
+		select {
+		case conn.MessageChannel <- actionUpdate:
+		default:
 		}
 
 		just.Logger.Debugf("send message to player %s success", conn.PlayerID)
