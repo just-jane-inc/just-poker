@@ -75,6 +75,8 @@ class WebSocketEvent:
 
     @property
     def data(self) -> Any:
+        if self._data is None:
+            return self._data
         if isinstance(self.event_type, WebSocketEventType):
             if self.event_type.data_class == dict:
                 return self._data
@@ -82,7 +84,8 @@ class WebSocketEvent:
                 try:
                     return self.event_type.data_class.from_dict(self._data)
                 except Exception as e:
-                    raise ex.CustomException(f"could not parse event data: {e}")
+                    logger.warning(f"could not parse event data: {e}")
+                    return self._data
         return self._data
 
 
