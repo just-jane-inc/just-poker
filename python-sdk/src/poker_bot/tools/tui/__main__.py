@@ -13,9 +13,9 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, Footer, Input, Label, Static
 
 import poker_bot.bot.poker_helpers as help
-from openapi_client import ApiClient
-from openapi_client.models import GamePlayerDTO, GameTableDTO
+from openapi_client.models import GameGameDTO, GamePlayerDTO, GameTableDTO
 from poker_bot.bot.bot import PokerBot
+from poker_bot.bot.websocket_events import GameStateListener
 from poker_bot.tools.tui.setup_tui_example import get_test_user, setup
 
 load_dotenv("config/.env")
@@ -28,6 +28,13 @@ parser.add_argument("--game-id", type=str, required=False, help="game id")
 parser.add_argument("--player-name", type=str, required=False, help="")
 parser.add_argument("--setup", action="store_true", required=False, help="")
 
+if os.name == 'nt':
+    # For windows only tool usage, fix for cert stuff
+    try:
+        import truststore
+        truststore.inject_into_ssl()
+    finally:
+        pass
 
 def main():
     args = parser.parse_args()
@@ -78,15 +85,6 @@ class Table(Static):
     table: reactive[GameTableDTO | None] = reactive(GameTableDTO())
     card_map = help.get_unicode_mapping()
     seconds_remaining = reactive(0)
-    conn: ApiClient | None = None
-    game_id: str = ""
-
-    async def update_table_state(self):
-        if not self.conn:
-            return
-
-        state = await help.get_game_state(self.conn, self.game_id)
-        self.table = state.table
 
     def render(self) -> str:
         view = "====TABLE====\n"
@@ -182,6 +180,9 @@ class PokerApp(App):
         ("q", "quit", "Quit"),
     ]
 
+    game_state: GameGameDTO | None = None
+    listener: GameStateListener | None = None
+
     def compose(self) -> ComposeResult:
         with Horizontal(id="main"):
             yield Players(id="players")
@@ -205,23 +206,25 @@ class PokerApp(App):
         self.game_state = None
         user = get_test_user(args.player_name)
 
-        table = self.query_one(Table)
-        table.conn = help.create_connection(base_url, user.token)
-        table.game_id = args.game_id
-        await table.update_table_state()
+        me = PokerBot(base_url, user.token, user.user_id, args.game_id)
+        self.query_one(Players).me = me
 
-        self.set_interval(3, self.tick)
+        self.listener = me.game_state_listener()
+        self.listener.on_state(self.apply_state)
+        await self.listener.start()
 
-        player = self.query_one(Players)
-        player.players = table.table.players
-        player.me = PokerBot(base_url, user.token, user.user_id, args.game_id)
+        # state = await me.get_game_state()
+        # if state is not None and self.game_state is None:
+        #     await self.apply_state(state)
 
-    async def tick(self) -> None:
-        table = self.query_one(Table)
-        await table.update_table_state()
+    async def apply_state(self, state: GameGameDTO) -> None:
+        self.game_state = state
+        self.query_one(Table).table = state.table
+        self.query_one(Players).players = state.table.players
 
-        player = self.query_one(Players)
-        player.players = table.table.players
+    async def on_unmount(self) -> None:
+        if self.listener is not None:
+            await self.listener.stop()
 
     async def action_fold(self) -> None:
         players = self.query_one(Players)
