@@ -95,7 +95,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func HandleWebSocket(w http.ResponseWriter, r *http.Request, gameID string, playerID string) {
+func HandleWebSocket(w http.ResponseWriter, r *http.Request, gameID string, playerID string, data any) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		Logger.Errorf("Failed to upgrade connection: %v", err)
@@ -106,7 +106,13 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request, gameID string, play
 	Logger.Infof("Client connected: %s", conn.RemoteAddr())
 
 	playerConn := UpdateHub.AddPlayerToHub(gameID, playerID)
+	defer playerConn.SignalExit()
 	playerConn.conn = conn
+	playerConn.MessageChannel <- WebsocketMessage[any]{
+		EventType: "welcome",
+		Data:      data,
+	}
+
 	go playerConn.handleMessages()
 
 	for {
@@ -126,13 +132,21 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request, gameID string, play
 	Logger.Infof("client disconnected: %s", conn.RemoteAddr())
 }
 
+func (p *PlayerUpdateConnection) SignalExit() {
+	select {
+	case p.Exit <- true:
+	default:
+	}
+}
+
 func (p *PlayerUpdateConnection) handleMessages() {
 	ticker := time.NewTicker(time.Duration(5) * time.Second)
+	defer Logger.Debugf("exiting handle message for [%s]", p.PlayerID)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-p.Exit:
-			Logger.Debugf("received exit signal for player [%s] connection, closing", p.PlayerID)
+			Logger.Infof("received exit signal for player [%s] connection, closing", p.PlayerID)
 			p.conn.Close()
 		case msg := <-p.MessageChannel:
 			Logger.Debugf("sending message [%d] to player [%s] ws connection", p.msgIDCounter, p.PlayerID)
@@ -152,6 +166,7 @@ func (p *PlayerUpdateConnection) handleMessages() {
 		case <-ticker.C:
 			_ = p.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if err := p.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				Logger.Warnf("encountered error sending ping frame to [%s]: %v", p.PlayerID, err)
 				return
 			}
 		}

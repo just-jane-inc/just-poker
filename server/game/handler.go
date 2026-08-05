@@ -419,13 +419,13 @@ func OnCreateGameConnection(w http.ResponseWriter, r *http.Request) {
 	gameID := r.PathValue("game_id")
 	just.Logger.Debugf("received request to connect to game state updates from game [%s] from player [%s]", gameID, userID)
 
-	_, ok := CurrentGames[gameID]
+	g, ok := CurrentGames[gameID]
 	if !ok {
 		just.NotFound("game not found", int(just.GameNotFound)).WriteJSONResponse(w)
 		return
 	}
 
-	just.HandleWebSocket(w, r, gameID, userID)
+	just.HandleWebSocket(w, r, gameID, userID, g.AsDTO())
 }
 
 func handleUpdates(dto GameDTO) {
