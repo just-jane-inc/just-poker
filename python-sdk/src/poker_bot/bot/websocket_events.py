@@ -42,7 +42,7 @@ class WebSocketEventType(Enum):
 
     UNKNOWN = "", dict
     WELCOME = "welcome", GameGameDTO
-    GAME_STATE_EVENT = "game_state_update", GameGameDTO
+    GAME_STATE_UPDATE = "game_state_update", GameGameDTO
     PLAYER_ACTION = "player_action", GamePlayerActionDTO
     PAYOUT = "payout", dict
     ROUND_START = "round_start", GameRoundDTO
@@ -144,15 +144,16 @@ def parse_event(message: str | bytes) -> WebSocketEvent:
     )
 
 
-class GameStateStream:
-    """Stream of GameState Update Events. Blocking"""
+class WebSocketStream:
+    """Stream of WebSocket Events. Blocking"""
     def __init__(self, base_url: str, token: str, game_id: str,
         *,
         reconnect: bool = True,
         max_retries: int = 0,
         retry_backoff: float = 1.0,
         max_retry_backoff: float = 30.0,
-        on_state: GameStateCallback | None = None,
+        on_state: EventCallback | None = None,
+        on_game_state: GameStateCallback | None = None
     ):
         if not token:
             raise ex.CustomException("api token not provided")
@@ -165,6 +166,7 @@ class GameStateStream:
         self._retry_backoff = retry_backoff
         self._max_retry_backoff = max_retry_backoff
         self._on_state = on_state
+        self._on_game_state = on_game_state
         self._conn = None
         self._closed = False
 
@@ -172,7 +174,7 @@ class GameStateStream:
     def url(self) -> str:
         return self._url
 
-    async def connect(self) -> "GameStateStream":
+    async def connect(self) -> "WebSocketStream":
         if self._conn is not None:
             return self
 
@@ -189,7 +191,7 @@ class GameStateStream:
             await self._conn.close()
             self._conn = None
 
-    async def __aenter__(self) -> "GameStateStream":
+    async def __aenter__(self) -> "WebSocketStream":
         return await self.connect()
 
     async def __aexit__(self, exc_type, exc, tb):
@@ -211,7 +213,7 @@ class GameStateStream:
                         logger.error(f"dropping bad update message: {e}")
                         continue
 
-                    if not isinstance(event.event_type, WebSocketEventType) or event.event_type.data_class != GameGameDTO:
+                    if not isinstance(event.event_type, WebSocketEventType):
                         continue
 
                     if event.data is not None and self._on_state is not None:
@@ -221,6 +223,15 @@ class GameStateStream:
                             raise
                         except Exception as e:
                             logger.error(f"error in on_state hook: {e}", exc_info=True)
+
+                    if event.data is not None and self._on_game_state is not None and isinstance(event.data, GameGameDTO):
+                        try:
+                            await _call(self._on_game_state, event.data)
+                        except asyncio.CancelledError:
+                            raise
+                        except Exception as e:
+                            logger.error(f"error in on_game_state hook: {e}", exc_info=True)
+
                     yield event
 
             except asyncio.CancelledError:
@@ -248,18 +259,18 @@ class GameStateStream:
                         self._max_retry_backoff)
             await asyncio.sleep(delay)
 
-    async def states(self) -> AsyncGenerator[GameGameDTO, None]:
+    async def states(self) -> AsyncGenerator[WebSocketEvent, None]:
         async for event in self.events():
             if event.data is not None:
-                yield event.data
+                yield event
 
-    def __aiter__(self) -> AsyncIterator[GameGameDTO]:
+    def __aiter__(self) -> AsyncIterator[WebSocketEvent]:
         return self.states()
 
-    async def next_state(self, timeout: float | None = None) -> GameGameDTO:
+    async def next_state(self, timeout: float | None = None) -> WebSocketEvent:
         states = self.states()
 
-        async def _next() -> GameGameDTO:
+        async def _next() -> WebSocketEvent:
             try:
                 return await states.__anext__()
             except StopAsyncIteration:
@@ -271,29 +282,42 @@ class GameStateStream:
             await states.aclose()
 
 
-class GameStateListener:
-    """Listener for GameState Updates. Non-blocking, assign a callback function to run whenever an update is received"""
+class WebSocketListener:
+    """Listener for Updates. Non-blocking, assign a callback function to run whenever an update is received"""
     def __init__(self, base_url: str, token: str, game_id: str, **kwargs):
-        self._stream = GameStateStream(base_url, token, game_id, **kwargs)
-        self._state_handlers: list[GameStateCallback] = []
+        self._stream = WebSocketStream(base_url, token, game_id, **kwargs)
+        self._game_state_handlers: list[GameStateCallback] = []
         self._event_handlers: dict[str, list[EventCallback]] = {}
         self._task: asyncio.Task | None = None
 
     @property
-    def stream(self) -> GameStateStream:
+    def stream(self) -> WebSocketStream:
         return self._stream
 
     @property
     def running(self) -> bool:
         return self._task is not None and not self._task.done()
 
-    def on_state(self, callback: GameStateCallback) -> GameStateCallback:
-        self._state_handlers.append(callback)
+    def on_game_state(self, callback: GameStateCallback) -> GameStateCallback:
+        self._game_state_handlers.append(callback)
         return callback
 
-    def on_event(self, event_type: str) -> Callable[[EventCallback], EventCallback]:
+    def on_event(self, *event_types: "WebSocketEventType | str") -> Callable[[EventCallback], EventCallback]:
+        """ Register this handler for one or more event types.
+
+            Ex.
+            @listener.on_event(WebSocketEventType.WELCOME,
+                               WebSocketEventType.GAME_STATE_UPDATE)
+            async def on_update(event: WebSocketEvent):
+        """
+        if not event_types:
+            raise ex.CustomException("on_event needs at least one event type")
+
+        keys = [str(event_type) for event_type in event_types]
+
         def decorator(callback: EventCallback) -> EventCallback:
-            self._event_handlers.setdefault(event_type, []).append(callback)
+            for key in keys:
+                self._event_handlers.setdefault(key, []).append(callback)
             return callback
         return decorator
 
@@ -317,7 +341,7 @@ class GameStateListener:
     async def run_forever(self):
         await self._run()
 
-    async def __aenter__(self) -> "GameStateListener":
+    async def __aenter__(self) -> "WebSocketListener":
         await self.start()
         return self
 
@@ -334,8 +358,8 @@ class GameStateListener:
             for handler in self._event_handlers.get(str(event.event_type), []):
                 handlers.append((handler, event))
 
-            if event.data is not None:
-                for handler in self._state_handlers:
+            if event.data is not None and isinstance(event.data, GameGameDTO):
+                for handler in self._game_state_handlers:
                     handlers.append((handler, event.data))
 
             for handler, arg in handlers:

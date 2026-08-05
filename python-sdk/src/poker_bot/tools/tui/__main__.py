@@ -15,7 +15,7 @@ from textual.widgets import Button, Footer, Input, Label, Static
 import poker_bot.bot.poker_helpers as help
 from openapi_client.models import GameGameDTO, GamePlayerDTO, GameTableDTO
 from poker_bot.bot.bot import PokerBot
-from poker_bot.bot.websocket_events import GameStateListener
+from poker_bot.bot.websocket_events import WebSocketListener, WebSocketEventType, WebSocketEvent
 from poker_bot.tools.tui.setup_tui_example import get_test_user, setup
 
 load_dotenv("config/.env")
@@ -181,7 +181,7 @@ class PokerApp(App):
     ]
 
     game_state: GameGameDTO | None = None
-    listener: GameStateListener | None = None
+    listener: WebSocketListener | None = None
 
     def compose(self) -> ComposeResult:
         with Horizontal(id="main"):
@@ -209,10 +209,19 @@ class PokerApp(App):
         me = PokerBot(base_url, user.token, user.user_id, args.game_id)
         self.query_one(Players).me = me
 
-        self.listener = me.game_state_listener()
-        self.listener.on_state(self.apply_state)
-        await self.listener.start()
+        self.listener = me.websocket_listener()
+        if self.listener is not None:
 
+            # Example of using as a decorator with specific event types
+            # @self.listener.on_event(WebSocketEventType.WELCOME, WebSocketEventType.GAME_STATE_UPDATE)
+            # async def _on_update(event: WebSocketEvent) -> None:
+            #     await self.apply_state(event.data)
+
+            # alternative - using the specific game state listener
+            self.listener.on_game_state(self.apply_state)
+            await self.listener.start()
+
+        # Fetch initial via POST if desired, but welcome msg on websocket should return it.
         # state = await me.get_game_state()
         # if state is not None and self.game_state is None:
         #     await self.apply_state(state)

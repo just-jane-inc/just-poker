@@ -13,7 +13,7 @@ from openapi_client import (
     GamePlayerActionDTO,
     UserApi,
 )
-from poker_bot.bot.websocket_events import GameStateListener, GameStateStream
+from poker_bot.bot.websocket_events import WebSocketListener, WebSocketStream, WebSocketEvent
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger("bot")
@@ -117,11 +117,16 @@ class PokerBot:
                 )
                 break
 
-    def game_state_stream(self, **kwargs) -> GameStateStream:
-        return GameStateStream(self._base_url, self._token, self._game_id, on_state=self._ingest_state, **kwargs)
+    def _ingest_update(self, event: WebSocketEvent):
+        # Note: not doing anything else from data stream atm, mainly placeholder
+        if event.data is not None and isinstance(event.data, GameGameDTO):
+            self._ingest_state(event.data)
 
-    def game_state_listener(self, **kwargs) -> GameStateListener:
-        return GameStateListener(self._base_url, self._token, self._game_id, on_state=self._ingest_state, **kwargs)
+    def websocket_stream(self, **kwargs) -> WebSocketStream:
+        return WebSocketStream(self._base_url, self._token, self._game_id, on_state=self._ingest_update, **kwargs)
+
+    def websocket_listener(self, **kwargs) -> WebSocketListener:
+        return WebSocketListener(self._base_url, self._token, self._game_id, on_game_state=self._ingest_state, **kwargs)
 
     async def exchange_chips(self, give: list[Chips], receive: list[Chips]):
         give_stack = {str(s.denomination): s.count for s in give}
