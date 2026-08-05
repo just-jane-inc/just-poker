@@ -81,7 +81,7 @@ type PlayerUpdateConnection struct {
 	MessageChannel chan WebsocketMessage[any]
 	Exit           chan any
 	conn           *websocket.Conn
-	msgIDCounter   int
+	MsgIDCounter   int
 }
 
 // upgrader configures the WebSocket upgrade parameters
@@ -159,20 +159,20 @@ func (p *PlayerUpdateConnection) handleMessages() {
 			Logger.Infof("received exit signal for player [%s] connection, closing", p.PlayerID)
 			p.conn.Close()
 		case msg := <-p.MessageChannel:
-			Logger.Debugf("sending message [%d] to player [%s] ws connection", p.msgIDCounter, p.PlayerID)
-			msg.ID = p.msgIDCounter
+			Logger.Debugf("sending message [%d] to player [%s] ws connection", p.MsgIDCounter, p.PlayerID)
+			msg.ID = p.MsgIDCounter
 			msg.TimeSent = time.Now()
 			bytes, err := json.Marshal(msg)
 			if err != nil {
-				Logger.Errorf("error marshalling message [%d] in websocket handler: %v", p.msgIDCounter, err)
+				Logger.Errorf("error marshalling message [%d] in websocket handler: %v", p.MsgIDCounter, err)
 				continue
 			}
 
 			if err = p.conn.WriteMessage(1, bytes); err != nil {
-				Logger.Errorf("error writing message [%d] to connection for player [%s]", p.msgIDCounter, p.PlayerID)
+				Logger.Errorf("error writing message [%d] to connection for player [%s]", p.MsgIDCounter, p.PlayerID)
 			}
 
-			p.msgIDCounter += 1
+			p.MsgIDCounter += 1
 		case <-ticker.C:
 			_ = p.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if err := p.conn.WriteMessage(websocket.PingMessage, nil); err != nil {

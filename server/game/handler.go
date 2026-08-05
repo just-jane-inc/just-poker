@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/just-jane-inc/just-poker/server/just"
 )
@@ -394,6 +395,9 @@ func OnGetNextListenerEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	msg := <-conn.MessageChannel
+	msg.TimeSent = time.Now()
+	msg.ID = conn.MsgIDCounter
+	conn.MsgIDCounter += 1
 	just.WriteJSONResponse(w, http.StatusOK, msg)
 }
 
