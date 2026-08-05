@@ -294,7 +294,7 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go handleUpdates(g.AsDTO())
+	go handleUpdates(playerAction, g.AsDTO())
 	just.OK("action_accepted", struct{}{}).WriteJSONResponse(w)
 }
 
@@ -441,10 +441,15 @@ func sendMessageToConnections(gameID string, eventType string, data any) {
 	}
 }
 
-func handleUpdates(dto GameDTO) {
+func handleUpdates(action PlayerActionDTO, dto GameDTO) {
 	err := just.RecordingHub.OnGameUpdate(dto)
 	if err != nil {
 		just.Logger.Errorf("error updating game state in elastic: %v", err)
+	}
+
+	actionUpdate := just.WebsocketMessage[any]{
+		EventType: "player_action",
+		Data:      action,
 	}
 
 	just.Logger.Debugf("sending updates for game with ID [%s]", dto.ID)
@@ -459,6 +464,11 @@ func handleUpdates(dto GameDTO) {
 
 		select {
 		case conn.MessageChannel <- msg:
+		default:
+		}
+
+		select {
+		case conn.MessageChannel <- actionUpdate:
 		default:
 		}
 
