@@ -84,7 +84,7 @@ func documentationHandler(
 // @license.url   http://license.bahms.org
 // @BasePath  /api
 func main() {
-	just.Logger.Debug("starting server...")
+	just.Logger.Info("starting server...")
 
 	apiMux := http.NewServeMux()
 

@@ -7,11 +7,6 @@ import (
 	"github.com/just-jane-inc/just-poker/server/just"
 )
 
-type ChipExchangeDTO struct {
-	Give    ChipStackDTO
-	Receive ChipStackDTO
-}
-
 func (s ChipStackDTO) asStack() stack {
 	createStack := make(map[int]int)
 	for d, c := range s {
@@ -43,6 +38,19 @@ func (s stack) Contains(that stack) bool {
 	}
 
 	return true
+}
+
+func (s stack) mergeWith(other stack) stack {
+	result := make(stack)
+	for d, c := range other {
+		result[d] += c
+	}
+
+	for d, c := range s {
+		result[d] += c
+	}
+
+	return result
 }
 
 func (g *game) ExchangeChips(playerID string, exchange ChipExchangeDTO) error {

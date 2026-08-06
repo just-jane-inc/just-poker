@@ -8,13 +8,13 @@ type RoundType string
 //
 //goland:noinspection GoSnakeCaseUsage
 const (
-	round_type_unset     RoundType = "unset"
-	round_type_setup     RoundType = "setup"
-	round_type_pre_flop  RoundType = "pre_flop"
-	round_type_flop      RoundType = "flop"
-	round_type_turn      RoundType = "turn"
-	round_type_river     RoundType = "river"
-	round_type_completed RoundType = "completed"
+	RoundTypeUnset     RoundType = "unset"
+	RoundTypeSetup     RoundType = "setup"
+	RoundTypePreFlop   RoundType = "pre_flop"
+	RoundTypeFlop      RoundType = "flop"
+	RoundTypeTurn      RoundType = "turn"
+	RoundTypeRiver     RoundType = "river"
+	RoundTypeCompleted RoundType = "completed"
 )
 
 type round struct {

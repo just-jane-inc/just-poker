@@ -1,3 +1,4 @@
+// Package just the core package handling things that are critical to business logic but not directly associated to poker
 package just
 
 import (
@@ -21,23 +22,38 @@ type Config struct {
 	ElasticAPIKey    string `env:"ELASTIC_API_KEY"`
 	ElasticIndexRoot string `env:"ELASTIC_INDEX_ROOT"`
 
+	ElasticLoggingIndex string `env:"ELASTIC_API_KEY"`
+	FileLoggingFile     string `env:"FILE_LOG_PATH"`
+	LogLevel            string `env:"LOG_LEVEL"`
+
 	Pepper []byte
 	pepper string `env:"JUST_POKER_PEPPER,required"`
 }
 
 var (
-	Logger     = jlog.NewLogger("just-poker").WithConsole(jlog.DEBUG)
+	Logger     = jlog.NewLogger("just-poker")
 	Env        Config
 	DBConnPool *pgxpool.Pool
 )
 
 func init() {
+	Logger.WithConsole(jlog.DEBUG)
 	Logger.Info("initializing config...")
 	_ = godotenv.Load()
 	var err error
 	err = env.Parse(&Env)
 	if err != nil {
 		log.Fatalf("unable to parse ennvironment variables: %e", err)
+	}
+
+	if Env.ElasticLoggingIndex != "" {
+		Logger.Info("enabling elastic logger...")
+		Logger = Logger.WithElastic(Env.ElasticHost, Env.ElasticAPIKey, Env.ElasticLoggingIndex, jlog.TRACE)
+	}
+
+	if Env.FileLoggingFile != "" {
+		Logger.Info("enabling file logger...")
+		Logger = Logger.WithFile(Env.FileLoggingFile, jlog.INFO)
 	}
 
 	Env.Pepper = []byte(Env.pepper)

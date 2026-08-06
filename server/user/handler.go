@@ -1,3 +1,4 @@
+// Package user handles operations related to management of users
 package user
 
 import (
@@ -11,7 +12,7 @@ import (
 	"github.com/just-jane-inc/just-poker/server/just"
 )
 
-type ApiKey struct {
+type APIKey struct {
 	UserID string `json:"user_id"`
 	KeyID  string `json:"key_id"`
 	Token  string `json:"token"`
@@ -79,7 +80,7 @@ func OnCreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	just.OK("new_user", ApiKey{KeyID: keyID, Token: token, UserID: userID}).WriteJSONResponse(w)
+	just.OK("new_user", APIKey{KeyID: keyID, Token: token, UserID: userID}).WriteJSONResponse(w)
 }
 
 // OnGetUsers Get all users
@@ -166,7 +167,7 @@ func OnRenewKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	just.OK("new_key", ApiKey{KeyID: keyID, Token: token, UserID: userID}).WriteJSONResponse(w)
+	just.OK("new_key", APIKey{KeyID: keyID, Token: token, UserID: userID}).WriteJSONResponse(w)
 }
 
 // OnDeleteUser Delete user

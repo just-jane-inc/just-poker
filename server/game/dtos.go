@@ -3,7 +3,19 @@ package game
 import (
 	"strconv"
 	"time"
+
+	"github.com/just-jane-inc/just-poker/server/just"
 )
+
+// ChipExchangeDTO a dto describing an exchange request between
+// two ChipStackDTO.
+type ChipExchangeDTO struct {
+	// the stack to give during the exchange
+	Give ChipStackDTO
+
+	// the stack to receive as a result of the exchange
+	Receive ChipStackDTO
+}
 
 // ChipCountDTO a dto describing the denomation and count
 // of a single collection of chips
@@ -43,7 +55,7 @@ type PlayerDTO struct {
 
 	// the type of user
 	// TODO: make this an enum
-	UserType string `json:"user_type"`
+	UserType just.UserType `json:"user_type"`
 
 	// the players position at the table, starting with 0 being the
 	// first player sitting clockwise from the dealer

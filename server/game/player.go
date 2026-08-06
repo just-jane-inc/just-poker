@@ -1,5 +1,9 @@
 package game
 
+import (
+	"github.com/just-jane-inc/just-poker/server/just"
+)
+
 type (
 	PlayerIntent string
 	PlayerState  string
@@ -9,26 +13,26 @@ type (
 //
 //goland:noinspection GoSnakeCaseUsage
 const (
-	player_state_unset    PlayerState = "unset"
-	player_state_inactive PlayerState = "inactive"
-	player_state_active   PlayerState = "active"
-	player_state_folded   PlayerState = "folded"
-	player_state_all_in   PlayerState = "all_in"
-	player_state_won      PlayerState = "won"
-	player_state_out      PlayerState = "out"
+	PlayerStateUnset    PlayerState = "unset"
+	PlayerStateInactive PlayerState = "inactive"
+	PlayerStateActive   PlayerState = "active"
+	PlayerStateFolded   PlayerState = "folded"
+	PlayerStateAllIn    PlayerState = "all_in"
+	PlayerStateWon      PlayerState = "won"
+	PlayerStateOut      PlayerState = "out"
 )
 
 // reason: leave me alone, snake case is nice here.
 //
 //goland:noinspection GoSnakeCaseUsage
 const (
-	player_intent_unset  = "unset"
-	player_intent_ante   = "ante"
-	player_intent_check  = "check"
-	player_intent_call   = "call"
-	player_intent_raise  = "raise"
-	player_intent_all_in = "all_in"
-	player_intent_fold   = "fold"
+	PlayerIntentUnset = "unset"
+	PlayerIntentAnte  = "ante"
+	PlayerIntentCheck = "check"
+	PlayerIntentCall  = "call"
+	PlayerIntentRaise = "raise"
+	PlayerIntentAllIn = "all_in"
+	PlayerIntentFold  = "fold"
 )
 
 type stack map[int]int
@@ -36,7 +40,7 @@ type stack map[int]int
 type player struct {
 	UserID          string
 	DisplayName     string
-	UserType        string
+	UserType        just.UserType
 	state           PlayerState
 	position        int
 	pocket          []*card

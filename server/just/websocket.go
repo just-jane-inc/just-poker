@@ -59,11 +59,14 @@ func (h *ServerUpdateHub) AddPlayerToHub(gameID string, playerID string) *Player
 		delete(hub.PlayerConnections, playerID)
 	}
 
+	usertype, _ := GetUserType(playerID)
+
 	p := &PlayerUpdateConnection{
 		GameID:         gameID,
 		PlayerID:       playerID,
 		MessageChannel: make(chan WebsocketMessage[any], 10),
 		Exit:           make(chan any),
+		UserType:       usertype,
 	}
 
 	hub.PlayerConnections[playerID] = p
@@ -82,6 +85,7 @@ type PlayerUpdateConnection struct {
 	Exit           chan any
 	conn           *websocket.Conn
 	MsgIDCounter   int
+	UserType       UserType
 }
 
 // upgrader configures the WebSocket upgrade parameters

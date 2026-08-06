@@ -1,6 +1,7 @@
 package game
 
 import (
+	"errors"
 	"math"
 	"slices"
 
@@ -113,7 +114,7 @@ func (t *table) NextPlayer(offset int) *player {
 	for i := range len(t.players) {
 		idx := (offset + i + 1) % len(t.players)
 		p := t.players[idx]
-		if p.state != player_state_out {
+		if p.state != PlayerStateOut {
 			return p
 		}
 	}
@@ -127,7 +128,7 @@ func (t *table) NextInactivePlayer(offset int) *player {
 	for i := range len(t.players) {
 		idx := (offset + i + 1) % len(t.players)
 		p := t.players[idx]
-		if p.state == player_state_inactive {
+		if p.state == PlayerStateInactive {
 			return p
 		}
 	}
@@ -139,27 +140,27 @@ func (t *table) NextRound() {
 	// at the begining of a round all active players
 	// need to be set to inactive?
 	for _, p := range t.players {
-		if p.state == player_state_active {
-			p.state = player_state_inactive
+		if p.state == PlayerStateActive {
+			p.state = PlayerStateInactive
 		}
 
-		if t.currentRound.currentRoundType != round_type_setup {
+		if t.currentRound.currentRoundType != RoundTypeSetup {
 			p.currentBet = make(stack)
 		}
 	}
 
 	switch t.currentRound.currentRoundType {
-	case round_type_unset: // GOTO setup
-		t.currentRound.currentRoundType = round_type_setup
+	case RoundTypeUnset: // GOTO setup
+		t.currentRound.currentRoundType = RoundTypeSetup
 		// this is the first time we enter the next round thing, this is fine?
 		// we might handle this in new haand?
 		p := t.NextInactivePlayer(t.buttonPosition)
-		p.state = player_state_active
+		p.state = PlayerStateActive
 		t.currentRound.currentPlayerPosition = p.position
 		t.currentRound.bet = t.currentHand.SmallBlind
 
-	case round_type_setup: // GOTO pre-flop
-		t.currentRound.currentRoundType = round_type_pre_flop
+	case RoundTypeSetup: // GOTO pre-flop
+		t.currentRound.currentRoundType = RoundTypePreFlop
 
 		// TODO: we really need to stop depending on inactive state
 		// at all times, need a different method
@@ -167,7 +168,7 @@ func (t *table) NextRound() {
 		for idx := range len(t.players) {
 			p := t.players[(idx+offset)%len(t.players)]
 
-			if p.state == player_state_out {
+			if p.state == PlayerStateOut {
 				continue
 			}
 
@@ -177,19 +178,19 @@ func (t *table) NextRound() {
 		for idx := range len(t.players) {
 			p := t.players[(idx+offset)%len(t.players)]
 
-			if p.state == player_state_out {
+			if p.state == PlayerStateOut {
 				continue
 			}
 
 			p.pocket[1] = t.deck.Draw()
 		}
 
-	case round_type_pre_flop: // GOTO flop
+	case RoundTypePreFlop: // GOTO flop
 		for _, p := range t.players {
 			p.currentBet = make(stack)
 		}
 
-		t.currentRound.currentRoundType = round_type_flop
+		t.currentRound.currentRoundType = RoundTypeFlop
 		t.currentRound.bet = 0
 
 		t.deck.Burn()
@@ -197,21 +198,21 @@ func (t *table) NextRound() {
 		t.street = append(t.street, t.deck.Draw())
 		t.street = append(t.street, t.deck.Draw())
 
-	case round_type_flop: // GOTO turn
-		t.currentRound.currentRoundType = round_type_turn
+	case RoundTypeFlop: // GOTO turn
+		t.currentRound.currentRoundType = RoundTypeTurn
 		t.currentRound.bet = 0
 
 		t.deck.Burn()
 		t.street = append(t.street, t.deck.Draw())
 
-	case round_type_turn: // GOTO river
-		t.currentRound.currentRoundType = round_type_river
+	case RoundTypeTurn: // GOTO river
+		t.currentRound.currentRoundType = RoundTypeRiver
 		t.currentRound.bet = 0
 
 		t.deck.Burn()
 		t.street = append(t.street, t.deck.Draw())
 
-	case round_type_river: // GOTO end
+	case RoundTypeRiver: // GOTO end
 		// He beat me... Straight up... Pay him... Pay that man his money
 		// Captain_Onosa
 		handEvaluations := t.Showdown()
@@ -231,7 +232,7 @@ func (t *table) NextRound() {
 
 		if len(winners) == 0 {
 			just.Logger.Errorf("critical error, hand terminated with no winners")
-			t.currentRound.currentRoundType = round_type_completed // blow up?
+			t.currentRound.currentRoundType = RoundTypeCompleted // blow up?
 			return
 		}
 
@@ -248,10 +249,10 @@ func (t *table) NextRound() {
 		t.sendMessageToConnections("payout", msg)
 		t.pot = make(map[int]int)
 		just.Logger.Debugf("the winner maybe is: [%v]", winners)
-		t.currentRound.currentRoundType = round_type_completed // blow up?
+		t.currentRound.currentRoundType = RoundTypeCompleted // blow up?
 	}
 
-	if t.currentRound.currentRoundType == round_type_unset {
+	if t.currentRound.currentRoundType == RoundTypeUnset {
 		return
 	}
 
@@ -281,15 +282,15 @@ func (t *table) sendMessageToConnections(eventType string, data any) {
 func (t *table) Showdown() map[int]int {
 	remainingPlayers := make([]*player, 0)
 	for _, p := range t.players {
-		if p.state == player_state_folded {
+		if p.state == PlayerStateFolded {
 			continue
 		}
 
-		if p.state == player_state_out {
+		if p.state == PlayerStateOut {
 			continue
 		}
 
-		if p.state == player_state_unset {
+		if p.state == PlayerStateUnset {
 			continue
 		}
 
@@ -324,4 +325,88 @@ func (t *table) Showdown() map[int]int {
 func (t *table) GetHand(position int) Hand {
 	hand := slices.Concat(t.street, t.players[position].pocket)
 	return Hand{Cards: hand}
+}
+
+func (t *table) OnGameOver() {
+	delete(CurrentGames, t.gameID)
+	for _, p := range t.players {
+		if p.state != PlayerStateOut {
+			p.state = PlayerStateWon
+		}
+	}
+
+	for _, conn := range just.UpdateHub.GetChannelsForGame(t.gameID) {
+		conn.MessageChannel <- just.WebsocketMessage[any]{
+			EventType: "game_over",
+			Data:      t.AsDTO().Players,
+		}
+	}
+}
+
+func (t *table) nextHand(bb int, sb int) error {
+	just.Logger.Debugf("attempting to start hand [%d]", t.currentHand.ID+1)
+
+	pot := t.pot.Sum()
+	if pot > 0 {
+		return errors.New("pot still has chips, cannot start new hand until the previous one is resolved")
+	}
+
+	for _, p := range t.players {
+		p.pocket = make([]*card, 0)
+
+		if p.chips.Sum() == 0 {
+			p.state = PlayerStateOut
+		}
+
+		// if a player is out we do not want to include them in the hand,
+		// this state should be locked in place by everything which updates
+		// player state.
+		if p.state == PlayerStateOut {
+			continue
+		}
+
+		p.state = PlayerStateInactive
+	}
+
+	var playersRemaining int
+	for _, p := range t.players {
+		if p.state != PlayerStateOut {
+			playersRemaining += 1
+		}
+	}
+
+	if playersRemaining == 1 {
+		t.OnGameOver()
+		just.Logger.Infof("game [%s] completed", t.gameID)
+		return nil
+	}
+
+	t.currentHand.SmallBlind = sb
+	t.currentHand.BigBlind = bb
+	t.buttonPosition = t.NextInactivePlayer(t.buttonPosition).position
+	t.smallBlindPosition = t.NextInactivePlayer(t.buttonPosition).position
+	t.bigBlindPosition = t.NextInactivePlayer(t.smallBlindPosition).position
+
+	t.deck.Reset()
+	t.street = make([]*card, 0)
+	t.pot = make(map[int]int)
+	t.currentRound.currentRoundType = RoundTypeUnset
+
+	t.currentHand.ID += 1
+	t.currentTurn.ID = 0
+
+	msg := HandStartEventDTO{
+		ID:                 t.currentHand.ID,
+		BigBlindCost:       t.currentHand.BigBlind,
+		BigBlindPosition:   t.bigBlindPosition,
+		SmallBlindCost:     t.currentHand.SmallBlind,
+		SmallBlindPosition: t.smallBlindPosition,
+		ButtonPosition:     t.buttonPosition,
+	}
+
+	t.sendMessageToConnections("hand_started", msg)
+
+	t.NextRound()
+	t.currentRound.currentAggressor = t.NextInactivePlayer(t.bigBlindPosition).position
+	return nil
 }

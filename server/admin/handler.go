@@ -1,4 +1,5 @@
-package game
+// Package admin for admin only actions
+package admin
 
 import (
 	"encoding/json"
@@ -9,8 +10,8 @@ import (
 )
 
 const (
-	game_status_paused GameStatus = "paused"
-	game_status_normal GameStatus = "normal"
+	GameStatusPaused GameStatus = "paused"
+	GameStatusNormal GameStatus = "normal"
 )
 
 type (
@@ -65,14 +66,14 @@ func OnUpdateGameStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch dto.Status {
-	case game_status_paused:
+	case GameStatusPaused:
 		err = g.PauseGameExecution()
 		if err != nil {
 			just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
 			return
 		}
 
-	case game_status_normal:
+	case GameStatusNormal:
 		err = g.ResumeGameExecution()
 		if err != nil {
 			just.BadRequest(err.Error(), 0).WriteJSONResponse(w)

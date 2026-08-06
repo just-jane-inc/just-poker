@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -13,6 +14,24 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+type UserType string
+
+func (ut UserType) IsValid() bool {
+	switch ut {
+	case UserTypeBot, UserTypeHuman, UserTypeAdmin, UserTypeGameMaster:
+		return true
+	}
+
+	return false
+}
+
+const (
+	UserTypeBot        UserType = "bot"
+	UserTypeHuman      UserType = "normal"
+	UserTypeAdmin      UserType = "admin"
+	UserTypeGameMaster UserType = "game_master"
 )
 
 func getMAC(secret string, pepper []byte) []byte {
@@ -27,7 +46,7 @@ func randomString(count int) string {
 	return base64.RawURLEncoding.EncodeToString(val)
 }
 
-func GetUserType(userID string) (string, error) {
+func GetUserType(userID string) (UserType, error) {
 	ctx := context.Background()
 	conn, err := DBConnPool.Acquire(ctx)
 	if err != nil {
@@ -43,7 +62,13 @@ func GetUserType(userID string) (string, error) {
 		return "", err
 	}
 
-	return userType, nil
+	utype := UserType(userType)
+	if !utype.IsValid() {
+		Logger.Errorf("encountered unknown usertype [%s] for user with id [%s]", utype, userID)
+		return "", errors.New("unknown user type encountered")
+	}
+
+	return utype, nil
 }
 
 func GetAuthorizedUser(r *http.Request) (string, string, error) {

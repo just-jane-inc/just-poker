@@ -95,11 +95,17 @@ func OnGetCurrentGameState(w http.ResponseWriter, r *http.Request) {
 
 	userType, err := just.GetUserType(userID)
 	if err != nil {
-		just.Logger.Errorf("encountered error fetching user type for user with id: %s", userID)
-		userType = "unset"
+		just.InternalError("invalid user").WriteJSONResponse(w)
+		return
 	}
 
 	dto := g.AsDTO()
+	usertype, _ := just.GetUserType(userID)
+	switch usertype {
+	case just.UserTypeGameMaster, just.UserTypeAdmin:
+	default:
+		dto.MaskCards(userID)
+	}
 
 	if userType != "admin" && userType != "game_master" {
 		dto.MaskCards(userID)
@@ -428,6 +434,13 @@ func OnCreateGameConnection(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dto := g.AsDTO()
+	usertype, _ := just.GetUserType(userID)
+	switch usertype {
+	case just.UserTypeGameMaster, just.UserTypeAdmin:
+	default:
+		dto.MaskCards(userID)
+	}
+
 	dto.MaskCards(userID)
 	just.HandleWebSocket(w, r, gameID, userID, dto)
 }
