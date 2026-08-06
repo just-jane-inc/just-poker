@@ -25,22 +25,13 @@ base_url = os.getenv("BASE_URL")
 parser = argparse.ArgumentParser(prog="test tui")
 parser.add_argument("--game-id", type=str, required=False, help="game id")
 parser.add_argument("--player-name", type=str, required=False, help="")
-parser.add_argument("--setup", action="store_true", required=False, help="")
-
-if os.name == "nt":
-    # For windows only tool usage, fix for cert stuff
-    try:
-        import truststore
-
-        truststore.inject_into_ssl()
-    finally:
-        pass
+parser.add_argument("--setup", type=int, default=0, required=False, help="")
 
 
 def main():
     args = parser.parse_args()
     if args.setup:
-        asyncio.run(setup(base_url))
+        asyncio.run(setup(base_url, args.setup))
     else:
         PokerApp(ansi_color=True).run()
 
@@ -83,9 +74,8 @@ class InputPopup(ModalScreen[str]):
 
 
 class Table(Static):
-    table: reactive[GameTableDTO | None] = reactive(GameTableDTO())
+    table: reactive[GameTableDTO | None] = reactive(GameTableDTO(), layout=True)
     card_map = help.get_unicode_mapping()
-    seconds_remaining = reactive(0)
 
     def render(self) -> str:
         view = "====TABLE====\n"
@@ -95,8 +85,7 @@ class Table(Static):
 
         to_call = self.table.current_round.bet
         view += f"POT: {chip_sum(self.table.pot)} STREET: {self.table.current_round.current_round_type.upper()} TO CALL: {to_call}"
-        view += f"  [{self.seconds_remaining}]"
-        view += "\n\n"
+        view += "\n"
         for card in self.table.street:
             rank = help.CardRank(card.rank)
             suit = help.CardSuit(card.suit)
@@ -106,10 +95,10 @@ class Table(Static):
 
 
 class Players(Static):
-    players: reactive[list[GamePlayerDTO] | None] = reactive(None)
-    current_turn: reactive[int] = reactive(-1)
+    players: reactive[list[GamePlayerDTO] | None] = reactive(None, layout=True)
+    current_turn: reactive[int] = reactive(-1, layout=True)
     card_map = help.get_unicode_mapping()
-    me: PokerBot | reactive[None] = reactive(None)
+    me: PokerBot | reactive[None] = reactive(None, layout=True)
 
     def render(self) -> str:
         view = ""
@@ -122,12 +111,9 @@ class Players(Static):
 
             name = player.display_name
             if player.user_id == self.me._user_id:
-                name = f"{name}<"
+                name = f"{name} <"
 
-            if player.state == "active":
-                view += f"* {name}\t{chip_stack}\t({current_bet})\n"
-            else:
-                view += f"{player.state} {name}\t{chip_stack}\t({current_bet})\n"
+            view += f"{player.state} {name}\t{chip_stack}\t({current_bet})\n"
 
             if player.hole:
                 rank = help.CardRank(player.hole[0].rank)
@@ -139,7 +125,7 @@ class Players(Static):
                 card_two = self.card_map[suit][rank]
                 view += f"{card_one} {card_two}"
 
-            view += "\n\n"
+            view += "\n"
 
         view += f"\nlength: {len(self.players)}"
         return view
@@ -160,13 +146,15 @@ class PokerApp(App):
     }
 
     #players {
-        width: 32;
+        height: 100%;
+        width: 50;
         min-width: 26;
         padding: 1 2;
         border-right: solid $primary;
     }
 
     #table {
+        height: 100%;
         width: 1fr;
         padding: 1 3;
     }

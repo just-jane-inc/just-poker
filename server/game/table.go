@@ -416,7 +416,6 @@ func (t *table) nextHand(bb int, sb int) error {
 	}
 
 	t.sendMessageToConnections("hand_started", msg)
-
 	t.nextRound()
 	return nil
 }

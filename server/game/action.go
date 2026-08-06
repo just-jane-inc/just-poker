@@ -338,15 +338,17 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) error {
 		return just.NewPokerError("failed to find a player...", 67)
 	}
 
-	g.table.currentRound.currentPlayerPosition = nextPlayer.position
-	nextPlayer.state = PlayerStateActive
-
 	// the player state should only change back to inactive if it
 	// is still active. the player may have gone all in or folded
 	// and that state should not be overwritten
 	if p.state == PlayerStateActive {
 		p.state = PlayerStateInactive
 	}
+
+	// it is possible for p == nextPlayer, we need to ensure that
+	// this happens after setting p state to inactive.
+	g.table.currentRound.currentPlayerPosition = nextPlayer.position
+	nextPlayer.state = PlayerStateActive
 
 	just.Logger.Debugf("[%s] [%d] -> [%d]", g.table.currentRound.currentRoundType, p.position, nextPlayer.position)
 

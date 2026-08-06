@@ -42,14 +42,16 @@ def get_test_users() -> list[TestUser]:
     return users
 
 
-async def get_test_setup(base_url: str) -> TestSetup:
+async def get_test_setup(base_url: str, player_count: int) -> TestSetup:
     bots: dict[str, TestBot] = dict()
     users = get_test_users()
 
-    game_id = await help.create_game(base_url, users[0].token, player_count=4)
+    game_id = await help.create_game(
+        base_url, users[0].token, player_count=player_count
+    )
     assert game_id
 
-    for user in get_test_users():
+    for user in get_test_users()[:player_count]:
         if user.username == "jill":
             continue
         bot = PokerBot(base_url, user.token, user.user_id, game_id)
@@ -61,8 +63,8 @@ async def get_test_setup(base_url: str) -> TestSetup:
     return TestSetup(bots, game_id)
 
 
-async def setup(base_url: str):
-    setup = await get_test_setup(base_url)
+async def setup(base_url: str, player_count: int = 4):
+    setup = await get_test_setup(base_url, player_count)
     print(f"game_id: {setup.game_id}")
     for id, user in setup.bots.items():
         print(f"user_name: {id}")

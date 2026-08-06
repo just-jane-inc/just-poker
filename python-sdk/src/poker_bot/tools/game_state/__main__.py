@@ -1,7 +1,6 @@
 import argparse
 import asyncio
 import os
-import textwrap
 
 import aiofiles
 from dotenv import load_dotenv
@@ -12,17 +11,6 @@ from openapi_client import ApiException
 
 parser = argparse.ArgumentParser(
     description="gets game state for a game by id",
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-    epilog=textwrap.dedent("""\
-    usage:
-        depends on the BASE_URL configured in config/.env and the token
-        configured in config/api-token. optionally these values can be
-        overridden by arguments.
-    examples:
-        python -m poker_bot.tools.game_state --id 123
-        python -m poker_bot.tools.game_state --game-id 456
-        python -m poker_bot.tools.game_state --game-id 789 --url http://localhost:7653 --token-file path/to/token/file
-    """),
 )
 
 parser.add_argument(
