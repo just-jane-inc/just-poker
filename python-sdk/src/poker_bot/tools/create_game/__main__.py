@@ -25,9 +25,7 @@ parser.add_argument(
 )
 
 
-async def new_game(
-    player_count: int, big_blind: int, small_blind: int, local: bool, token: str
-):
+async def new_game(player_count: int, big_blind: int, small_blind: int, token: str):
     resp = await create_game(
         base_url, token, big_blind, small_blind, player_count=player_count
     )
@@ -41,7 +39,7 @@ def main():
         print(token)
 
     args = parser.parse_args()
-    asyncio.run(new_game(args.players, args.bb, args.sb, args.local, token))
+    asyncio.run(new_game(args.players, args.bb, args.sb, token))
 
 
 if __name__ == "__main__":

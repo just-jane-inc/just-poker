@@ -289,7 +289,7 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go handleUpdates(playerAction, g.AsDTO())
+	go handleUpdates(g.AsDTO())
 	just.OK("action_accepted", struct{}{}).WriteJSONResponse(w)
 }
 
@@ -345,13 +345,19 @@ func OnRegisterListener(w http.ResponseWriter, r *http.Request) {
 	gameID := r.PathValue("game_id")
 	just.Logger.Debugf("received request to connect to game state updates from game [%s] from player [%s]", gameID, userID)
 
-	_, ok := CurrentGames[gameID]
+	g, ok := CurrentGames[gameID]
 	if !ok {
 		just.NotFound("game not found", int(just.GameNotFound)).WriteJSONResponse(w)
 		return
 	}
 
-	just.UpdateHub.AddPlayerToHub(gameID, userID)
+	conn := just.UpdateHub.AddPlayerToHub(gameID, userID)
+	conn.MessageChannel <- just.WebsocketMessage[any]{
+		EventType: "welcome",
+		Data:      g.AsDTO(),
+	}
+
+	just.OK("listener_created", g.AsDTO()).WriteJSONResponse(w)
 }
 
 // OnGetNextListenerEvent _liiiisten_
@@ -360,7 +366,7 @@ func OnRegisterListener(w http.ResponseWriter, r *http.Request) {
 // @Tags         Game
 // @Param game_id path string true "ID of the Game to get events from"
 // @Produce      json
-// @Success      200
+// @Success      200 {object} GameDTO
 // @Router       /game/{game_id}/state/listen [get]
 func OnGetNextListenerEvent(w http.ResponseWriter, r *http.Request) {
 	userID, _, err := just.GetAuthorizedUser(r)
@@ -426,31 +432,10 @@ func OnCreateGameConnection(w http.ResponseWriter, r *http.Request) {
 	just.HandleWebSocket(w, r, gameID, userID, dto)
 }
 
-func sendMessageToConnections(gameID string, eventType string, data any) {
-	msg := just.WebsocketMessage[any]{
-		Data:      data,
-		EventType: eventType,
-	}
-
-	for _, conn := range just.UpdateHub.GetChannelsForGame(gameID) {
-		select {
-		case conn.MessageChannel <- msg:
-		default:
-		}
-
-		just.Logger.Debugf("send message to player %s success", conn.PlayerID)
-	}
-}
-
-func handleUpdates(action PlayerActionDTO, dto GameDTO) {
+func handleUpdates(dto GameDTO) {
 	err := just.RecordingHub.OnGameUpdate(dto)
 	if err != nil {
 		just.Logger.Errorf("error updating game state in elastic: %v", err)
-	}
-
-	actionUpdate := just.WebsocketMessage[any]{
-		EventType: "player_action",
-		Data:      action,
 	}
 
 	just.Logger.Debugf("sending updates for game with ID [%s]", dto.ID)
@@ -468,11 +453,28 @@ func handleUpdates(action PlayerActionDTO, dto GameDTO) {
 		default:
 		}
 
+	}
+
+	if dto.EndedAt == nil {
+		return
+	}
+
+	for _, conn := range just.UpdateHub.GetChannelsForGame(dto.ID) {
+		just.Logger.Debugf("sending update to player %s", conn.PlayerID)
+		dtoNew := dto.DeepCopy()
+		dtoNew.MaskCards(conn.PlayerID)
+		msg := just.WebsocketMessage[any]{
+			Data:      dtoNew,
+			EventType: "game_state_update",
+		}
+
 		select {
-		case conn.MessageChannel <- actionUpdate:
+		case conn.MessageChannel <- msg:
 		default:
 		}
 
 		just.Logger.Debugf("send message to player %s success", conn.PlayerID)
 	}
+
+	delete(just.UpdateHub.Games, dto.ID)
 }

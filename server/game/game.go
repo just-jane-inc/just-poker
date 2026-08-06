@@ -44,6 +44,7 @@ type PlayerActionThing struct {
 	action    PlayerActionDTO
 	onError   chan error
 	onSuccess chan any
+	onMessage chan just.WebsocketMessage[any]
 }
 
 type game struct {
@@ -54,7 +55,8 @@ type game struct {
 	config              NewGameConfigDTO
 	table               *table
 	pauseGameSemaphor   chan any
-	playerActionChannel chan PlayerActionThing
+	playerActionChannel chan *PlayerActionThing
+	gameEnded           bool
 }
 
 func (g *GameDTO) MaskCards(userID string) {
@@ -95,11 +97,7 @@ func (g *game) OnGameOver() {
 			EventType: "game_over",
 			Data:      g.AsDTO(),
 		}
-
-		conn.Exit <- struct{}{}
 	}
-
-	delete(just.UpdateHub.Games, g.id)
 }
 
 func (g *game) OverWriteTable(dto TableDTO) error {
@@ -119,9 +117,10 @@ func createGameFromConfig(config NewGameConfigDTO) (*game, error) {
 		config:              config,
 		table:               &table{},
 		pauseGameSemaphor:   make(chan any),
-		playerActionChannel: make(chan PlayerActionThing),
+		playerActionChannel: make(chan *PlayerActionThing, 5),
 	}
 
+	g.table.currentTurnChannel = nil
 	g.table.players = make([]*player, 0)
 	g.table.deck = &deck{}
 
@@ -279,9 +278,6 @@ func (g *game) TryStartNewHand() error {
 	t.pot = make(map[int]int)
 	t.currentRound.currentRoundType = round_type_unset
 
-	t.NextRound()
-	t.currentRound.currentAggressor = t.NextInactivePlayer(t.bigBlindPosition).position
-
 	t.currentHand.ID += 1
 	t.currentTurn.ID = 0
 
@@ -294,7 +290,10 @@ func (g *game) TryStartNewHand() error {
 		ButtonPosition:     t.buttonPosition,
 	}
 
-	sendMessageToConnections(g.id, "hand_started", msg)
+	t.sendMessageToConnections("hand_started", msg)
+
+	t.NextRound()
+	t.currentRound.currentAggressor = t.NextInactivePlayer(t.bigBlindPosition).position
 	return nil
 }
 
@@ -329,7 +328,8 @@ func (g *game) TryPlayerAction(action PlayerActionDTO) error {
 		onSuccess: successChannel,
 	}
 
-	g.playerActionChannel <- playerAction
+	g.playerActionChannel <- &playerAction
+
 	select {
 	case <-successChannel:
 		return nil
@@ -345,7 +345,6 @@ func (g *game) ProccessPlayerActions(exit chan any) {
 			just.Logger.Debug("exit signal received while processing player actions")
 			return
 		case action := <-g.playerActionChannel:
-			just.Logger.Debug("processing player action")
 			err := g.HandlePlayerAction(action.action)
 			if err != nil {
 				action.onError <- err
@@ -561,6 +560,7 @@ func (g *game) HandlePlayerAction(action PlayerActionDTO) error {
 	}
 
 	just.Logger.Debugf("accepted action [%s] for player with id [%s]", action.Intent, action.PlayerID)
+	g.table.sendMessageToConnections("player_action", action)
 
 	// after we get to this state we know that the player action
 	// has been accepted and we need to compute what to do next

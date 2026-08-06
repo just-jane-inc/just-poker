@@ -91,6 +91,9 @@ type GameDTO struct {
 	// the time that the game started originally
 	StartedAt *time.Time `json:"started_at"`
 
+	// the time that the game ended
+	EndedAt *time.Time `json:"ended_at"`
+
 	// the configuration used to setup the game
 	Config NewGameConfigDTO `json:"game_config"`
 

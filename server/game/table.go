@@ -24,6 +24,7 @@ type table struct {
 	bigBlindPosition   int
 	smallBlindPosition int
 	gameID             string
+	currentTurnChannel chan just.WebsocketMessage[any]
 }
 
 func (t table) GetPlayerWithID(playerID string) *player {
@@ -244,7 +245,7 @@ func (t *table) NextRound() {
 			Chips:    t.pot.AsDto(),
 		}
 
-		sendMessageToConnections(t.gameID, "payout", msg)
+		t.sendMessageToConnections("payout", msg)
 		t.pot = make(map[int]int)
 		just.Logger.Debugf("the winner maybe is: [%v]", winners)
 		t.currentRound.currentRoundType = round_type_completed // blow up?
@@ -258,7 +259,23 @@ func (t *table) NextRound() {
 		Type: t.currentRound.currentRoundType,
 	}
 
-	sendMessageToConnections(t.gameID, "round_start", msg)
+	t.sendMessageToConnections("round_start", msg)
+}
+
+func (t *table) sendMessageToConnections(eventType string, data any) {
+	msg := just.WebsocketMessage[any]{
+		Data:      data,
+		EventType: eventType,
+	}
+
+	for _, conn := range just.UpdateHub.GetChannelsForGame(t.gameID) {
+		select {
+		case conn.MessageChannel <- msg:
+		default:
+			just.Logger.Infof("buffer for connection [%s]::[%s] full, exiting", conn.GameID, conn.PlayerID)
+			conn.Exit <- struct{}{}
+		}
+	}
 }
 
 func (t *table) Showdown() map[int]int {

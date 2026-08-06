@@ -30,6 +30,12 @@ async def get_game_state(client: ApiClient, game_id: str) -> GameGameDTO | None:
     return resp.data
 
 
+async def start_game(client: ApiClient, game_id: str):
+    game_api = GameApi(client)
+    resp = await game_api.game_game_id_started_post(game_id)
+    return resp.data
+
+
 def create_connection(base_url: str, token: str = "") -> ApiClient:
     config = None
     if token:
