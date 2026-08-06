@@ -82,6 +82,26 @@ func (g *game) AsDTO() GameDTO {
 	}
 }
 
+func (g *game) OnGameOver() {
+	delete(CurrentGames, g.id)
+	for _, p := range g.table.players {
+		if p.state != player_state_out {
+			p.state = player_state_won
+		}
+	}
+
+	for _, conn := range just.UpdateHub.GetChannelsForGame(g.id) {
+		conn.MessageChannel <- just.WebsocketMessage[any]{
+			EventType: "game_over",
+			Data:      g.AsDTO(),
+		}
+
+		conn.Exit <- struct{}{}
+	}
+
+	delete(just.UpdateHub.Games, g.id)
+}
+
 func (g *game) OverWriteTable(dto TableDTO) error {
 	select {
 	case g.pauseGameSemaphor <- struct{}{}:
@@ -209,6 +229,17 @@ func (g *game) TryStartGame() error {
 }
 
 func (g *game) TryStartNewHand() error {
+	var playersRemaining int
+	for _, p := range g.table.players {
+		if p.state != player_state_out {
+			playersRemaining += 1
+		}
+	}
+
+	if playersRemaining == 1 {
+		g.OnGameOver()
+	}
+
 	just.Logger.Debugf("attempting to start hand [%d]", g.table.currentHand.ID+1)
 
 	t := g.table

@@ -250,12 +250,7 @@ func (t *table) NextRound() {
 		t.currentRound.currentRoundType = round_type_completed // blow up?
 	}
 
-	switch t.currentRound.currentRoundType {
-	case round_type_unset:
-		return
-	case round_type_completed:
-		return
-	case round_type_setup:
+	if t.currentRound.currentRoundType == round_type_unset {
 		return
 	}
 
