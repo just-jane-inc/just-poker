@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -32,6 +31,7 @@ func OnEvalHand() {}
 // @Produce      json
 // @Param game_id path string true "ID of the Game to join"
 // @Success      200 {object} just.ResponseMessage[any]
+// @Failure      400 {object} just.ResponseMessage[just.ErrorDTO]
 // @Security BearerAuth
 // @Router       /game/{game_id}/player [post]
 func OnJoinGameRequest(w http.ResponseWriter, r *http.Request) {
@@ -76,6 +76,7 @@ func OnJoinGameRequest(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param game_id path string true "ID of the Game to get the state of"
 // @Success      200 {object} just.ResponseMessage[GameDTO]
+// @Failure      400 {object} just.ResponseMessage[just.ErrorDTO]
 // @Security BearerAuth
 // @Router       /game/{game_id}/state [get]
 func OnGetCurrentGameState(w http.ResponseWriter, r *http.Request) {
@@ -112,6 +113,7 @@ func OnGetCurrentGameState(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param request body NewGameConfigDTO true "an object defining configuration information for the new game"
 // @Success      200 {object} just.ResponseMessage[string] "game created - game id as string"
+// @Failure      400 {object} just.ResponseMessage[just.ErrorDTO]
 // @Security BearerAuth
 // @Router       /game [post]
 func OnCreateGame(w http.ResponseWriter, r *http.Request) {
@@ -150,6 +152,7 @@ func OnCreateGame(w http.ResponseWriter, r *http.Request) {
 // @Param request body ChipExchangeDTO true "a specification for the chips to exchange"
 // @Param game_id path string true "ID of the Game exchange chips in"
 // @Success      200 {object} just.ResponseMessage[any]
+// @Failure      400 {object} just.ResponseMessage[just.ErrorDTO]
 // @Security BearerAuth
 // @Router       /game/{game_id}/chip/exchange [post]
 func OnExchangeChips(w http.ResponseWriter, r *http.Request) {
@@ -204,6 +207,7 @@ func OnExchangeChips(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param game_id path string true "the id of the game to start"
 // @Success      200 {object} just.ResponseMessage[any]
+// @Failure      400 {object} just.ResponseMessage[just.ErrorDTO]
 // @Security BearerAuth
 // @Router       /game/{game_id}/started [post]
 func OnStartGame(w http.ResponseWriter, r *http.Request) {
@@ -229,6 +233,7 @@ func OnStartGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	go handleUpdates(g.AsDTO(), "game_started")
 	go g.ProccessPlayerActions(make(chan any))
 
 	just.OK("game_started", struct{}{}).WriteJSONResponse(w)
@@ -244,6 +249,7 @@ func OnStartGame(w http.ResponseWriter, r *http.Request) {
 // @Param game_id path string true "the id of the game"
 // @Param request body PlayerActionDTO true "the action the player is preforming"
 // @Success      200 {object} just.ResponseMessage[any]
+// @Failure      400 {object} just.ResponseMessage[just.ErrorDTO]
 // @Security BearerAuth
 // @Router       /game/{game_id}/action [post]
 func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
@@ -280,12 +286,19 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 
 	err = g.TryPlayerAction(playerAction)
 	if err != nil {
-		log.Println(err.Error())
-		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
+		just.Logger.Warn(err.Error())
+
+		var pokerError *just.PokerError
+		if errors.As(err, &pokerError) {
+			just.BadRequest(pokerError.Message, int(pokerError.Code)).WriteJSONResponse(w)
+			return
+		}
+
+		just.BadRequest(err.Error(), int(just.Unknown)).WriteJSONResponse(w)
 		return
 	}
 
-	go handleUpdates(g.AsDTO())
+	go handleUpdates(g.AsDTO(), "game_state_update")
 	just.OK("action_accepted", struct{}{}).WriteJSONResponse(w)
 }
 
@@ -435,7 +448,7 @@ func OnCreateGameConnection(w http.ResponseWriter, r *http.Request) {
 	just.HandleWebSocket(w, r, gameID, userID, dto)
 }
 
-func handleUpdates(dto GameDTO) {
+func handleUpdates(dto GameDTO, eventType string) {
 	err := just.RecordingHub.OnGameUpdate(dto)
 	if err != nil {
 		just.Logger.Errorf("error updating game state in elastic: %v", err)
@@ -454,7 +467,7 @@ func handleUpdates(dto GameDTO) {
 
 		msg := just.WebsocketMessage[any]{
 			Data:      dtoNew,
-			EventType: "game_state_update",
+			EventType: eventType,
 		}
 
 		select {

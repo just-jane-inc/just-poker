@@ -548,6 +548,16 @@
                             }
                         },
                         "description": "game created - game id as string"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
                     }
                 },
                 "security": [
@@ -605,6 +615,16 @@
                             }
                         },
                         "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
                     }
                 },
                 "security": [
@@ -662,6 +682,16 @@
                             }
                         },
                         "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
                     }
                 },
                 "security": [
@@ -708,6 +738,16 @@
                             }
                         },
                         "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
                     }
                 },
                 "security": [
@@ -754,6 +794,16 @@
                             }
                         },
                         "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
                     }
                 },
                 "security": [
@@ -791,6 +841,16 @@
                             }
                         },
                         "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
                     }
                 },
                 "security": [
