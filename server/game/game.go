@@ -5,6 +5,7 @@ package game
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"maps"
 	"strconv"
@@ -49,8 +50,10 @@ type game struct {
 	startedAt           *time.Time
 	id                  string
 	joinGameLock        sync.Mutex
+	isPaused            bool
 	config              NewGameConfigDTO
 	table               *table
+	pauseGameSemaphor   chan any
 	playerActionChannel chan PlayerActionThing
 }
 
@@ -79,11 +82,23 @@ func (g *game) AsDTO() GameDTO {
 	}
 }
 
+func (g *game) OverWriteTable(dto TableDTO) error {
+	select {
+	case g.pauseGameSemaphor <- struct{}{}:
+		g.isPaused = true
+	default:
+	}
+
+	g.table = dto.AsTable()
+	return nil
+}
+
 func createGameFromConfig(config NewGameConfigDTO) (*game, error) {
 	g := &game{
 		joinGameLock:        sync.Mutex{},
 		config:              config,
 		table:               &table{},
+		pauseGameSemaphor:   make(chan any),
 		playerActionChannel: make(chan PlayerActionThing),
 	}
 
@@ -247,6 +262,28 @@ func (g *game) TryStartNewHand() error {
 	}
 
 	sendMessageToConnections(g.id, "hand_started", msg)
+	return nil
+}
+
+func (g *game) PauseGameExecution() error {
+	select {
+	case g.pauseGameSemaphor <- struct{}{}:
+		g.isPaused = true
+	default:
+		return errors.New("game is already paused")
+	}
+
+	return nil
+}
+
+func (g *game) ResumeGameExecution() error {
+	select {
+	case <-g.pauseGameSemaphor:
+		g.isPaused = false
+	default:
+		return errors.New("game is already paused")
+	}
+
 	return nil
 }
 

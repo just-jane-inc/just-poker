@@ -18,6 +18,7 @@ __version__ = "1.0.0"
 
 # Define package exports
 __all__ = [
+    "AdminApi",
     "GameApi",
     "UserApi",
     "ApiResponse",
@@ -29,12 +30,16 @@ __all__ = [
     "ApiKeyError",
     "ApiAttributeError",
     "ApiException",
+    "AdminGameGameIdStatusPostRequest",
+    "AdminGameGameIdTablePostRequest",
     "GameActiveGameDTO",
     "GameCardDTO",
     "GameChipExchangeDTO",
     "GameGameDTO",
     "GameGameIdActionPostRequest",
     "GameGameIdChipExchangePostRequest",
+    "GameGameStatus",
+    "GameGameStatusDTO",
     "GameHandDTO",
     "GameNewGameConfigDTO",
     "GamePlayerActionDTO",
@@ -52,6 +57,7 @@ __all__ = [
 ]
 
 # import apis into sdk package
+from openapi_client.api.admin_api import AdminApi as AdminApi
 from openapi_client.api.game_api import GameApi as GameApi
 from openapi_client.api.user_api import UserApi as UserApi
 
@@ -67,12 +73,16 @@ from openapi_client.exceptions import ApiAttributeError as ApiAttributeError
 from openapi_client.exceptions import ApiException as ApiException
 
 # import models into sdk package
+from openapi_client.models.admin_game_game_id_status_post_request import AdminGameGameIdStatusPostRequest as AdminGameGameIdStatusPostRequest
+from openapi_client.models.admin_game_game_id_table_post_request import AdminGameGameIdTablePostRequest as AdminGameGameIdTablePostRequest
 from openapi_client.models.game_active_game_dto import GameActiveGameDTO as GameActiveGameDTO
 from openapi_client.models.game_card_dto import GameCardDTO as GameCardDTO
 from openapi_client.models.game_chip_exchange_dto import GameChipExchangeDTO as GameChipExchangeDTO
 from openapi_client.models.game_game_dto import GameGameDTO as GameGameDTO
 from openapi_client.models.game_game_id_action_post_request import GameGameIdActionPostRequest as GameGameIdActionPostRequest
 from openapi_client.models.game_game_id_chip_exchange_post_request import GameGameIdChipExchangePostRequest as GameGameIdChipExchangePostRequest
+from openapi_client.models.game_game_status import GameGameStatus as GameGameStatus
+from openapi_client.models.game_game_status_dto import GameGameStatusDTO as GameGameStatusDTO
 from openapi_client.models.game_hand_dto import GameHandDTO as GameHandDTO
 from openapi_client.models.game_new_game_config_dto import GameNewGameConfigDTO as GameNewGameConfigDTO
 from openapi_client.models.game_player_action_dto import GamePlayerActionDTO as GamePlayerActionDTO

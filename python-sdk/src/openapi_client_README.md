@@ -56,17 +56,17 @@ configuration = openapi_client.Configuration(
 # Enter a context with an instance of the API client
 async with openapi_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = openapi_client.GameApi(api_client)
-    game_id = 'game_id_example' # str | the id of the game
-    game_game_id_action_post_request = openapi_client.GameGameIdActionPostRequest() # GameGameIdActionPostRequest | the action the player is preforming
+    api_instance = openapi_client.AdminApi(api_client)
+    game_id = 'game_id_example' # str | ID of the Game to update status of
+    admin_game_game_id_status_post_request = openapi_client.AdminGameGameIdStatusPostRequest() # AdminGameGameIdStatusPostRequest | the status of the game to set
 
     try:
-        # Player Action
-        api_response = await api_instance.game_game_id_action_post(game_id, game_game_id_action_post_request)
-        print("The response of GameApi->game_game_id_action_post:\n")
+        # Update Game Status
+        api_response = await api_instance.admin_game_game_id_status_post(game_id, admin_game_game_id_status_post_request)
+        print("The response of AdminApi->admin_game_game_id_status_post:\n")
         pprint(api_response)
     except ApiException as e:
-        print("Exception when calling GameApi->game_game_id_action_post: %s\n" % e)
+        print("Exception when calling AdminApi->admin_game_game_id_status_post: %s\n" % e)
 
 ```
 
@@ -76,13 +76,16 @@ All URIs are relative to *https://game.bahms.org/api/poker*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+*AdminApi* | [**admin_game_game_id_status_post**](openapi_client/docs/AdminApi.md#admin_game_game_id_status_post) | **POST** /admin/game/{game_id}/status | Update Game Status
+*AdminApi* | [**admin_game_game_id_table_post**](openapi_client/docs/AdminApi.md#admin_game_game_id_table_post) | **POST** /admin/game/{game_id}/table | Change Game Table
 *GameApi* | [**game_game_id_action_post**](openapi_client/docs/GameApi.md#game_game_id_action_post) | **POST** /game/{game_id}/action | Player Action
 *GameApi* | [**game_game_id_chip_exchange_post**](openapi_client/docs/GameApi.md#game_game_id_chip_exchange_post) | **POST** /game/{game_id}/chip/exchange | Exchange Chips
-*GameApi* | [**game_game_id_listener_listener_id_get**](openapi_client/docs/GameApi.md#game_game_id_listener_listener_id_get) | **GET** /game/{game_id}/listener/{listener_id} | Get Next Event
-*GameApi* | [**game_game_id_listener_post**](openapi_client/docs/GameApi.md#game_game_id_listener_post) | **POST** /game/{game_id}/listener | Creates Listener
 *GameApi* | [**game_game_id_player_post**](openapi_client/docs/GameApi.md#game_game_id_player_post) | **POST** /game/{game_id}/player | Join a Game
 *GameApi* | [**game_game_id_started_post**](openapi_client/docs/GameApi.md#game_game_id_started_post) | **POST** /game/{game_id}/started | Start Game
 *GameApi* | [**game_game_id_state_get**](openapi_client/docs/GameApi.md#game_game_id_state_get) | **GET** /game/{game_id}/state | Game State
+*GameApi* | [**game_game_id_state_listen_get**](openapi_client/docs/GameApi.md#game_game_id_state_listen_get) | **GET** /game/{game_id}/state/listen | Get Listener
+*GameApi* | [**game_game_id_state_listen_post**](openapi_client/docs/GameApi.md#game_game_id_state_listen_post) | **POST** /game/{game_id}/state/listen | Register Listener
+*GameApi* | [**game_game_id_state_ws_get**](openapi_client/docs/GameApi.md#game_game_id_state_ws_get) | **GET** /game/{game_id}/state/ws | Connect Updates
 *GameApi* | [**game_get**](openapi_client/docs/GameApi.md#game_get) | **GET** /game | Gets Active Games
 *GameApi* | [**game_post**](openapi_client/docs/GameApi.md#game_post) | **POST** /game | Create Game
 *GameApi* | [**hand_evaluator_evaluate_post**](openapi_client/docs/GameApi.md#hand_evaluator_evaluate_post) | **POST** /hand-evaluator/evaluate | Evaluate a Hand
@@ -91,12 +94,16 @@ Class | Method | HTTP request | Description
 
 ## Documentation For Models
 
+ - [AdminGameGameIdStatusPostRequest](openapi_client/docs/AdminGameGameIdStatusPostRequest.md)
+ - [AdminGameGameIdTablePostRequest](openapi_client/docs/AdminGameGameIdTablePostRequest.md)
  - [GameActiveGameDTO](openapi_client/docs/GameActiveGameDTO.md)
  - [GameCardDTO](openapi_client/docs/GameCardDTO.md)
  - [GameChipExchangeDTO](openapi_client/docs/GameChipExchangeDTO.md)
  - [GameGameDTO](openapi_client/docs/GameGameDTO.md)
  - [GameGameIdActionPostRequest](openapi_client/docs/GameGameIdActionPostRequest.md)
  - [GameGameIdChipExchangePostRequest](openapi_client/docs/GameGameIdChipExchangePostRequest.md)
+ - [GameGameStatus](openapi_client/docs/GameGameStatus.md)
+ - [GameGameStatusDTO](openapi_client/docs/GameGameStatusDTO.md)
  - [GameHandDTO](openapi_client/docs/GameHandDTO.md)
  - [GameNewGameConfigDTO](openapi_client/docs/GameNewGameConfigDTO.md)
  - [GamePlayerActionDTO](openapi_client/docs/GamePlayerActionDTO.md)

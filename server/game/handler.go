@@ -35,7 +35,6 @@ func OnEvalHand() {}
 // @Security BearerAuth
 // @Router       /game/{game_id}/player [post]
 func OnJoinGameRequest(w http.ResponseWriter, r *http.Request) {
-	just.Logger.Debug("join game request received")
 	var userid string
 	var username string
 	var err error
@@ -45,21 +44,16 @@ func OnJoinGameRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	gameID := r.PathValue("game_id")
+	just.Logger.Debugf("received request to join game [%s]", gameID)
 	g, ok := CurrentGames[gameID]
 	if !ok {
 		just.NotFound("game not found", int(just.GameNotFound)).WriteJSONResponse(w)
 		return
 	}
 
-	just.Logger.Debugf("taking game lock for user request [%s]", username)
 	g.joinGameLock.Lock()
-	just.Logger.Debugf("game lock take for user request [%s]", username)
-
 	err = g.TryJoinGame(username, userid)
-
-	just.Logger.Debugf("releasing game lock for user request [%s]", username)
 	g.joinGameLock.Unlock()
-	just.Logger.Debugf("game lock released for user request [%s]", username)
 
 	if err != nil {
 		var pokerErr *just.PokerError
@@ -276,15 +270,15 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 	}
 
 	playerAction.PlayerID = userID
-
-	defer func() {
-		just.RecordingHub.OnPlayerAction(playerAction, err)
-	}()
-
 	gameID := r.PathValue("game_id")
 	g, ok := CurrentGames[gameID]
 	if !ok {
 		just.NotFound(fmt.Sprintf("could not find game with id %s", gameID), 0).WriteJSONResponse(w)
+		return
+	}
+
+	if g.isPaused {
+		just.InvalidPlayerActionGameIsPaused().WriteJSONResponse(w)
 		return
 	}
 
@@ -338,7 +332,8 @@ func OnGetCurrentActiveGames(w http.ResponseWriter, _ *http.Request) {
 // @Summary     Register Listener
 // @Description  creates a listener that will begin buffering game events that can be queried from an endpoint
 // @Tags         Game
-// @Success      200 {object}
+// @Param game_id path string true "ID of the Game to listen to"
+// @Success      200
 // @Router       /game/{game_id}/state/listen [post]
 func OnRegisterListener(w http.ResponseWriter, r *http.Request) {
 	userID, _, err := just.GetAuthorizedUser(r)
@@ -363,8 +358,9 @@ func OnRegisterListener(w http.ResponseWriter, r *http.Request) {
 // @Summary     Get Listener
 // @Description  creates a listener that will begin buffering game events that can be queried from an endpoint
 // @Tags         Game
+// @Param game_id path string true "ID of the Game to get events from"
 // @Produce      json
-// @Success      200 {object}
+// @Success      200
 // @Router       /game/{game_id}/state/listen [get]
 func OnGetNextListenerEvent(w http.ResponseWriter, r *http.Request) {
 	userID, _, err := just.GetAuthorizedUser(r)
@@ -406,7 +402,8 @@ func OnGetNextListenerEvent(w http.ResponseWriter, r *http.Request) {
 // @Description  gets all game updates
 // @Tags         Game
 // @Produce      json
-// @Success      200 {object}
+// @Param game_id path string true "ID of the Game to get events from"
+// @Success      200
 // @Router       /game/{game_id}/state/ws [get]
 func OnCreateGameConnection(w http.ResponseWriter, r *http.Request) {
 	userID, _, err := just.GetAuthorizedUser(r)

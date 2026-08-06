@@ -20,6 +20,7 @@ const (
 	GameAlreadyStarted  ErrorCode = 2020
 	GameIsFull          ErrorCode = 2021
 	PlayerAlreadyJoined ErrorCode = 2022
+	GameIsPaused        ErrorCode = 2023
 )
 
 type PokerError struct {

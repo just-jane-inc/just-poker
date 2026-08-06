@@ -66,6 +66,25 @@
                 },
                 "type": "object"
             },
+            "game.GameStatus": {
+                "enum": [
+                    "paused",
+                    "normal"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "game_status_paused",
+                    "game_status_normal"
+                ]
+            },
+            "game.GameStatusDTO": {
+                "properties": {
+                    "status": {
+                        "$ref": "#/components/schemas/game.GameStatus"
+                    }
+                },
+                "type": "object"
+            },
             "game.HandDTO": {
                 "description": "the current hand",
                 "properties": {
@@ -335,6 +354,126 @@
         "url": ""
     },
     "paths": {
+        "/admin/game/{game_id}/status": {
+            "post": {
+                "description": "Changes the status of an active game, for use by admins",
+                "parameters": [
+                    {
+                        "description": "ID of the Game to update status of",
+                        "in": "path",
+                        "name": "game_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/game.GameStatusDTO",
+                                        "summary": "status",
+                                        "description": "the status of the game to set"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "the status of the game to set",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Update Game Status",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        },
+        "/admin/game/{game_id}/table": {
+            "post": {
+                "description": "Changes the state of an active game",
+                "parameters": [
+                    {
+                        "description": "ID of the Game to update status of",
+                        "in": "path",
+                        "name": "game_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/game.TableDTO",
+                                        "summary": "status",
+                                        "description": "the table struct to apply"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "the table struct to apply",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Change Game Table",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        },
         "/game": {
             "get": {
                 "description": "gets all games that are currently being played",
@@ -517,88 +656,6 @@
                 ]
             }
         },
-        "/game/{game_id}/listener": {
-            "post": {
-                "description": "creates a new listener",
-                "parameters": [
-                    {
-                        "description": "the id of the game to create a listener in",
-                        "in": "path",
-                        "name": "game_id",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/just.ResponseMessage-string"
-                                }
-                            }
-                        },
-                        "description": "the id of the listener"
-                    }
-                },
-                "summary": "Creates Listener",
-                "tags": [
-                    "Game"
-                ]
-            }
-        },
-        "/game/{game_id}/listener/{listener_id}": {
-            "get": {
-                "description": "gets next event from listener queue",
-                "parameters": [
-                    {
-                        "description": "the id of the game",
-                        "in": "path",
-                        "name": "listener_id",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "description": "the id of the listener",
-                        "in": "path",
-                        "name": "game_id",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/just.ResponseMessage-any"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    }
-                },
-                "summary": "Get Next Event",
-                "tags": [
-                    "Game"
-                ]
-            }
-        },
         "/game/{game_id}/player": {
             "post": {
                 "description": "Join an open game",
@@ -723,6 +780,93 @@
                     }
                 ],
                 "summary": "Game State",
+                "tags": [
+                    "Game"
+                ]
+            }
+        },
+        "/game/{game_id}/state/listen": {
+            "get": {
+                "description": "creates a listener that will begin buffering game events that can be queried from an endpoint",
+                "parameters": [
+                    {
+                        "description": "ID of the Game to get events from",
+                        "in": "path",
+                        "name": "game_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "summary": "Get Listener",
+                "tags": [
+                    "Game"
+                ]
+            },
+            "post": {
+                "description": "creates a listener that will begin buffering game events that can be queried from an endpoint",
+                "parameters": [
+                    {
+                        "description": "ID of the Game to listen to",
+                        "in": "path",
+                        "name": "game_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "summary": "Register Listener",
+                "tags": [
+                    "Game"
+                ]
+            }
+        },
+        "/game/{game_id}/state/ws": {
+            "get": {
+                "description": "gets all game updates",
+                "parameters": [
+                    {
+                        "description": "ID of the Game to get events from",
+                        "in": "path",
+                        "name": "game_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "summary": "Connect Updates",
                 "tags": [
                     "Game"
                 ]

@@ -86,6 +86,19 @@ func BadRequest(message string, code int) HTTPResponse {
 	}
 }
 
+func InvalidPlayerActionGameIsPaused() HTTPResponse {
+	return HTTPResponse{
+		Code: http.StatusBadRequest,
+		Object: ResponseMessage[ErrorDTO]{
+			Type: "error",
+			Data: ErrorDTO{
+				ErrorCode: int(GameIsPaused),
+				Error:     "the game is current paused",
+			},
+		},
+	}
+}
+
 func OK(responseType string, obj any) HTTPResponse {
 	return HTTPResponse{
 		Code: http.StatusOK,

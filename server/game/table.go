@@ -36,6 +36,53 @@ func (t table) GetPlayerWithID(playerID string) *player {
 	return nil
 }
 
+func (dto RoundDTO) AsRound() round {
+	// TODO: why is this not a DTO?
+	return round{
+		bet:                   dto.Bet,
+		currentRoundType:      dto.CurrentRoundType,
+		currentPlayerPosition: dto.CurrentPlayerPosition,
+		currentAggressor:      dto.CurrentAggressor,
+	}
+}
+
+func (dto TableDTO) AsTable() *table {
+	t := table{
+		players:            make([]*player, len(dto.Players)),
+		pot:                dto.Pot.asStack(),
+		street:             make([]*card, len(dto.Street)),
+		currentRound:       dto.CurrentRound.AsRound(),
+		currentHand:        dto.CurrentHand,
+		buttonPosition:     dto.ButtonPosition,
+		smallBlindPosition: dto.SmallBlindPosition,
+		bigBlindPosition:   dto.BigBlindPosition,
+	}
+
+	for i, p := range dto.Players {
+		t.players[i] = &player{
+			UserID:          p.UserID,
+			DisplayName:     p.DisplayName,
+			UserType:        p.UserType,
+			state:           PlayerState(p.State),
+			position:        p.Position,
+			pocket:          make([]*card, len(p.Hole)),
+			chips:           p.Stack.asStack(),
+			currentBet:      p.CurrentBet.asStack(),
+			potContribution: p.PotContribution,
+		}
+
+		for j, c := range p.Hole {
+			t.players[i].pocket[j] = &card{c.Rank, c.Suit}
+		}
+	}
+
+	for k, c := range dto.Street {
+		t.street[k] = &card{c.Rank, c.Suit}
+	}
+
+	return &t
+}
+
 func (t table) AsDTO() TableDTO {
 	dto := TableDTO{
 		Players:            make([]PlayerDTO, len(t.players)),

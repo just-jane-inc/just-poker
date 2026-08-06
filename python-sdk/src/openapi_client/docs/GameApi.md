@@ -6,11 +6,12 @@ Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**game_game_id_action_post**](GameApi.md#game_game_id_action_post) | **POST** /game/{game_id}/action | Player Action
 [**game_game_id_chip_exchange_post**](GameApi.md#game_game_id_chip_exchange_post) | **POST** /game/{game_id}/chip/exchange | Exchange Chips
-[**game_game_id_listener_listener_id_get**](GameApi.md#game_game_id_listener_listener_id_get) | **GET** /game/{game_id}/listener/{listener_id} | Get Next Event
-[**game_game_id_listener_post**](GameApi.md#game_game_id_listener_post) | **POST** /game/{game_id}/listener | Creates Listener
 [**game_game_id_player_post**](GameApi.md#game_game_id_player_post) | **POST** /game/{game_id}/player | Join a Game
 [**game_game_id_started_post**](GameApi.md#game_game_id_started_post) | **POST** /game/{game_id}/started | Start Game
 [**game_game_id_state_get**](GameApi.md#game_game_id_state_get) | **GET** /game/{game_id}/state | Game State
+[**game_game_id_state_listen_get**](GameApi.md#game_game_id_state_listen_get) | **GET** /game/{game_id}/state/listen | Get Listener
+[**game_game_id_state_listen_post**](GameApi.md#game_game_id_state_listen_post) | **POST** /game/{game_id}/state/listen | Register Listener
+[**game_game_id_state_ws_get**](GameApi.md#game_game_id_state_ws_get) | **GET** /game/{game_id}/state/ws | Connect Updates
 [**game_get**](GameApi.md#game_get) | **GET** /game | Gets Active Games
 [**game_post**](GameApi.md#game_post) | **POST** /game | Create Game
 [**hand_evaluator_evaluate_post**](GameApi.md#hand_evaluator_evaluate_post) | **POST** /hand-evaluator/evaluate | Evaluate a Hand
@@ -175,146 +176,6 @@ Name | Type | Description  | Notes
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 **200** | OK |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **game_game_id_listener_listener_id_get**
-> JustResponseMessageAny game_game_id_listener_listener_id_get(listener_id, game_id)
-
-Get Next Event
-
-gets next event from listener queue
-
-### Example
-
-
-```python
-import openapi_client
-from openapi_client.models.just_response_message_any import JustResponseMessageAny
-from openapi_client.rest import ApiException
-from pprint import pprint
-
-# Defining the host is optional and defaults to https://game.bahms.org/api/poker
-# See configuration.py for a list of all supported configuration parameters.
-configuration = openapi_client.Configuration(
-    host = "https://game.bahms.org/api/poker"
-)
-
-
-# Enter a context with an instance of the API client
-async with openapi_client.ApiClient(configuration) as api_client:
-    # Create an instance of the API class
-    api_instance = openapi_client.GameApi(api_client)
-    listener_id = 'listener_id_example' # str | the id of the game
-    game_id = 'game_id_example' # str | the id of the listener
-
-    try:
-        # Get Next Event
-        api_response = await api_instance.game_game_id_listener_listener_id_get(listener_id, game_id)
-        print("The response of GameApi->game_game_id_listener_listener_id_get:\n")
-        pprint(api_response)
-    except Exception as e:
-        print("Exception when calling GameApi->game_game_id_listener_listener_id_get: %s\n" % e)
-```
-
-
-
-### Parameters
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **listener_id** | **str**| the id of the game | 
- **game_id** | **str**| the id of the listener | 
-
-### Return type
-
-[**JustResponseMessageAny**](JustResponseMessageAny.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-### HTTP response details
-
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-**200** | OK |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **game_game_id_listener_post**
-> JustResponseMessageString game_game_id_listener_post(game_id, body=body)
-
-Creates Listener
-
-creates a new listener
-
-### Example
-
-
-```python
-import openapi_client
-from openapi_client.models.just_response_message_string import JustResponseMessageString
-from openapi_client.rest import ApiException
-from pprint import pprint
-
-# Defining the host is optional and defaults to https://game.bahms.org/api/poker
-# See configuration.py for a list of all supported configuration parameters.
-configuration = openapi_client.Configuration(
-    host = "https://game.bahms.org/api/poker"
-)
-
-
-# Enter a context with an instance of the API client
-async with openapi_client.ApiClient(configuration) as api_client:
-    # Create an instance of the API class
-    api_instance = openapi_client.GameApi(api_client)
-    game_id = 'game_id_example' # str | the id of the game to create a listener in
-    body = None # object |  (optional)
-
-    try:
-        # Creates Listener
-        api_response = await api_instance.game_game_id_listener_post(game_id, body=body)
-        print("The response of GameApi->game_game_id_listener_post:\n")
-        pprint(api_response)
-    except Exception as e:
-        print("Exception when calling GameApi->game_game_id_listener_post: %s\n" % e)
-```
-
-
-
-### Parameters
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **game_id** | **str**| the id of the game to create a listener in | 
- **body** | **object**|  | [optional] 
-
-### Return type
-
-[**JustResponseMessageString**](JustResponseMessageString.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-### HTTP response details
-
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-**200** | the id of the listener |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -542,6 +403,205 @@ Name | Type | Description  | Notes
 ### Authorization
 
 [BearerAuth](../README.md#BearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | OK |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **game_game_id_state_listen_get**
+> object game_game_id_state_listen_get(game_id)
+
+Get Listener
+
+creates a listener that will begin buffering game events that can be queried from an endpoint
+
+### Example
+
+
+```python
+import openapi_client
+from openapi_client.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to https://game.bahms.org/api/poker
+# See configuration.py for a list of all supported configuration parameters.
+configuration = openapi_client.Configuration(
+    host = "https://game.bahms.org/api/poker"
+)
+
+
+# Enter a context with an instance of the API client
+async with openapi_client.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = openapi_client.GameApi(api_client)
+    game_id = 'game_id_example' # str | ID of the Game to get events from
+
+    try:
+        # Get Listener
+        api_response = await api_instance.game_game_id_state_listen_get(game_id)
+        print("The response of GameApi->game_game_id_state_listen_get:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling GameApi->game_game_id_state_listen_get: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **game_id** | **str**| ID of the Game to get events from | 
+
+### Return type
+
+**object**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | OK |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **game_game_id_state_listen_post**
+> game_game_id_state_listen_post(game_id)
+
+Register Listener
+
+creates a listener that will begin buffering game events that can be queried from an endpoint
+
+### Example
+
+
+```python
+import openapi_client
+from openapi_client.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to https://game.bahms.org/api/poker
+# See configuration.py for a list of all supported configuration parameters.
+configuration = openapi_client.Configuration(
+    host = "https://game.bahms.org/api/poker"
+)
+
+
+# Enter a context with an instance of the API client
+async with openapi_client.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = openapi_client.GameApi(api_client)
+    game_id = 'game_id_example' # str | ID of the Game to listen to
+
+    try:
+        # Register Listener
+        await api_instance.game_game_id_state_listen_post(game_id)
+    except Exception as e:
+        print("Exception when calling GameApi->game_game_id_state_listen_post: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **game_id** | **str**| ID of the Game to listen to | 
+
+### Return type
+
+void (empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: Not defined
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | OK |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **game_game_id_state_ws_get**
+> object game_game_id_state_ws_get(game_id)
+
+Connect Updates
+
+gets all game updates
+
+### Example
+
+
+```python
+import openapi_client
+from openapi_client.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to https://game.bahms.org/api/poker
+# See configuration.py for a list of all supported configuration parameters.
+configuration = openapi_client.Configuration(
+    host = "https://game.bahms.org/api/poker"
+)
+
+
+# Enter a context with an instance of the API client
+async with openapi_client.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = openapi_client.GameApi(api_client)
+    game_id = 'game_id_example' # str | ID of the Game to get events from
+
+    try:
+        # Connect Updates
+        api_response = await api_instance.game_game_id_state_ws_get(game_id)
+        print("The response of GameApi->game_game_id_state_ws_get:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling GameApi->game_game_id_state_ws_get: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **game_id** | **str**| ID of the Game to get events from | 
+
+### Return type
+
+**object**
+
+### Authorization
+
+No authorization required
 
 ### HTTP request headers
 

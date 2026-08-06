@@ -14,92 +14,29 @@
 
 import unittest
 
-from openapi_client.api.game_api import GameApi
+from openapi_client.api.admin_api import AdminApi
 
 
-class TestGameApi(unittest.IsolatedAsyncioTestCase):
-    """GameApi unit test stubs"""
+class TestAdminApi(unittest.IsolatedAsyncioTestCase):
+    """AdminApi unit test stubs"""
 
     async def asyncSetUp(self) -> None:
-        self.api = GameApi()
+        self.api = AdminApi()
 
     async def asyncTearDown(self) -> None:
         await self.api.api_client.close()
 
-    async def test_game_game_id_action_post(self) -> None:
-        """Test case for game_game_id_action_post
+    async def test_admin_game_game_id_status_post(self) -> None:
+        """Test case for admin_game_game_id_status_post
 
-        Player Action
+        Update Game Status
         """
         pass
 
-    async def test_game_game_id_chip_exchange_post(self) -> None:
-        """Test case for game_game_id_chip_exchange_post
+    async def test_admin_game_game_id_table_post(self) -> None:
+        """Test case for admin_game_game_id_table_post
 
-        Exchange Chips
-        """
-        pass
-
-    async def test_game_game_id_player_post(self) -> None:
-        """Test case for game_game_id_player_post
-
-        Join a Game
-        """
-        pass
-
-    async def test_game_game_id_started_post(self) -> None:
-        """Test case for game_game_id_started_post
-
-        Start Game
-        """
-        pass
-
-    async def test_game_game_id_state_get(self) -> None:
-        """Test case for game_game_id_state_get
-
-        Game State
-        """
-        pass
-
-    async def test_game_game_id_state_listen_get(self) -> None:
-        """Test case for game_game_id_state_listen_get
-
-        Get Listener
-        """
-        pass
-
-    async def test_game_game_id_state_listen_post(self) -> None:
-        """Test case for game_game_id_state_listen_post
-
-        Register Listener
-        """
-        pass
-
-    async def test_game_game_id_state_ws_get(self) -> None:
-        """Test case for game_game_id_state_ws_get
-
-        Connect Updates
-        """
-        pass
-
-    async def test_game_get(self) -> None:
-        """Test case for game_get
-
-        Gets Active Games
-        """
-        pass
-
-    async def test_game_post(self) -> None:
-        """Test case for game_post
-
-        Create Game
-        """
-        pass
-
-    async def test_hand_evaluator_evaluate_post(self) -> None:
-        """Test case for hand_evaluator_evaluate_post
-
-        Evaluate a Hand
+        Change Game Table
         """
         pass
 
