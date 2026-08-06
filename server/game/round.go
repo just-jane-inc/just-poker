@@ -9,7 +9,7 @@ type RoundType string
 //goland:noinspection GoSnakeCaseUsage
 const (
 	RoundTypeUnset     RoundType = "unset"
-	RoundTypeSetup     RoundType = "setup"
+	RoundTypeAnte      RoundType = "setup"
 	RoundTypePreFlop   RoundType = "pre_flop"
 	RoundTypeFlop      RoundType = "flop"
 	RoundTypeTurn      RoundType = "turn"

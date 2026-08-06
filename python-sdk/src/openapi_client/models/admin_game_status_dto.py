@@ -19,16 +19,16 @@ import json
 
 from pydantic import BaseModel, ConfigDict
 from typing import Any, ClassVar, Dict, List, Optional
-from openapi_client.models.game_game_status import GameGameStatus
+from openapi_client.models.admin_game_status import AdminGameStatus
 from typing import Optional, Set
 from typing_extensions import Self
 from pydantic_core import to_jsonable_python
 
-class GameGameStatusDTO(BaseModel):
+class AdminGameStatusDTO(BaseModel):
     """
-    GameGameStatusDTO
+    AdminGameStatusDTO
     """ # noqa: E501
-    status: Optional[GameGameStatus] = None
+    status: Optional[AdminGameStatus] = None
     __properties: ClassVar[List[str]] = ["status"]
 
     model_config = ConfigDict(
@@ -49,7 +49,7 @@ class GameGameStatusDTO(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of GameGameStatusDTO from a JSON string"""
+        """Create an instance of AdminGameStatusDTO from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -74,7 +74,7 @@ class GameGameStatusDTO(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of GameGameStatusDTO from a dict"""
+        """Create an instance of AdminGameStatusDTO from a dict"""
         if obj is None:
             return None
 

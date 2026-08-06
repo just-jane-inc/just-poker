@@ -12,26 +12,22 @@
 """  # noqa: E501
 
 
-from __future__ import annotations
-import json
-from enum import Enum
-from typing_extensions import Self
+import unittest
 
+from openapi_client.models.admin_game_status import AdminGameStatus
 
-class GameGameStatus(str, Enum):
-    """
-    GameGameStatus
-    """
+class TestAdminGameStatus(unittest.TestCase):
+    """AdminGameStatus unit test stubs"""
 
-    """
-    allowed enum values
-    """
-    game_status_paused = 'paused'
-    game_status_normal = 'normal'
+    def setUp(self):
+        pass
 
-    @classmethod
-    def from_json(cls, json_str: str) -> Self:
-        """Create an instance of GameGameStatus from a JSON string"""
-        return cls(json.loads(json_str))
+    def tearDown(self):
+        pass
 
+    def testAdminGameStatus(self):
+        """Test AdminGameStatus"""
+        # inst = AdminGameStatus()
 
+if __name__ == '__main__':
+    unittest.main()

@@ -12,6 +12,7 @@ base_url = os.getenv("BASE_URL")
 parser = argparse.ArgumentParser("poker bot tool CLI")
 parser.add_argument(
     "--players",
+    "--player-count",
     type=int,
     required=False,
     default=4,

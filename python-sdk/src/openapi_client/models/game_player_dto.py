@@ -20,6 +20,7 @@ import json
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from openapi_client.models.game_card_dto import GameCardDTO
+from openapi_client.models.just_user_type import JustUserType
 from typing import Optional, Set
 from typing_extensions import Self
 from pydantic_core import to_jsonable_python
@@ -35,8 +36,8 @@ class GamePlayerDTO(BaseModel):
     pot_contribution: Optional[StrictInt] = Field(default=None, description="the sum total the player has contributed to the pot, note that this does not include chips currently in CurrentBet")
     stack: Optional[Dict[str, StrictInt]] = Field(default=None, description="an optional mapping of chips that is required by some action types.")
     state: Optional[StrictStr] = Field(default=None, description="the players state")
-    user_id: Optional[StrictStr] = Field(default=None, description="the is of the user")
-    user_type: Optional[StrictStr] = Field(default=None, description="the type of user TODO: make this an enum")
+    user_id: Optional[StrictStr] = Field(default=None, description="the id of the user")
+    user_type: Optional[JustUserType] = None
     __properties: ClassVar[List[str]] = ["current_bet", "display_name", "hole", "position", "pot_contribution", "stack", "state", "user_id", "user_type"]
 
     model_config = ConfigDict(

@@ -418,7 +418,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **game_game_id_state_listen_get**
-> object game_game_id_state_listen_get(game_id)
+> GameGameDTO game_game_id_state_listen_get(game_id)
 
 Get Listener
 
@@ -429,6 +429,7 @@ creates a listener that will begin buffering game events that can be queried fro
 
 ```python
 import openapi_client
+from openapi_client.models.game_game_dto import GameGameDTO
 from openapi_client.rest import ApiException
 from pprint import pprint
 
@@ -465,7 +466,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-**object**
+[**GameGameDTO**](GameGameDTO.md)
 
 ### Authorization
 

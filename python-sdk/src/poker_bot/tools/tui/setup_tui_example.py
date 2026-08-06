@@ -46,10 +46,12 @@ async def get_test_setup(base_url: str) -> TestSetup:
     bots: dict[str, TestBot] = dict()
     users = get_test_users()
 
-    game_id = await help.create_game(base_url, users[0].token, player_count=6)
+    game_id = await help.create_game(base_url, users[0].token, player_count=4)
     assert game_id
 
     for user in get_test_users():
+        if user.username == "jill":
+            continue
         bot = PokerBot(base_url, user.token, user.user_id, game_id)
         await bot.join_game()
         bots[user.username] = TestBot(user, bot)

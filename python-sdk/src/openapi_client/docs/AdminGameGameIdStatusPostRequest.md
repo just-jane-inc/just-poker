@@ -5,7 +5,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**status** | [**GameGameStatus**](GameGameStatus.md) |  | [optional] 
+**status** | [**AdminGameStatus**](AdminGameStatus.md) |  | [optional] 
 
 ## Example
 

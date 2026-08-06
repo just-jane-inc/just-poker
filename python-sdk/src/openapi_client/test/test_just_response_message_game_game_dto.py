@@ -36,6 +36,7 @@ class TestJustResponseMessageGameGameDTO(unittest.TestCase):
         if include_optional:
             return JustResponseMessageGameGameDTO(
                 data = openapi_client.models.game/game_dto.game.GameDTO(
+                    ended_at = '', 
                     game_config = openapi_client.models.game/new_game_config_dto.game.NewGameConfigDTO(
                         big_blind = 56, 
                         player_count = 56, 
@@ -74,7 +75,7 @@ class TestJustResponseMessageGameGameDTO(unittest.TestCase):
                                 stack = , 
                                 state = '', 
                                 user_id = '', 
-                                user_type = '', )
+                                user_type = 'bot', )
                             ], 
                         pot = , 
                         small_blind_position = 56, 

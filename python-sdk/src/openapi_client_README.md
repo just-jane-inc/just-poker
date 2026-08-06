@@ -96,14 +96,14 @@ Class | Method | HTTP request | Description
 
  - [AdminGameGameIdStatusPostRequest](openapi_client/docs/AdminGameGameIdStatusPostRequest.md)
  - [AdminGameGameIdTablePostRequest](openapi_client/docs/AdminGameGameIdTablePostRequest.md)
+ - [AdminGameStatus](openapi_client/docs/AdminGameStatus.md)
+ - [AdminGameStatusDTO](openapi_client/docs/AdminGameStatusDTO.md)
  - [GameActiveGameDTO](openapi_client/docs/GameActiveGameDTO.md)
  - [GameCardDTO](openapi_client/docs/GameCardDTO.md)
  - [GameChipExchangeDTO](openapi_client/docs/GameChipExchangeDTO.md)
  - [GameGameDTO](openapi_client/docs/GameGameDTO.md)
  - [GameGameIdActionPostRequest](openapi_client/docs/GameGameIdActionPostRequest.md)
  - [GameGameIdChipExchangePostRequest](openapi_client/docs/GameGameIdChipExchangePostRequest.md)
- - [GameGameStatus](openapi_client/docs/GameGameStatus.md)
- - [GameGameStatusDTO](openapi_client/docs/GameGameStatusDTO.md)
  - [GameHandDTO](openapi_client/docs/GameHandDTO.md)
  - [GameNewGameConfigDTO](openapi_client/docs/GameNewGameConfigDTO.md)
  - [GamePlayerActionDTO](openapi_client/docs/GamePlayerActionDTO.md)
@@ -118,6 +118,7 @@ Class | Method | HTTP request | Description
  - [JustResponseMessageGameGameDTO](openapi_client/docs/JustResponseMessageGameGameDTO.md)
  - [JustResponseMessageJustErrorDTO](openapi_client/docs/JustResponseMessageJustErrorDTO.md)
  - [JustResponseMessageString](openapi_client/docs/JustResponseMessageString.md)
+ - [JustUserType](openapi_client/docs/JustUserType.md)
 
 
 <a id="documentation-for-authorization"></a>

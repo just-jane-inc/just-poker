@@ -35,6 +35,7 @@ class TestGameGameDTO(unittest.TestCase):
         model = GameGameDTO()
         if include_optional:
             return GameGameDTO(
+                ended_at = '',
                 game_config = openapi_client.models.game/new_game_config_dto.game.NewGameConfigDTO(
                     big_blind = 56, 
                     player_count = 56, 
@@ -75,7 +76,7 @@ class TestGameGameDTO(unittest.TestCase):
                                 }, 
                             state = '', 
                             user_id = '', 
-                            user_type = '', )
+                            user_type = 'bot', )
                         ], 
                     pot = , 
                     small_blind_position = 56, 

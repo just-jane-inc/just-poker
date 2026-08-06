@@ -14,10 +14,10 @@
 
 import unittest
 
-from openapi_client.models.game_player_dto import GamePlayerDTO
+from openapi_client.models.admin_game_status_dto import AdminGameStatusDTO
 
-class TestGamePlayerDTO(unittest.TestCase):
-    """GamePlayerDTO unit test stubs"""
+class TestAdminGameStatusDTO(unittest.TestCase):
+    """AdminGameStatusDTO unit test stubs"""
 
     def setUp(self):
         pass
@@ -25,41 +25,25 @@ class TestGamePlayerDTO(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def make_instance(self, include_optional) -> GamePlayerDTO:
-        """Test GamePlayerDTO
+    def make_instance(self, include_optional) -> AdminGameStatusDTO:
+        """Test AdminGameStatusDTO
             include_optional is a boolean, when False only required
             params are included, when True both required and
             optional params are included """
-        # uncomment below to create an instance of `GamePlayerDTO`
+        # uncomment below to create an instance of `AdminGameStatusDTO`
         """
-        model = GamePlayerDTO()
+        model = AdminGameStatusDTO()
         if include_optional:
-            return GamePlayerDTO(
-                current_bet = {
-                    'key' : 56
-                    },
-                display_name = '',
-                hole = [
-                    openapi_client.models.game/card_dto.game.CardDTO(
-                        rank = 56, 
-                        suit = 56, )
-                    ],
-                position = 56,
-                pot_contribution = 56,
-                stack = {
-                    'key' : 56
-                    },
-                state = '',
-                user_id = '',
-                user_type = 'bot'
+            return AdminGameStatusDTO(
+                status = 'paused'
             )
         else:
-            return GamePlayerDTO(
+            return AdminGameStatusDTO(
         )
         """
 
-    def testGamePlayerDTO(self):
-        """Test GamePlayerDTO"""
+    def testAdminGameStatusDTO(self):
+        """Test AdminGameStatusDTO"""
         # inst_req_only = self.make_instance(include_optional=False)
         # inst_req_and_optional = self.make_instance(include_optional=True)
 

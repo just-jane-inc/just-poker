@@ -26,13 +26,13 @@ class GameRoundType(str, Enum):
     """
     allowed enum values
     """
-    round_type_unset = 'unset'
-    round_type_setup = 'setup'
-    round_type_pre_flop = 'pre_flop'
-    round_type_flop = 'flop'
-    round_type_turn = 'turn'
-    round_type_river = 'river'
-    round_type_completed = 'completed'
+    RoundTypeUnset = 'unset'
+    RoundTypeAnte = 'setup'
+    RoundTypePreFlop = 'pre_flop'
+    RoundTypeFlop = 'flop'
+    RoundTypeTurn = 'turn'
+    RoundTypeRiver = 'river'
+    RoundTypeCompleted = 'completed'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:

@@ -65,7 +65,7 @@ class TestGameTableDTO(unittest.TestCase):
                             }, 
                         state = '', 
                         user_id = '', 
-                        user_type = '', )
+                        user_type = 'bot', )
                     ],
                 pot = {
                     'key' : 56

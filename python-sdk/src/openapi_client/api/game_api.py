@@ -19,6 +19,7 @@ from pydantic import Field, StrictStr
 from typing import Any, Dict, List, Optional
 from typing_extensions import Annotated
 from openapi_client.models.game_active_game_dto import GameActiveGameDTO
+from openapi_client.models.game_game_dto import GameGameDTO
 from openapi_client.models.game_game_id_action_post_request import GameGameIdActionPostRequest
 from openapi_client.models.game_game_id_chip_exchange_post_request import GameGameIdChipExchangePostRequest
 from openapi_client.models.game_post_request import GamePostRequest
@@ -1478,7 +1479,7 @@ class GameApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> object:
+    ) -> GameGameDTO:
         """Get Listener
 
         creates a listener that will begin buffering game events that can be queried from an endpoint
@@ -1516,7 +1517,7 @@ class GameApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "object",
+            '200': "GameGameDTO",
         }
         response_data = await self.api_client.call_api(
             *_param,
@@ -1545,7 +1546,7 @@ class GameApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[object]:
+    ) -> ApiResponse[GameGameDTO]:
         """Get Listener
 
         creates a listener that will begin buffering game events that can be queried from an endpoint
@@ -1583,7 +1584,7 @@ class GameApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "object",
+            '200': "GameGameDTO",
         }
         response_data = await self.api_client.call_api(
             *_param,
@@ -1650,7 +1651,7 @@ class GameApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "object",
+            '200': "GameGameDTO",
         }
         response_data = await self.api_client.call_api(
             *_param,

@@ -5,6 +5,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**ended_at** | **str** | the time that the game ended | [optional] 
 **game_config** | [**GameNewGameConfigDTO**](GameNewGameConfigDTO.md) |  | [optional] 
 **id** | **str** | the id of the game | [optional] 
 **started_at** | **str** | the time that the game started originally | [optional] 

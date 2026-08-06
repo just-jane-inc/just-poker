@@ -26,6 +26,7 @@ type table struct {
 	smallBlindPosition int
 	gameID             string
 	currentTurnChannel chan just.WebsocketMessage[any]
+	isHeadsUp          bool
 }
 
 func (t table) GetPlayerWithID(playerID string) *player {
@@ -136,7 +137,7 @@ func (t *table) NextInactivePlayer(offset int) *player {
 	return nil
 }
 
-func (t *table) NextRound() {
+func (t *table) nextRound() {
 	// at the begining of a round all active players
 	// need to be set to inactive?
 	for _, p := range t.players {
@@ -144,22 +145,23 @@ func (t *table) NextRound() {
 			p.state = PlayerStateInactive
 		}
 
-		if t.currentRound.currentRoundType != RoundTypeSetup {
+		if t.currentRound.currentRoundType != RoundTypeAnte {
 			p.currentBet = make(stack)
 		}
 	}
 
 	switch t.currentRound.currentRoundType {
 	case RoundTypeUnset: // GOTO setup
-		t.currentRound.currentRoundType = RoundTypeSetup
-		// this is the first time we enter the next round thing, this is fine?
-		// we might handle this in new haand?
-		p := t.NextInactivePlayer(t.buttonPosition)
-		p.state = PlayerStateActive
+		t.currentRound.currentRoundType = RoundTypeAnte
+		t.currentRound.currentAggressor = t.NextInactivePlayer(t.bigBlindPosition).position
+		p := t.players[t.smallBlindPosition]
 		t.currentRound.currentPlayerPosition = p.position
 		t.currentRound.bet = t.currentHand.SmallBlind
 
-	case RoundTypeSetup: // GOTO pre-flop
+		// this must come after setting the current aggressor to deal with heads up play
+		p.state = PlayerStateActive
+
+	case RoundTypeAnte: // GOTO pre-flop
 		t.currentRound.currentRoundType = RoundTypePreFlop
 
 		// TODO: we really need to stop depending on inactive state
@@ -381,10 +383,19 @@ func (t *table) nextHand(bb int, sb int) error {
 		return nil
 	}
 
+	t.isHeadsUp = playersRemaining == 2
+
 	t.currentHand.SmallBlind = sb
 	t.currentHand.BigBlind = bb
 	t.buttonPosition = t.NextInactivePlayer(t.buttonPosition).position
-	t.smallBlindPosition = t.NextInactivePlayer(t.buttonPosition).position
+
+	if t.isHeadsUp {
+		// in heads up play the button posts the small blind
+		t.smallBlindPosition = t.buttonPosition
+	} else {
+		t.smallBlindPosition = t.NextInactivePlayer(t.buttonPosition).position
+	}
+
 	t.bigBlindPosition = t.NextInactivePlayer(t.smallBlindPosition).position
 
 	t.deck.Reset()
@@ -406,7 +417,6 @@ func (t *table) nextHand(bb int, sb int) error {
 
 	t.sendMessageToConnections("hand_started", msg)
 
-	t.NextRound()
-	t.currentRound.currentAggressor = t.NextInactivePlayer(t.bigBlindPosition).position
+	t.nextRound()
 	return nil
 }

@@ -93,21 +93,11 @@ func OnGetCurrentGameState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userType, err := just.GetUserType(userID)
-	if err != nil {
-		just.InternalError("invalid user").WriteJSONResponse(w)
-		return
-	}
-
 	dto := g.AsDTO()
 	usertype, _ := just.GetUserType(userID)
 	switch usertype {
 	case just.UserTypeGameMaster, just.UserTypeAdmin:
 	default:
-		dto.MaskCards(userID)
-	}
-
-	if userType != "admin" && userType != "game_master" {
 		dto.MaskCards(userID)
 	}
 
@@ -451,11 +441,17 @@ func handleUpdates(dto GameDTO) {
 		just.Logger.Errorf("error updating game state in elastic: %v", err)
 	}
 
+	just.Logger.Infof("sending update: %v", dto)
+
 	just.Logger.Debugf("sending updates for game with ID [%s]", dto.ID)
 	for _, conn := range just.UpdateHub.GetChannelsForGame(dto.ID) {
 		just.Logger.Debugf("sending update to player %s", conn.PlayerID)
 		dtoNew := dto.DeepCopy()
-		dtoNew.MaskCards(conn.PlayerID)
+
+		if conn.UserType != just.UserTypeAdmin && conn.UserType != just.UserTypeGameMaster {
+			dtoNew.MaskCards(conn.PlayerID)
+		}
+
 		msg := just.WebsocketMessage[any]{
 			Data:      dtoNew,
 			EventType: "game_state_update",
@@ -465,13 +461,13 @@ func handleUpdates(dto GameDTO) {
 		case conn.MessageChannel <- msg:
 		default:
 		}
-
 	}
 
 	if dto.EndedAt == nil {
 		return
 	}
 
+	// TODO: send a useful message
 	for _, conn := range just.UpdateHub.GetChannelsForGame(dto.ID) {
 		just.Logger.Debugf("sending update to player %s", conn.PlayerID)
 		dtoNew := dto.DeepCopy()

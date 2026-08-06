@@ -12,40 +12,26 @@
 """  # noqa: E501
 
 
-import unittest
+from __future__ import annotations
+import json
+from enum import Enum
+from typing_extensions import Self
 
-from openapi_client.models.game_game_status_dto import GameGameStatusDTO
 
-class TestGameGameStatusDTO(unittest.TestCase):
-    """GameGameStatusDTO unit test stubs"""
+class AdminGameStatus(str, Enum):
+    """
+    AdminGameStatus
+    """
 
-    def setUp(self):
-        pass
+    """
+    allowed enum values
+    """
+    GameStatusPaused = 'paused'
+    GameStatusNormal = 'normal'
 
-    def tearDown(self):
-        pass
+    @classmethod
+    def from_json(cls, json_str: str) -> Self:
+        """Create an instance of AdminGameStatus from a JSON string"""
+        return cls(json.loads(json_str))
 
-    def make_instance(self, include_optional) -> GameGameStatusDTO:
-        """Test GameGameStatusDTO
-            include_optional is a boolean, when False only required
-            params are included, when True both required and
-            optional params are included """
-        # uncomment below to create an instance of `GameGameStatusDTO`
-        """
-        model = GameGameStatusDTO()
-        if include_optional:
-            return GameGameStatusDTO(
-                status = 'paused'
-            )
-        else:
-            return GameGameStatusDTO(
-        )
-        """
 
-    def testGameGameStatusDTO(self):
-        """Test GameGameStatusDTO"""
-        # inst_req_only = self.make_instance(include_optional=False)
-        # inst_req_and_optional = self.make_instance(include_optional=True)
-
-if __name__ == '__main__':
-    unittest.main()

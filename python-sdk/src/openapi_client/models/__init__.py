@@ -15,14 +15,14 @@
 # import models into model package
 from openapi_client.models.admin_game_game_id_status_post_request import AdminGameGameIdStatusPostRequest
 from openapi_client.models.admin_game_game_id_table_post_request import AdminGameGameIdTablePostRequest
+from openapi_client.models.admin_game_status import AdminGameStatus
+from openapi_client.models.admin_game_status_dto import AdminGameStatusDTO
 from openapi_client.models.game_active_game_dto import GameActiveGameDTO
 from openapi_client.models.game_card_dto import GameCardDTO
 from openapi_client.models.game_chip_exchange_dto import GameChipExchangeDTO
 from openapi_client.models.game_game_dto import GameGameDTO
 from openapi_client.models.game_game_id_action_post_request import GameGameIdActionPostRequest
 from openapi_client.models.game_game_id_chip_exchange_post_request import GameGameIdChipExchangePostRequest
-from openapi_client.models.game_game_status import GameGameStatus
-from openapi_client.models.game_game_status_dto import GameGameStatusDTO
 from openapi_client.models.game_hand_dto import GameHandDTO
 from openapi_client.models.game_new_game_config_dto import GameNewGameConfigDTO
 from openapi_client.models.game_player_action_dto import GamePlayerActionDTO
@@ -37,4 +37,5 @@ from openapi_client.models.just_response_message_any import JustResponseMessageA
 from openapi_client.models.just_response_message_game_game_dto import JustResponseMessageGameGameDTO
 from openapi_client.models.just_response_message_just_error_dto import JustResponseMessageJustErrorDTO
 from openapi_client.models.just_response_message_string import JustResponseMessageString
+from openapi_client.models.just_user_type import JustUserType
 

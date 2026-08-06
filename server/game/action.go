@@ -174,8 +174,8 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) error {
 
 	// the setup 'round' has unique logic and should not mix
 	// with the other round types
-	if g.table.currentRound.currentRoundType == RoundTypeSetup {
-		if err := g.handleSetup(action, p); err != nil {
+	if g.table.currentRound.currentRoundType == RoundTypeAnte {
+		if err := g.handleAnte(action, p); err != nil {
 			return err
 		}
 	}
@@ -188,7 +188,7 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) error {
 		// the happy path of the ante intent will have already been handled by this point
 		// we do not need to do anything else here, simply ensure that this intent
 		// was applied during the setup round.
-		if g.table.currentRound.currentRoundType != RoundTypeSetup {
+		if g.table.currentRound.currentRoundType != RoundTypeAnte {
 			return &just.PokerError{
 				Message: "ante is only accepted during the setup round",
 				Code:    just.InvalidActionType,
@@ -303,9 +303,9 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) error {
 			// recording the previous round here for logging
 			prevRoundType := g.table.currentRound.currentRoundType
 
-			g.table.NextRound()
+			g.table.nextRound()
 			if g.table.currentRound.currentRoundType == RoundTypePreFlop {
-				nextRoundFirstPlayer = g.table.NextInactivePlayer(g.table.buttonPosition + 2)
+				nextRoundFirstPlayer = g.table.NextInactivePlayer(g.table.bigBlindPosition)
 			} else {
 				nextRoundFirstPlayer = g.table.NextInactivePlayer(g.table.buttonPosition)
 			}
@@ -363,14 +363,14 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) error {
 	return nil
 }
 
-// handleSetup handles provided player action for the setup round type
+// handleAnte handles provided player action for the setup round type
 //
 // returns an error if the game is not actually in this round type
 // or if the provided action is invalid in some way.
 //
 // it is assumed that the provided player (p) preforms the provided action.
-func (g *game) handleSetup(action PlayerActionDTO, p *player) error {
-	if g.table.currentRound.currentRoundType != RoundTypeSetup {
+func (g *game) handleAnte(action PlayerActionDTO, p *player) error {
+	if g.table.currentRound.currentRoundType != RoundTypeAnte {
 		errorMessage := fmt.Sprintf(
 			"internal error, setup handler invoked when round type was [ %s ]",
 			g.table.currentRound.currentRoundType,

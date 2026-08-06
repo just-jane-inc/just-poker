@@ -14,10 +14,10 @@
 
 import unittest
 
-from openapi_client.models.game_player_dto import GamePlayerDTO
+from openapi_client.models.just_user_type import JustUserType
 
-class TestGamePlayerDTO(unittest.TestCase):
-    """GamePlayerDTO unit test stubs"""
+class TestJustUserType(unittest.TestCase):
+    """JustUserType unit test stubs"""
 
     def setUp(self):
         pass
@@ -25,43 +25,9 @@ class TestGamePlayerDTO(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def make_instance(self, include_optional) -> GamePlayerDTO:
-        """Test GamePlayerDTO
-            include_optional is a boolean, when False only required
-            params are included, when True both required and
-            optional params are included """
-        # uncomment below to create an instance of `GamePlayerDTO`
-        """
-        model = GamePlayerDTO()
-        if include_optional:
-            return GamePlayerDTO(
-                current_bet = {
-                    'key' : 56
-                    },
-                display_name = '',
-                hole = [
-                    openapi_client.models.game/card_dto.game.CardDTO(
-                        rank = 56, 
-                        suit = 56, )
-                    ],
-                position = 56,
-                pot_contribution = 56,
-                stack = {
-                    'key' : 56
-                    },
-                state = '',
-                user_id = '',
-                user_type = 'bot'
-            )
-        else:
-            return GamePlayerDTO(
-        )
-        """
-
-    def testGamePlayerDTO(self):
-        """Test GamePlayerDTO"""
-        # inst_req_only = self.make_instance(include_optional=False)
-        # inst_req_and_optional = self.make_instance(include_optional=True)
+    def testJustUserType(self):
+        """Test JustUserType"""
+        # inst = JustUserType()
 
 if __name__ == '__main__':
     unittest.main()

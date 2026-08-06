@@ -47,14 +47,13 @@ type RoundDTO struct {
 
 // PlayerDTO a dto representing a single player
 type PlayerDTO struct {
-	// the is of the user
+	// the id of the user
 	UserID string `json:"user_id"`
 
 	// the users display name
 	DisplayName string `json:"display_name"`
 
 	// the type of user
-	// TODO: make this an enum
 	UserType just.UserType `json:"user_type"`
 
 	// the players position at the table, starting with 0 being the

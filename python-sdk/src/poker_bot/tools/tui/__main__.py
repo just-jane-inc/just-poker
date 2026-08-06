@@ -14,7 +14,9 @@ from textual.widgets import Button, Footer, Input, Label, Static
 import poker_bot.bot.poker_helpers as help
 from openapi_client.models import GameGameDTO, GamePlayerDTO, GameTableDTO
 from poker_bot.bot.bot import PokerBot
-from poker_bot.bot.websocket_events import WebSocketListener, WebSocketEventType, WebSocketEvent
+from poker_bot.bot.websocket_events import (
+    WebSocketListener,
+)
 from poker_bot.tools.tui.setup_tui_example import get_test_user, setup
 
 load_dotenv("config/.env")
@@ -25,13 +27,15 @@ parser.add_argument("--game-id", type=str, required=False, help="game id")
 parser.add_argument("--player-name", type=str, required=False, help="")
 parser.add_argument("--setup", action="store_true", required=False, help="")
 
-if os.name == 'nt':
+if os.name == "nt":
     # For windows only tool usage, fix for cert stuff
     try:
         import truststore
+
         truststore.inject_into_ssl()
     finally:
         pass
+
 
 def main():
     args = parser.parse_args()
@@ -137,6 +141,7 @@ class Players(Static):
 
             view += "\n\n"
 
+        view += f"\nlength: {len(self.players)}"
         return view
 
 
@@ -199,7 +204,6 @@ class PokerApp(App):
 
     async def on_mount(self) -> None:
         args = parser.parse_args()
-        print(args)
         self.game_state = None
         user = get_test_user(args.player_name)
 
@@ -208,7 +212,6 @@ class PokerApp(App):
 
         self.listener = me.websocket_listener()
         if self.listener is not None:
-
             # Example of using as a decorator with specific event types
             # @self.listener.on_event(WebSocketEventType.WELCOME, WebSocketEventType.GAME_STATE_UPDATE)
             # async def _on_update(event: WebSocketEvent) -> None:

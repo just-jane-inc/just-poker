@@ -1,40 +1,87 @@
 import argparse
 import asyncio
 import os
+import textwrap
 
+import aiofiles
 from dotenv import load_dotenv
+from httpx import ConnectError
 
-from poker_bot.bot.poker_helpers import create_connection, get_game_state
+import poker_bot.bot.poker_helpers as help
+from openapi_client import ApiException
 
-load_dotenv("config/.env")
-base_url = os.getenv("BASE_URL")
+parser = argparse.ArgumentParser(
+    description="gets game state for a game by id",
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    epilog=textwrap.dedent("""\
+    usage:
+        depends on the BASE_URL configured in config/.env and the token
+        configured in config/api-token. optionally these values can be
+        overridden by arguments.
+    examples:
+        python -m poker_bot.tools.game_state --id 123
+        python -m poker_bot.tools.game_state --game-id 456
+        python -m poker_bot.tools.game_state --game-id 789 --url http://localhost:7653 --token-file path/to/token/file
+    """),
+)
 
-parser = argparse.ArgumentParser("poker bot tool CLI")
 parser.add_argument(
+    "--id",
     "--game-id",
     type=str,
-    required=False,
+    required=True,
     help="the id of the game to get the state of",
 )
 
+parser.add_argument(
+    "--url",
+    type=str,
+    required=False,
+    help="an override for the base_url to use",
+)
 
-async def get_state(game_id: str):
-    client = create_connection(
-        base_url, "bahms.LqEwOpyhXZ7tZRUf.q_gZf2_hpcfdV3H6gvkEt7cRBb3Lcb-LNoYd-nGYE4oa"
-    )
+parser.add_argument(
+    "--token-file",
+    type=str,
+    required=False,
+    help="an override for the filepath containing an api token to use",
+)
 
-    resp = await get_game_state(client, game_id)
-    print(resp.to_str())
+
+async def get_state(game_id: str, token_file: str, base_url: str):
+    async with aiofiles.open(token_file, "r") as f:
+        token = await f.read()
+        token = str(token.strip("\n"))
+
+    client = help.create_connection(base_url, token)
+    try:
+        resp = await help.get_game_state(client, game_id)
+        print(resp.to_str())
+    except ApiException as e:
+        print(f"encountered exception when getting game state: {e}")
+    except ConnectError:
+        print(
+            f"connection could not be established - is the server at {base_url} online?"
+        )
 
 
 def main():
-    print("starting thing")
-    with open("config/api-token", "r") as f:
-        token = str(f.read()).strip("\n")
-        print(token)
+    base_url = ""
+    token_file = ""
 
     args = parser.parse_args()
-    asyncio.run(get_state(args.game_id))
+    if args.url:
+        base_url = args.url
+    else:
+        load_dotenv("config/.env")
+        base_url = os.getenv("BASE_URL")
+
+    if args.token_file:
+        token_file = args.token_file
+    else:
+        token_file = "config/api-token"
+
+    asyncio.run(get_state(args.id, token_file, base_url))
 
 
 if __name__ == "__main__":

@@ -12,22 +12,28 @@
 """  # noqa: E501
 
 
-import unittest
+from __future__ import annotations
+import json
+from enum import Enum
+from typing_extensions import Self
 
-from openapi_client.models.game_game_status import GameGameStatus
 
-class TestGameGameStatus(unittest.TestCase):
-    """GameGameStatus unit test stubs"""
+class JustUserType(str, Enum):
+    """
+    the type of user
+    """
 
-    def setUp(self):
-        pass
+    """
+    allowed enum values
+    """
+    UserTypeBot = 'bot'
+    UserTypeHuman = 'normal'
+    UserTypeAdmin = 'admin'
+    UserTypeGameMaster = 'game_master'
 
-    def tearDown(self):
-        pass
+    @classmethod
+    def from_json(cls, json_str: str) -> Self:
+        """Create an instance of JustUserType from a JSON string"""
+        return cls(json.loads(json_str))
 
-    def testGameGameStatus(self):
-        """Test GameGameStatus"""
-        # inst = GameGameStatus()
 
-if __name__ == '__main__':
-    unittest.main()

@@ -12,8 +12,8 @@ Name | Type | Description | Notes
 **pot_contribution** | **int** | the sum total the player has contributed to the pot, note that this does not include chips currently in CurrentBet | [optional] 
 **stack** | **Dict[str, int]** | an optional mapping of chips that is required by some action types. | [optional] 
 **state** | **str** | the players state | [optional] 
-**user_id** | **str** | the is of the user | [optional] 
-**user_type** | **str** | the type of user TODO: make this an enum | [optional] 
+**user_id** | **str** | the id of the user | [optional] 
+**user_type** | [**JustUserType**](JustUserType.md) |  | [optional] 
 
 ## Example
 

@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from dataclasses import dataclass
 
@@ -13,7 +12,11 @@ from openapi_client import (
     GamePlayerActionDTO,
     UserApi,
 )
-from poker_bot.bot.websocket_events import WebSocketListener, WebSocketStream, WebSocketEvent
+from poker_bot.bot.websocket_events import (
+    WebSocketEvent,
+    WebSocketListener,
+    WebSocketStream,
+)
 
 logging.basicConfig(
     filename="app.log",  # Name of the file
@@ -89,6 +92,7 @@ class PokerBot:
         self._player = None
         self._user_id = user_id
         self._current_stack: list[Chips] = []
+        self._current_state: GameGameDTO | None
 
     async def join_game(self):
         if self._joined:
@@ -110,8 +114,9 @@ class PokerBot:
 
     def _ingest_state(self, state: GameGameDTO):
         # TODO: get the LSP to stop being insane
-        if state.table is None or state.table.players is None:
-            raise ex.CustomException("what")
+        if state is None or state.table is None or state.table.players is None:
+            logger.warning("state is none in _ingest_state")
+            return
 
         for player in state.table.players:
             if player.user_id == self._user_id:
@@ -123,16 +128,30 @@ class PokerBot:
                 )
                 break
 
+        self._current_state = state
+
     def _ingest_update(self, event: WebSocketEvent):
         # Note: not doing anything else from data stream atm, mainly placeholder
         if event.data is not None and isinstance(event.data, GameGameDTO):
             self._ingest_state(event.data)
 
     def websocket_stream(self, **kwargs) -> WebSocketStream:
-        return WebSocketStream(self._base_url, self._token, self._game_id, on_state=self._ingest_update, **kwargs)
+        return WebSocketStream(
+            self._base_url,
+            self._token,
+            self._game_id,
+            on_state=self._ingest_update,
+            **kwargs,
+        )
 
     def websocket_listener(self, **kwargs) -> WebSocketListener:
-        return WebSocketListener(self._base_url, self._token, self._game_id, on_game_state=self._ingest_state, **kwargs)
+        return WebSocketListener(
+            self._base_url,
+            self._token,
+            self._game_id,
+            on_game_state=self._ingest_state,
+            **kwargs,
+        )
 
     async def exchange_chips(self, give: list[Chips], receive: list[Chips]):
         give_stack = {str(s.denomination): s.count for s in give}
@@ -249,8 +268,6 @@ class PokerBot:
         raise ValueError("could not construct a valid bet for provided amount")
 
     async def raise_bet(self, raise_to: int):
-        await self.wait_for_turn()
-
         current_bet = convert_stack(self._player.current_bet)
         current_bet = sum(s.denomination * s.count for s in current_bet)
         raise_to = raise_to - current_bet
@@ -262,9 +279,7 @@ class PokerBot:
         await self.send_action("raise", stack)
 
     async def ante(self):
-        state = await self.wait_for_turn()
-
-        amount = state.table.current_round.bet
+        amount = self._current_state.table.current_round.bet
         if not amount:
             raise ex.CustomException("erm")
 
@@ -275,9 +290,7 @@ class PokerBot:
         await self.send_action("ante", stack)
 
     async def call(self):
-        state = await self.wait_for_turn()
-
-        amount = state.table.current_round.bet
+        amount = self._current_state.table.current_round.bet
         if not amount:
             raise ex.CustomException("erm")
 
@@ -294,10 +307,3 @@ class PokerBot:
         dto = GamePlayerActionDTO(chips=bet, intent=intent)
         req = GameGameIdActionPostRequest(dto)
         await self._game_api.game_game_id_action_post(self._game_id, req)
-
-    async def wait_for_turn(self, wait: int = 1) -> GameGameDTO | None:
-        state = await self.get_game_state()
-        if state.table.current_round.current_player_position == self._player.position:
-            return state
-
-        await asyncio.sleep(1)

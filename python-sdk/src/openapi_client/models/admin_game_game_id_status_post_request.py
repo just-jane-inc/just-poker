@@ -17,12 +17,12 @@ import json
 import pprint
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, field_validator
 from typing import Any, Dict, List, Optional
-from openapi_client.models.game_game_status_dto import GameGameStatusDTO
+from openapi_client.models.admin_game_status_dto import AdminGameStatusDTO
 from pydantic import StrictStr, Field
 from typing import Union, List, Set, Optional, Dict
 from typing_extensions import Literal, Self
 
-ADMINGAMEGAMEIDSTATUSPOSTREQUEST_ONE_OF_SCHEMAS = ["GameGameStatusDTO", "object"]
+ADMINGAMEGAMEIDSTATUSPOSTREQUEST_ONE_OF_SCHEMAS = ["AdminGameStatusDTO", "object"]
 
 class AdminGameGameIdStatusPostRequest(BaseModel):
     """
@@ -30,10 +30,10 @@ class AdminGameGameIdStatusPostRequest(BaseModel):
     """
     # data type: object
     oneof_schema_1_validator: Optional[Dict[str, Any]] = None
-    # data type: GameGameStatusDTO
-    oneof_schema_2_validator: Optional[GameGameStatusDTO] = Field(default=None, description="the status of the game to set")
-    actual_instance: Optional[Union[GameGameStatusDTO, object]] = None
-    one_of_schemas: Set[str] = { "GameGameStatusDTO", "object" }
+    # data type: AdminGameStatusDTO
+    oneof_schema_2_validator: Optional[AdminGameStatusDTO] = Field(default=None, description="the status of the game to set")
+    actual_instance: Optional[Union[AdminGameStatusDTO, object]] = None
+    one_of_schemas: Set[str] = { "AdminGameStatusDTO", "object" }
 
     model_config = ConfigDict(
         validate_assignment=True,
@@ -62,17 +62,17 @@ class AdminGameGameIdStatusPostRequest(BaseModel):
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
-        # validate data type: GameGameStatusDTO
-        if not isinstance(v, GameGameStatusDTO):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `GameGameStatusDTO`")
+        # validate data type: AdminGameStatusDTO
+        if not isinstance(v, AdminGameStatusDTO):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `AdminGameStatusDTO`")
         else:
             match += 1
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when setting `actual_instance` in AdminGameGameIdStatusPostRequest with oneOf schemas: GameGameStatusDTO, object. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when setting `actual_instance` in AdminGameGameIdStatusPostRequest with oneOf schemas: AdminGameStatusDTO, object. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when setting `actual_instance` in AdminGameGameIdStatusPostRequest with oneOf schemas: GameGameStatusDTO, object. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting `actual_instance` in AdminGameGameIdStatusPostRequest with oneOf schemas: AdminGameStatusDTO, object. Details: " + ", ".join(error_messages))
         else:
             return v
 
@@ -96,19 +96,19 @@ class AdminGameGameIdStatusPostRequest(BaseModel):
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
-        # deserialize data into GameGameStatusDTO
+        # deserialize data into AdminGameStatusDTO
         try:
-            instance.actual_instance = GameGameStatusDTO.from_json(json_str)
+            instance.actual_instance = AdminGameStatusDTO.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
 
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when deserializing the JSON string into AdminGameGameIdStatusPostRequest with oneOf schemas: GameGameStatusDTO, object. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when deserializing the JSON string into AdminGameGameIdStatusPostRequest with oneOf schemas: AdminGameStatusDTO, object. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into AdminGameGameIdStatusPostRequest with oneOf schemas: GameGameStatusDTO, object. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into AdminGameGameIdStatusPostRequest with oneOf schemas: AdminGameStatusDTO, object. Details: " + ", ".join(error_messages))
         else:
             return instance
 
@@ -122,7 +122,7 @@ class AdminGameGameIdStatusPostRequest(BaseModel):
         else:
             return json.dumps(self.actual_instance)
 
-    def to_dict(self) -> Optional[Union[Dict[str, Any], GameGameStatusDTO, object]]:
+    def to_dict(self) -> Optional[Union[Dict[str, Any], AdminGameStatusDTO, object]]:
         """Returns the dict representation of the actual instance"""
         if self.actual_instance is None:
             return None

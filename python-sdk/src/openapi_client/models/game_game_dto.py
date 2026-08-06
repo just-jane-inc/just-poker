@@ -29,11 +29,12 @@ class GameGameDTO(BaseModel):
     """
     GameGameDTO
     """ # noqa: E501
+    ended_at: Optional[StrictStr] = Field(default=None, description="the time that the game ended")
     game_config: Optional[GameNewGameConfigDTO] = None
     id: Optional[StrictStr] = Field(default=None, description="the id of the game")
     started_at: Optional[StrictStr] = Field(default=None, description="the time that the game started originally")
     table: Optional[GameTableDTO] = None
-    __properties: ClassVar[List[str]] = ["game_config", "id", "started_at", "table"]
+    __properties: ClassVar[List[str]] = ["ended_at", "game_config", "id", "started_at", "table"]
 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -92,6 +93,7 @@ class GameGameDTO(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
+            "ended_at": obj.get("ended_at"),
             "game_config": GameNewGameConfigDTO.from_dict(obj["game_config"]) if obj.get("game_config") is not None else None,
             "id": obj.get("id"),
             "started_at": obj.get("started_at"),

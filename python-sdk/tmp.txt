@@ -1,0 +1,144 @@
+[main] WARN  o.o.codegen.DefaultCodegen - OpenAPI 3.1 support is still in beta. To report an issue related to 3.1 spec, please kindly open an issue in the Github repo: https://github.com/openAPITools/openapi-generator.
+[main] INFO  o.o.codegen.DefaultGenerator - Generating with dryRun=false
+[main] INFO  o.o.codegen.DefaultGenerator - OpenAPI Generator: python (client)
+[main] INFO  o.o.codegen.DefaultGenerator - Generator 'python' is considered stable.
+[main] INFO  o.o.c.l.AbstractPythonCodegen - Environment variable PYTHON_POST_PROCESS_FILE not defined so the Python code may not be properly formatted. To define it, try 'export PYTHON_POST_PROCESS_FILE="/usr/local/bin/yapf -i"' (Linux/Mac)
+[main] INFO  o.o.c.l.AbstractPythonCodegen - NOTE: To enable file post-processing, 'enablePostProcessFile' must be set to `true` (--enable-post-process-file for CLI).
+[main] WARN  o.o.codegen.utils.ModelUtils - Failed to get the schema name: null
+[main] INFO  o.o.codegen.InlineModelResolver - Inline schema created as _admin_game__game_id__status_post_request. To have complete control of the model name, set the `title` field or use the modelNameMapping option (e.g. --model-name-mappings _admin_game__game_id__status_post_request=NewModel,ModelA=NewModelA in CLI) or inlineSchemaNameMapping option (--inline-schema-name-mappings _admin_game__game_id__status_post_request=NewModel,ModelA=NewModelA in CLI).
+[main] INFO  o.o.codegen.InlineModelResolver - Inline schema created as _admin_game__game_id__table_post_request. To have complete control of the model name, set the `title` field or use the modelNameMapping option (e.g. --model-name-mappings _admin_game__game_id__table_post_request=NewModel,ModelA=NewModelA in CLI) or inlineSchemaNameMapping option (--inline-schema-name-mappings _admin_game__game_id__table_post_request=NewModel,ModelA=NewModelA in CLI).
+[main] INFO  o.o.codegen.InlineModelResolver - Inline schema created as _game_post_request. To have complete control of the model name, set the `title` field or use the modelNameMapping option (e.g. --model-name-mappings _game_post_request=NewModel,ModelA=NewModelA in CLI) or inlineSchemaNameMapping option (--inline-schema-name-mappings _game_post_request=NewModel,ModelA=NewModelA in CLI).
+[main] INFO  o.o.codegen.InlineModelResolver - Inline schema created as _game__game_id__action_post_request. To have complete control of the model name, set the `title` field or use the modelNameMapping option (e.g. --model-name-mappings _game__game_id__action_post_request=NewModel,ModelA=NewModelA in CLI) or inlineSchemaNameMapping option (--inline-schema-name-mappings _game__game_id__action_post_request=NewModel,ModelA=NewModelA in CLI).
+[main] INFO  o.o.codegen.InlineModelResolver - Inline schema created as _game__game_id__chip_exchange_post_request. To have complete control of the model name, set the `title` field or use the modelNameMapping option (e.g. --model-name-mappings _game__game_id__chip_exchange_post_request=NewModel,ModelA=NewModelA in CLI) or inlineSchemaNameMapping option (--inline-schema-name-mappings _game__game_id__chip_exchange_post_request=NewModel,ModelA=NewModelA in CLI).
+[main] INFO  o.o.codegen.InlineModelResolver - Inline schema created as _hand_evaluator_evaluate_post_request. To have complete control of the model name, set the `title` field or use the modelNameMapping option (e.g. --model-name-mappings _hand_evaluator_evaluate_post_request=NewModel,ModelA=NewModelA in CLI) or inlineSchemaNameMapping option (--inline-schema-name-mappings _hand_evaluator_evaluate_post_request=NewModel,ModelA=NewModelA in CLI).
+[main] WARN  o.o.codegen.DefaultCodegen - OpenAPI 3.1 support is still in beta. To report an issue related to 3.1 spec, please kindly open an issue in the Github repo: https://github.com/openAPITools/openapi-generator.
+[main] INFO  o.o.codegen.DefaultGenerator - Model game.ChipStackDTO not generated since it's a free-form object
+[main] WARN  o.o.c.l.AbstractPythonCodegen - Codegen property is null (e.g. map/dict of undefined type). Default to typing.Any.
+[main] WARN  o.o.c.l.AbstractPythonCodegen - Codegen property is null (e.g. map/dict of undefined type). Default to typing.Any.
+[main] WARN  o.o.c.l.AbstractPythonCodegen - Codegen property is null (e.g. map/dict of undefined type). Default to typing.Any.
+[main] WARN  o.o.c.l.AbstractPythonCodegen - Codegen property is null (e.g. map/dict of undefined type). Default to typing.Any.
+[main] WARN  o.o.c.l.AbstractPythonCodegen - Codegen property is null (e.g. map/dict of undefined type). Default to typing.Any.
+[main] WARN  o.o.c.l.AbstractPythonCodegen - Codegen property is null (e.g. map/dict of undefined type). Default to typing.Any.
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/admin_game_game_id_status_post_request.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_admin_game_game_id_status_post_request.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/AdminGameGameIdStatusPostRequest.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/admin_game_game_id_table_post_request.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_admin_game_game_id_table_post_request.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/AdminGameGameIdTablePostRequest.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/admin_game_status.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_admin_game_status.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/AdminGameStatus.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/admin_game_status_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_admin_game_status_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/AdminGameStatusDTO.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/game_active_game_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_game_active_game_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/GameActiveGameDTO.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/game_card_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_game_card_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/GameCardDTO.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/game_chip_exchange_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_game_chip_exchange_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/GameChipExchangeDTO.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/game_game_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_game_game_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/GameGameDTO.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/game_game_id_action_post_request.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_game_game_id_action_post_request.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/GameGameIdActionPostRequest.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/game_game_id_chip_exchange_post_request.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_game_game_id_chip_exchange_post_request.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/GameGameIdChipExchangePostRequest.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/game_hand_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_game_hand_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/GameHandDTO.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/game_new_game_config_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_game_new_game_config_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/GameNewGameConfigDTO.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/game_player_action_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_game_player_action_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/GamePlayerActionDTO.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/game_player_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_game_player_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/GamePlayerDTO.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/game_post_request.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_game_post_request.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/GamePostRequest.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/game_round_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_game_round_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/GameRoundDTO.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/game_round_type.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_game_round_type.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/GameRoundType.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/game_table_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_game_table_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/GameTableDTO.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/hand_evaluator_evaluate_post_request.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_hand_evaluator_evaluate_post_request.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/HandEvaluatorEvaluatePostRequest.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/just_error_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_just_error_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/JustErrorDTO.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/just_response_message_any.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_just_response_message_any.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/JustResponseMessageAny.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/just_response_message_game_game_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_just_response_message_game_game_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/JustResponseMessageGameGameDTO.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/just_response_message_just_error_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_just_response_message_just_error_dto.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/JustResponseMessageJustErrorDTO.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/just_response_message_string.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_just_response_message_string.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/JustResponseMessageString.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/just_user_type.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_just_user_type.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/JustUserType.md
+[main] WARN  o.o.codegen.DefaultCodegen - Empty operationId found for path: post /admin/game/{game_id}/status. Renamed to auto-generated operationId: adminGameGameIdStatusPost
+[main] WARN  o.o.codegen.DefaultCodegen - Empty operationId found for path: post /admin/game/{game_id}/table. Renamed to auto-generated operationId: adminGameGameIdTablePost
+[main] WARN  o.o.codegen.DefaultCodegen - Empty operationId found for path: get /game. Renamed to auto-generated operationId: gameGet
+[main] WARN  o.o.codegen.DefaultCodegen - Empty operationId found for path: post /game. Renamed to auto-generated operationId: gamePost
+[main] WARN  o.o.codegen.DefaultCodegen - Empty operationId found for path: post /game/{game_id}/action. Renamed to auto-generated operationId: gameGameIdActionPost
+[main] WARN  o.o.codegen.DefaultCodegen - Empty operationId found for path: post /game/{game_id}/chip/exchange. Renamed to auto-generated operationId: gameGameIdChipExchangePost
+[main] WARN  o.o.codegen.DefaultCodegen - Empty operationId found for path: post /game/{game_id}/player. Renamed to auto-generated operationId: gameGameIdPlayerPost
+[main] WARN  o.o.codegen.DefaultCodegen - Empty operationId found for path: post /game/{game_id}/started. Renamed to auto-generated operationId: gameGameIdStartedPost
+[main] WARN  o.o.codegen.DefaultCodegen - Empty operationId found for path: get /game/{game_id}/state. Renamed to auto-generated operationId: gameGameIdStateGet
+[main] WARN  o.o.codegen.DefaultCodegen - Empty operationId found for path: get /game/{game_id}/state/listen. Renamed to auto-generated operationId: gameGameIdStateListenGet
+[main] WARN  o.o.codegen.DefaultCodegen - Empty operationId found for path: post /game/{game_id}/state/listen. Renamed to auto-generated operationId: gameGameIdStateListenPost
+[main] WARN  o.o.codegen.DefaultCodegen - Empty operationId found for path: get /game/{game_id}/state/ws. Renamed to auto-generated operationId: gameGameIdStateWsGet
+[main] WARN  o.o.codegen.DefaultCodegen - Empty operationId found for path: post /hand-evaluator/evaluate. Renamed to auto-generated operationId: hand_evaluatorEvaluatePost
+[main] WARN  o.o.codegen.DefaultCodegen - Empty operationId found for path: delete /user/me. Renamed to auto-generated operationId: userMeDelete
+[main] WARN  o.o.c.l.AbstractPythonCodegen - Codegen property is null (e.g. map/dict of undefined type). Default to typing.Any.
+[main] WARN  o.o.c.l.AbstractPythonCodegen - Codegen property is null (e.g. map/dict of undefined type). Default to typing.Any.
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/api/admin_api.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_admin_api.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/AdminApi.md
+[main] WARN  o.o.c.l.AbstractPythonCodegen - Codegen property is null (e.g. map/dict of undefined type). Default to typing.Any.
+[main] WARN  o.o.c.l.AbstractPythonCodegen - Codegen property is null (e.g. map/dict of undefined type). Default to typing.Any.
+[main] WARN  o.o.c.l.AbstractPythonCodegen - Codegen property is null (e.g. map/dict of undefined type). Default to typing.Any.
+[main] WARN  o.o.c.l.AbstractPythonCodegen - Codegen property is null (e.g. map/dict of undefined type). Default to typing.Any.
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/api/game_api.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_game_api.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/GameApi.md
+[main] WARN  o.o.c.l.AbstractPythonCodegen - Codegen property is null (e.g. map/dict of undefined type). Default to typing.Any.
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/api/user_api.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/test_user_api.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/docs/UserApi.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client_README.md
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/configuration.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/__init__.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/models/__init__.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/api/__init__.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/exceptions.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/test/__init__.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/api_client.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/api_response.py
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/openapi_client/rest.py
+[main] INFO  o.o.codegen.TemplateManager - Skipped /home/jane/just-stream/just-poker/python-sdk/src/.openapi-generator-ignore (Skipped by supportingFiles options supplied by user.)
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/.openapi-generator/VERSION
+[main] INFO  o.o.codegen.TemplateManager - writing file /home/jane/just-stream/just-poker/python-sdk/src/.openapi-generator/FILES
+############################################################################################
+# Thanks for using OpenAPI Generator.                                                      #
+# We appreciate your support! Please consider donation to help us maintain this project.   #
+# https://opencollective.com/openapi_generator/donate                                      #
+############################################################################################

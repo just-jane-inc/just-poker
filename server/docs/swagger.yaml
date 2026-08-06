@@ -1,5 +1,18 @@
 components:
   schemas:
+    admin.GameStatus:
+      enum:
+      - paused
+      - normal
+      type: string
+      x-enum-varnames:
+      - GameStatusPaused
+      - GameStatusNormal
+    admin.GameStatusDTO:
+      properties:
+        status:
+          $ref: '#/components/schemas/admin.GameStatus'
+      type: object
     game.ActiveGameDTO:
       properties:
         id:
@@ -33,6 +46,9 @@ components:
       type: object
     game.GameDTO:
       properties:
+        ended_at:
+          description: the time that the game ended
+          type: string
         game_config:
           $ref: '#/components/schemas/game.NewGameConfigDTO'
         id:
@@ -43,19 +59,6 @@ components:
           type: string
         table:
           $ref: '#/components/schemas/game.TableDTO'
-      type: object
-    game.GameStatus:
-      enum:
-      - paused
-      - normal
-      type: string
-      x-enum-varnames:
-      - game_status_paused
-      - game_status_normal
-    game.GameStatusDTO:
-      properties:
-        status:
-          $ref: '#/components/schemas/game.GameStatus'
       type: object
     game.HandDTO:
       description: the current hand
@@ -134,13 +137,10 @@ components:
           description: the players state
           type: string
         user_id:
-          description: the is of the user
+          description: the id of the user
           type: string
         user_type:
-          description: |-
-            the type of user
-            TODO: make this an enum
-          type: string
+          $ref: '#/components/schemas/just.UserType'
       type: object
     game.RoundDTO:
       description: the current round
@@ -171,13 +171,13 @@ components:
       - completed
       type: string
       x-enum-varnames:
-      - round_type_unset
-      - round_type_setup
-      - round_type_pre_flop
-      - round_type_flop
-      - round_type_turn
-      - round_type_river
-      - round_type_completed
+      - RoundTypeUnset
+      - RoundTypeAnte
+      - RoundTypePreFlop
+      - RoundTypeFlop
+      - RoundTypeTurn
+      - RoundTypeRiver
+      - RoundTypeCompleted
     game.TableDTO:
       description: the table
       properties:
@@ -247,6 +247,19 @@ components:
           example: user.created
           type: string
       type: object
+    just.UserType:
+      description: the type of user
+      enum:
+      - bot
+      - normal
+      - admin
+      - game_master
+      type: string
+      x-enum-varnames:
+      - UserTypeBot
+      - UserTypeHuman
+      - UserTypeAdmin
+      - UserTypeGameMaster
   securitySchemes:
     BearerAuth:
       description: Type "Bearer" followed by a space and your token (e.g. "Bearer
@@ -313,7 +326,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/game.GameStatusDTO'
+              - $ref: '#/components/schemas/admin.GameStatusDTO'
                 description: the status of the game to set
                 summary: status
         description: the status of the game to set
@@ -568,7 +581,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: '#/components/schemas/game.GameDTO'
           description: OK
       summary: Get Listener
       tags:
