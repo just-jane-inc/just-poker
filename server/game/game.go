@@ -229,26 +229,7 @@ func (g *game) TryStartGame() error {
 }
 
 func (g *game) TryStartNewHand() error {
-	var playersRemaining int
 	for _, p := range g.table.players {
-		if p.state != player_state_out {
-			playersRemaining += 1
-		}
-	}
-
-	if playersRemaining == 1 {
-		g.OnGameOver()
-	}
-
-	just.Logger.Debugf("attempting to start hand [%d]", g.table.currentHand.ID+1)
-
-	t := g.table
-	pot := t.pot.Sum()
-	if pot > 0 {
-		return fmt.Errorf("pot still has chips, cannot start new hand until the previous one is resolved")
-	}
-
-	for _, p := range t.players {
 		p.pocket = make([]*card, 0)
 
 		if p.chips.Sum() == 0 {
@@ -263,6 +244,27 @@ func (g *game) TryStartNewHand() error {
 		}
 
 		p.state = player_state_inactive
+	}
+
+	var playersRemaining int
+	for _, p := range g.table.players {
+		if p.state != player_state_out {
+			playersRemaining += 1
+		}
+	}
+
+	if playersRemaining == 1 {
+		g.OnGameOver()
+		just.Logger.Infof("game [%s] completed", g.id)
+		return nil
+	}
+
+	just.Logger.Debugf("attempting to start hand [%d]", g.table.currentHand.ID+1)
+
+	t := g.table
+	pot := t.pot.Sum()
+	if pot > 0 {
+		return fmt.Errorf("pot still has chips, cannot start new hand until the previous one is resolved")
 	}
 
 	// TODO: growing blinds based on configurations
