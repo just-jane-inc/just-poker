@@ -17,10 +17,11 @@ const (
 	InvalidBetAmount    ErrorCode = 2003
 	InvalidChipExchange ErrorCode = 2004
 
-	GameAlreadyStarted  ErrorCode = 2020
-	GameIsFull          ErrorCode = 2021
-	PlayerAlreadyJoined ErrorCode = 2022
-	GameIsPaused        ErrorCode = 2023
+	GameAlreadyStarted       ErrorCode = 2020
+	GameIsFull               ErrorCode = 2021
+	PlayerAlreadyJoined      ErrorCode = 2022
+	GameIsPaused             ErrorCode = 2023
+	InvalidGameConfiguration ErrorCode = 2024
 )
 
 type PokerError struct {

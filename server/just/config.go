@@ -53,7 +53,7 @@ func init() {
 
 	if Env.FileLoggingFile != "" {
 		Logger.Info("enabling file logger...")
-		Logger = Logger.WithFile(Env.FileLoggingFile, jlog.INFO)
+		Logger = Logger.WithFile(Env.FileLoggingFile, jlog.DEBUG)
 	}
 
 	Env.Pepper = []byte(Env.pepper)

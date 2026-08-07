@@ -75,7 +75,28 @@ func (g *game) OverWriteTable(dto TableDTO) error {
 	return nil
 }
 
-func createGameFromConfig(config NewGameConfigDTO) (*game, error) {
+func createGameFromConfig(config NewGameConfigDTO) (*game, *just.PokerError) {
+	just.Logger.Debugf("%v", config)
+	if config.PlayerCount < 2 {
+		return nil, just.NewPokerError("player count must be greater then 2 for a poker game", just.InvalidGameConfiguration)
+	}
+
+	if config.PlayerCount > 8 {
+		return nil, just.NewPokerError("no more then 8 players can poker at once", just.InvalidGameConfiguration)
+	}
+
+	if config.SmallBlind >= config.BigBlind {
+		return nil, just.NewPokerError("small blind must be greater then the big blind", just.InvalidGameConfiguration)
+	}
+
+	if config.SmallBlind <= 0 || config.BigBlind <= 0 {
+		return nil, just.NewPokerError("blinds must be greater then 0", just.InvalidGameConfiguration)
+	}
+
+	if config.StartingChips.Sum() <= config.BigBlind {
+		return nil, just.NewPokerError("insufficient starting chips to poker", just.InvalidGameConfiguration)
+	}
+
 	g := &game{
 		joinGameLock:        sync.Mutex{},
 		config:              config,
@@ -93,7 +114,7 @@ func createGameFromConfig(config NewGameConfigDTO) (*game, error) {
 
 	conn, err := just.DBConnPool.Acquire(ctx)
 	if err != nil {
-		return nil, err
+		return nil, just.NewPokerError(err.Error(), just.Unknown)
 	}
 	defer conn.Release()
 
@@ -101,7 +122,7 @@ func createGameFromConfig(config NewGameConfigDTO) (*game, error) {
 	stmt := `insert into just_poker_game (starting_chips, player_count) values ($1, $2) RETURNING game_id`
 	err = conn.QueryRow(ctx, stmt, config.StartingChips, config.PlayerCount).Scan(&id)
 	if err != nil {
-		return nil, err
+		return nil, just.NewPokerError(err.Error(), just.Unknown)
 	}
 
 	g.id = strconv.Itoa(id)

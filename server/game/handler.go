@@ -132,9 +132,9 @@ func OnCreateGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	g, err := createGameFromConfig(config)
-	if err != nil {
-		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
+	g, pokerError := createGameFromConfig(config)
+	if pokerError != nil {
+		just.BadRequest(pokerError.Message, int(pokerError.Code)).WriteJSONResponse(w)
 		return
 	}
 

@@ -1,26 +1,9 @@
-import os
-
 import pytest
-from dotenv import load_dotenv
+from helpers import base_url, get_test_users
 
 import openapi_client as api
 import poker_bot.bot.poker_helpers as help
-import poker_bot.tools.tui.setup_tui_example as examples
 from poker_bot.bot import bot
-
-load_dotenv("config/.env")
-base_url = os.getenv("BASE_URL")
-
-
-def get_test_users() -> list[examples.TestUser]:
-    test_users = examples.get_test_users()
-    users = []
-    for user in test_users:
-        if user.username == "jill":
-            continue
-        users.append(user)
-
-    return users
 
 
 @pytest.mark.asyncio
@@ -39,7 +22,6 @@ async def test_turn_order_violation():
 
     await bots[0].start_game()
 
-    # setup
     try:
         _ = await bots[0].send_action("ante", {"10": 5})
         assert False
@@ -66,15 +48,15 @@ async def test_game_one():
     await bots[0].start_game()
 
     # setup
-    await bots[2].send_action("ante", {"50": 1})
-    await bots[3].send_action("ante", {"10": 10})
+    await bots[2].ante()
+    await bots[3].ante()
 
     # pre flop
-    await bots[0].send_action("call", {"50": 2})
-    await bots[1].send_action("raise", {"100": 2})
-    await bots[2].send_action("fold", {})
-    await bots[3].send_action("call", {"100": 1})
-    await bots[0].send_action("call", {"100": 1})
+    await bots[0].call()
+    await bots[1].raise_bet(200)
+    await bots[2].fold()
+    await bots[3].call()
+    await bots[0].call()
 
     state = await bots[0].get_game_state()
     assert (
@@ -82,19 +64,19 @@ async def test_game_one():
     )
 
     # flop
-    await bots[3].send_action("check", {})
-    await bots[0].send_action("check", {})
-    await bots[1].send_action("check", {})
+    await bots[3].check()
+    await bots[0].check()
+    await bots[1].check()
 
     # turn
-    await bots[3].send_action("check", {})
-    await bots[0].send_action("check", {})
-    await bots[1].send_action("check", {})
+    await bots[3].check()
+    await bots[0].check()
+    await bots[1].check()
 
     # river
-    await bots[3].send_action("check", {})
-    await bots[0].send_action("check", {})
-    await bots[1].send_action("check", {})
+    await bots[3].check()
+    await bots[0].check()
+    await bots[1].check()
 
     state = await bots[0].get_game_state()
     assert state.table.current_hand.id == 2
@@ -148,8 +130,8 @@ async def test_checking_game_one():
         bots.append(b)
 
     await bots[0].start_game()
-    state = bots[0].get_game_state()
-    assert state.table.current_hand.id == 0
+    state = await bots[0].get_game_state()
+    assert state.table.current_hand.id == 1
 
     # setup
     await bots[2].send_action("ante", {"10": 5})
@@ -176,7 +158,7 @@ async def test_checking_game_one():
     state = await bots[0].get_game_state()
     assert state is not None
     assert (
-        state.table.current_round.current_round_type == api.GameRoundType.RoundTypeturn
+        state.table.current_round.current_round_type == api.GameRoundType.RoundTypeTurn
     )
 
     # turn
@@ -188,8 +170,7 @@ async def test_checking_game_one():
     state = await bots[0].get_game_state()
     assert state is not None
     assert (
-        state.table.current_round.current_round_type
-        == api.api.GameRoundType.RoundTypeRiver
+        state.table.current_round.current_round_type == api.GameRoundType.RoundTypeRiver
     )
 
     # river
@@ -198,4 +179,6 @@ async def test_checking_game_one():
     await bots[0].send_action("check", {})
     await bots[1].send_action("check", {})
 
-    assert state.table.current_hand.id == 1
+    state = await bots[0].get_game_state()
+    assert state is not None
+    assert state.table.current_hand.id == 2

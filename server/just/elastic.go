@@ -22,6 +22,7 @@ func (hub *EventRecordingHub) getElasticHeader() map[string]any {
 }
 
 func (hub *EventRecordingHub) OnPlayerAction(object any, err error) error {
+	return nil
 	Logger.Debugf("sending player action update to elastic")
 	msg := hub.getElasticHeader()
 	msg["event_type"] = "player_action"
@@ -47,6 +48,7 @@ func (hub *EventRecordingHub) OnPlayerAction(object any, err error) error {
 }
 
 func (hub *EventRecordingHub) OnGameUpdate(object any) error {
+	return nil
 	Logger.Debugf("sending game state update to elastic")
 	msg := hub.getElasticHeader()
 	msg["event_type"] = "game_state"

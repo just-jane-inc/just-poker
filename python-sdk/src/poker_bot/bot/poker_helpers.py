@@ -65,11 +65,8 @@ async def create_game(
         player_count=player_count,
     )
 
-    try:
-        resp = await api.game_post(GamePostRequest(dto))
-        return resp.data
-    except ApiException as e:
-        logger.error(f"encountered error creating game: {e}")
+    resp = await api.game_post(GamePostRequest(dto))
+    return resp.data
 
 
 async def delete_user(base_url: str, token: str) -> str | None:

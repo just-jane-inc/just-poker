@@ -1,8 +1,10 @@
+import asyncio
 import logging
 from dataclasses import dataclass
 
 import poker_bot.bot.poker_exceptions as ex
 import poker_bot.bot.poker_helpers as help
+import poker_bot.bot.websocket_events as ws
 from openapi_client import (
     GameApi,
     GameChipExchangeDTO,
@@ -12,6 +14,7 @@ from openapi_client import (
     GamePlayerActionDTO,
     UserApi,
 )
+from openapi_client.models.game_player_dto import GamePlayerDTO
 from poker_bot.bot.websocket_events import (
     WebSocketEvent,
     WebSocketListener,
@@ -89,10 +92,11 @@ class PokerBot:
         self._user_api = UserApi(self._api_client)
         self._game_api = GameApi(self._api_client)
         self._joined = False
-        self._player = None
         self._user_id = user_id
+        self._player: GamePlayerDTO | None = None
         self._current_stack: list[Chips] = []
-        self._current_state: GameGameDTO | None
+        self._current_state: GameGameDTO | None = None
+        self._listener: ws.WebSocketListener | None = None
 
     async def join_game(self):
         if self._joined:
@@ -111,6 +115,20 @@ class PokerBot:
 
         self._ingest_state(resp.data)
         return resp.data
+
+    async def connect_game_state_listener(self):
+        if self._listener is not None:
+            raise ex.CustomException("already have a listener")
+
+        self._listener = self.websocket_listener()
+
+        @self._listener.on_event(
+            ws.WebSocketEventType.WELCOME, ws.WebSocketEventType.GAME_STATE_UPDATE
+        )
+        async def thing(e: ws.WebSocketEvent) -> None:
+            self._ingest_state(e.data)
+
+        await self._listener.start()
 
     def _ingest_state(self, state: GameGameDTO):
         # TODO: get the LSP to stop being insane
@@ -267,7 +285,12 @@ class PokerBot:
 
         raise ValueError("could not construct a valid bet for provided amount")
 
+    async def check(self):
+        await self.wait_for_my_turn()
+        await self.send_action("check", {})
+
     async def raise_bet(self, raise_to: int):
+        await self.wait_for_my_turn()
         current_bet = convert_stack(self._player.current_bet)
         current_bet = sum(s.denomination * s.count for s in current_bet)
         raise_to = raise_to - current_bet
@@ -279,6 +302,7 @@ class PokerBot:
         await self.send_action("raise", stack)
 
     async def ante(self):
+        await self.wait_for_my_turn()
         amount = self._current_state.table.current_round.bet
         if not amount:
             raise ex.CustomException("erm")
@@ -290,6 +314,7 @@ class PokerBot:
         await self.send_action("ante", stack)
 
     async def call(self):
+        await self.wait_for_my_turn()
         amount = self._current_state.table.current_round.bet
         if not amount:
             raise ex.CustomException("erm")
@@ -303,7 +328,44 @@ class PokerBot:
 
         await self.send_action("call", stack)
 
-    async def send_action(self, intent: str, bet: dict[str, int] | None):
+    async def fold(self):
+        await self.wait_for_my_turn()
+        await self.send_action("fold")
+
+    async def send_action(self, intent: str, bet: dict[str, int] | None = None):
+        """send an action to the joined game
+
+        Gee, I sure can't wait for bots to hop in my pool! - ty999999
+
+        raises:
+            openapi_client.exceptions.ApiException - on any failure. exception body
+            may be parseable to an openapi_client.JustResponseMessageJustErrorDTO containing
+            recovery information. please see documentation on error recovery, that exists and
+            is impressively verbose. surely...
+        """
+
+        if bet is None:
+            bet = {}
+
         dto = GamePlayerActionDTO(chips=bet, intent=intent)
         req = GameGameIdActionPostRequest(dto)
         await self._game_api.game_game_id_action_post(self._game_id, req)
+
+    async def wait_for_my_turn(self):
+        if self._listener is None:
+            await self.connect_game_state_listener()
+
+        while not self.is_my_turn():
+            await asyncio.sleep(0.25)
+
+    def is_my_turn(self) -> bool:
+        if self._current_state is None:
+            return False
+
+        if self._current_state.table is None:
+            return None
+
+        current_player_position = (
+            self._current_state.table.current_round.current_player_position
+        )
+        return current_player_position == self._player.position
