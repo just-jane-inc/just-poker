@@ -27,6 +27,15 @@ parser.add_argument("--game-id", type=str, required=False, help="game id")
 parser.add_argument("--player-name", type=str, required=False, help="")
 parser.add_argument("--setup", type=int, default=0, required=False, help="")
 
+if os.name == "nt":
+    # For windows only tool usage, fix for cert stuff
+    try:
+        import truststore
+
+        truststore.inject_into_ssl()
+    finally:
+        pass
+
 
 def main():
     args = parser.parse_args()

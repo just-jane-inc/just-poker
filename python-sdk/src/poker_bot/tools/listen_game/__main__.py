@@ -27,6 +27,15 @@ parser.add_argument(
     help="the id of the game to going",
 )
 
+if os.name == "nt":
+    # For windows only tool usage, fix for cert stuff
+    try:
+        import truststore
+
+        truststore.inject_into_ssl()
+    finally:
+        pass
+
 
 async def listen_as(user: str, game_id: str):
     test_user = get_test_user(user)
