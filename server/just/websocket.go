@@ -189,6 +189,13 @@ func (p *PlayerUpdateConnection) handleMessages() {
 			Logger.Infof("received exit signal for player [%s] connection, closing", p.PlayerID)
 			p.conn.Close()
 		case msg := <-p.MessageChannel:
+			if msg.EventType == "" {
+				select {
+				case p.Exit <- struct{}{}:
+				default:
+				}
+			}
+
 			Logger.Debugf("sending message [%d] to player [%s] ws connection", p.MsgIDCounter, p.PlayerID)
 			msg.ID = p.MsgIDCounter
 			msg.TimeSent = time.Now()
