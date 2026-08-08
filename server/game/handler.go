@@ -99,7 +99,7 @@ func OnStartNextHand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = g.table.nextHandWithDeck(dto.Deck, g.config.BigBlind, g.config.SmallBlind); err != nil {
+	if pokerError := g.table.nextHandWithDeck(dto.Deck, g.config.BigBlind, g.config.SmallBlind); pokerError != nil {
 		just.Logger.Errorf("encountered error setting next hand: %v", err)
 		just.InternalError(err.Error()).WriteJSONResponse(w)
 		return

@@ -285,6 +285,8 @@ func (g *game) TryStartGame() error {
 		if err != nil {
 			return err
 		}
+	} else {
+		g.table.currentRound.currentRoundType = RoundTypeUnset
 	}
 
 	t := time.Now()

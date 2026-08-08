@@ -2,6 +2,7 @@ package game
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"slices"
 
@@ -351,10 +352,14 @@ func (t *table) OnGameOver() {
 	}
 }
 
-func (t *table) nextHandWithDeck(deck []CardDTO, bb int, sb int) error {
+func (t *table) nextHandWithDeck(deck []CardDTO, bb int, sb int) *just.PokerError {
+	if t.currentRound.currentRoundType != RoundTypeCompleted && t.currentRound.currentRoundType != RoundTypeUnset {
+		return just.NewPokerError("a hand is already in progress - can not start a new hand", 0)
+	}
+
 	err := t.nextHand(bb, sb)
 	if err != nil {
-		return err
+		return just.NewPokerError(fmt.Sprintf("encountered error: %v", err), 0)
 	}
 
 	if len(deck) != 52 {
