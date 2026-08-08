@@ -17,8 +17,9 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
+from openapi_client.models.just_error_code import JustErrorCode
 from typing import Optional, Set
 from typing_extensions import Self
 from pydantic_core import to_jsonable_python
@@ -28,7 +29,7 @@ class JustErrorDTO(BaseModel):
     JustErrorDTO
     """ # noqa: E501
     error: Optional[StrictStr] = None
-    error_code: Optional[StrictInt] = None
+    error_code: Optional[JustErrorCode] = None
     __properties: ClassVar[List[str]] = ["error", "error_code"]
 
     model_config = ConfigDict(

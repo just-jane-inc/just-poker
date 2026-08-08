@@ -19,6 +19,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
+from openapi_client.models.game_player_intent import GamePlayerIntent
 from typing import Optional, Set
 from typing_extensions import Self
 from pydantic_core import to_jsonable_python
@@ -29,7 +30,7 @@ class GamePlayerActionDTO(BaseModel):
     """ # noqa: E501
     accepted_at: Optional[StrictStr] = Field(default=None, description="a timestamp capturing when a succesful action was accepted by the game")
     chips: Optional[Dict[str, StrictInt]] = Field(default=None, description="an optional mapping of chips that is required by some action types.")
-    intent: Optional[StrictStr] = Field(default=None, description="the type of action a player intended to preform")
+    intent: Optional[GamePlayerIntent] = None
     player_id: Optional[StrictStr] = Field(default=None, description="the id of the player preforming the action")
     __properties: ClassVar[List[str]] = ["accepted_at", "chips", "intent", "player_id"]
 

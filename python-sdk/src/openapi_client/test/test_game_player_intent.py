@@ -14,10 +14,10 @@
 
 import unittest
 
-from openapi_client.models.just_response_message_just_error_dto import JustResponseMessageJustErrorDTO
+from openapi_client.models.game_player_intent import GamePlayerIntent
 
-class TestJustResponseMessageJustErrorDTO(unittest.TestCase):
-    """JustResponseMessageJustErrorDTO unit test stubs"""
+class TestGamePlayerIntent(unittest.TestCase):
+    """GamePlayerIntent unit test stubs"""
 
     def setUp(self):
         pass
@@ -25,30 +25,9 @@ class TestJustResponseMessageJustErrorDTO(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def make_instance(self, include_optional) -> JustResponseMessageJustErrorDTO:
-        """Test JustResponseMessageJustErrorDTO
-            include_optional is a boolean, when False only required
-            params are included, when True both required and
-            optional params are included """
-        # uncomment below to create an instance of `JustResponseMessageJustErrorDTO`
-        """
-        model = JustResponseMessageJustErrorDTO()
-        if include_optional:
-            return JustResponseMessageJustErrorDTO(
-                data = openapi_client.models.just/error_dto.just.ErrorDTO(
-                    error = '', 
-                    error_code = 67, ),
-                type = 'user.created'
-            )
-        else:
-            return JustResponseMessageJustErrorDTO(
-        )
-        """
-
-    def testJustResponseMessageJustErrorDTO(self):
-        """Test JustResponseMessageJustErrorDTO"""
-        # inst_req_only = self.make_instance(include_optional=False)
-        # inst_req_and_optional = self.make_instance(include_optional=True)
+    def testGamePlayerIntent(self):
+        """Test GamePlayerIntent"""
+        # inst = GamePlayerIntent()
 
 if __name__ == '__main__':
     unittest.main()

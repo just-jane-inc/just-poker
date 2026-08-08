@@ -12,43 +12,42 @@
 """  # noqa: E501
 
 
-import unittest
+from __future__ import annotations
+import json
+from enum import Enum
+from typing_extensions import Self
 
-from openapi_client.models.just_response_message_just_error_dto import JustResponseMessageJustErrorDTO
 
-class TestJustResponseMessageJustErrorDTO(unittest.TestCase):
-    """JustResponseMessageJustErrorDTO unit test stubs"""
+class JustErrorCode(int, Enum):
+    """
+    JustErrorCode
+    """
 
-    def setUp(self):
-        pass
+    """
+    allowed enum values
+    """
+    SkillIssue = 67
+    Unknown = 1000
+    UserNotFound = 1001
+    GameNotFound = 1002
+    TokenMissing = 1003
+    MalformedRequestBody = 1004
+    TurnOrderViolation = 2000
+    InvalidActionType = 2001
+    NotEnoughChips = 2002
+    InvalidBetAmount = 2003
+    InvalidChipExchange = 2004
+    ExpectedAnteAction = 2005
+    GameAlreadyStarted = 2020
+    GameIsFull = 2021
+    PlayerAlreadyJoined = 2022
+    GameIsPaused = 2023
+    InvalidGameConfiguration = 2024
+    HandAlreadyInProgress = 2025
 
-    def tearDown(self):
-        pass
+    @classmethod
+    def from_json(cls, json_str: str) -> Self:
+        """Create an instance of JustErrorCode from a JSON string"""
+        return cls(json.loads(json_str))
 
-    def make_instance(self, include_optional) -> JustResponseMessageJustErrorDTO:
-        """Test JustResponseMessageJustErrorDTO
-            include_optional is a boolean, when False only required
-            params are included, when True both required and
-            optional params are included """
-        # uncomment below to create an instance of `JustResponseMessageJustErrorDTO`
-        """
-        model = JustResponseMessageJustErrorDTO()
-        if include_optional:
-            return JustResponseMessageJustErrorDTO(
-                data = openapi_client.models.just/error_dto.just.ErrorDTO(
-                    error = '', 
-                    error_code = 67, ),
-                type = 'user.created'
-            )
-        else:
-            return JustResponseMessageJustErrorDTO(
-        )
-        """
 
-    def testJustResponseMessageJustErrorDTO(self):
-        """Test JustResponseMessageJustErrorDTO"""
-        # inst_req_only = self.make_instance(include_optional=False)
-        # inst_req_and_optional = self.make_instance(include_optional=True)
-
-if __name__ == '__main__':
-    unittest.main()

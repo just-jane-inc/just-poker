@@ -6,7 +6,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **error** | **str** |  | [optional] 
-**error_code** | **int** |  | [optional] 
+**error_code** | [**JustErrorCode**](JustErrorCode.md) |  | [optional] 
 
 ## Example
 

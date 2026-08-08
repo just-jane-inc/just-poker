@@ -46,11 +46,13 @@ __all__ = [
     "GameNewHandDTO",
     "GamePlayerActionDTO",
     "GamePlayerDTO",
+    "GamePlayerIntent",
     "GamePostRequest",
     "GameRoundDTO",
     "GameRoundType",
     "GameTableDTO",
     "HandEvaluatorEvaluatePostRequest",
+    "JustErrorCode",
     "JustErrorDTO",
     "JustResponseMessageAny",
     "JustResponseMessageGameGameDTO",
@@ -92,11 +94,13 @@ from openapi_client.models.game_new_game_config_dto import GameNewGameConfigDTO 
 from openapi_client.models.game_new_hand_dto import GameNewHandDTO as GameNewHandDTO
 from openapi_client.models.game_player_action_dto import GamePlayerActionDTO as GamePlayerActionDTO
 from openapi_client.models.game_player_dto import GamePlayerDTO as GamePlayerDTO
+from openapi_client.models.game_player_intent import GamePlayerIntent as GamePlayerIntent
 from openapi_client.models.game_post_request import GamePostRequest as GamePostRequest
 from openapi_client.models.game_round_dto import GameRoundDTO as GameRoundDTO
 from openapi_client.models.game_round_type import GameRoundType as GameRoundType
 from openapi_client.models.game_table_dto import GameTableDTO as GameTableDTO
 from openapi_client.models.hand_evaluator_evaluate_post_request import HandEvaluatorEvaluatePostRequest as HandEvaluatorEvaluatePostRequest
+from openapi_client.models.just_error_code import JustErrorCode as JustErrorCode
 from openapi_client.models.just_error_dto import JustErrorDTO as JustErrorDTO
 from openapi_client.models.just_response_message_any import JustResponseMessageAny as JustResponseMessageAny
 from openapi_client.models.just_response_message_game_game_dto import JustResponseMessageGameGameDTO as JustResponseMessageGameGameDTO

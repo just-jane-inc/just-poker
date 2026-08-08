@@ -7,7 +7,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **accepted_at** | **str** | a timestamp capturing when a succesful action was accepted by the game | [optional] 
 **chips** | **Dict[str, int]** | an optional mapping of chips that is required by some action types. | [optional] 
-**intent** | **str** | the type of action a player intended to preform | [optional] 
+**intent** | [**GamePlayerIntent**](GamePlayerIntent.md) |  | [optional] 
 **player_id** | **str** | the id of the player preforming the action | [optional] 
 
 ## Example

@@ -1,11 +1,25 @@
 import os
+import random
 
 from dotenv import load_dotenv
 
 import poker_bot.tools.tui.setup_tui_example as examples
+from openapi_client.models.game_card_dto import GameCardDTO
 
 load_dotenv("config/.env")
 base_url = os.getenv("BASE_URL")
+
+
+def get_deck(seed: int | None = None) -> list[GameCardDTO]:
+    ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"]
+    suits = ["s", "h", "c", "d"]
+    deck = [GameCardDTO(rank=ord(r), suit=ord(s)) for r in ranks for s in suits]
+
+    if seed is not None:
+        random.seed(seed)
+
+    random.shuffle(deck)
+    return deck
 
 
 def get_test_users() -> list[examples.TestUser]:

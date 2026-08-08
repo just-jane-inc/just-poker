@@ -39,7 +39,7 @@ class TestGameGameIdActionPostRequest(unittest.TestCase):
                 chips = {
                     'key' : 56
                     },
-                intent = '',
+                intent = 'unset',
                 player_id = ''
             )
         else:

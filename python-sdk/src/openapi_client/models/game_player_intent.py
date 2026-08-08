@@ -12,43 +12,31 @@
 """  # noqa: E501
 
 
-import unittest
+from __future__ import annotations
+import json
+from enum import Enum
+from typing_extensions import Self
 
-from openapi_client.models.just_response_message_just_error_dto import JustResponseMessageJustErrorDTO
 
-class TestJustResponseMessageJustErrorDTO(unittest.TestCase):
-    """JustResponseMessageJustErrorDTO unit test stubs"""
+class GamePlayerIntent(str, Enum):
+    """
+    the type of action a player intended to preform
+    """
 
-    def setUp(self):
-        pass
+    """
+    allowed enum values
+    """
+    PlayerIntentUnset = 'unset'
+    PlayerIntentAnte = 'ante'
+    PlayerIntentCheck = 'check'
+    PlayerIntentCall = 'call'
+    PlayerIntentRaise = 'raise'
+    PlayerIntentAllIn = 'all_in'
+    PlayerIntentFold = 'fold'
 
-    def tearDown(self):
-        pass
+    @classmethod
+    def from_json(cls, json_str: str) -> Self:
+        """Create an instance of GamePlayerIntent from a JSON string"""
+        return cls(json.loads(json_str))
 
-    def make_instance(self, include_optional) -> JustResponseMessageJustErrorDTO:
-        """Test JustResponseMessageJustErrorDTO
-            include_optional is a boolean, when False only required
-            params are included, when True both required and
-            optional params are included """
-        # uncomment below to create an instance of `JustResponseMessageJustErrorDTO`
-        """
-        model = JustResponseMessageJustErrorDTO()
-        if include_optional:
-            return JustResponseMessageJustErrorDTO(
-                data = openapi_client.models.just/error_dto.just.ErrorDTO(
-                    error = '', 
-                    error_code = 67, ),
-                type = 'user.created'
-            )
-        else:
-            return JustResponseMessageJustErrorDTO(
-        )
-        """
 
-    def testJustResponseMessageJustErrorDTO(self):
-        """Test JustResponseMessageJustErrorDTO"""
-        # inst_req_only = self.make_instance(include_optional=False)
-        # inst_req_and_optional = self.make_instance(include_optional=True)
-
-if __name__ == '__main__':
-    unittest.main()

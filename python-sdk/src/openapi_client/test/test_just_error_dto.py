@@ -36,7 +36,7 @@ class TestJustErrorDTO(unittest.TestCase):
         if include_optional:
             return JustErrorDTO(
                 error = '',
-                error_code = 56
+                error_code = 67
             )
         else:
             return JustErrorDTO(

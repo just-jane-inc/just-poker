@@ -1,29 +1,15 @@
 import json
-import random
 
 import pytest
-from helpers import base_url, get_test_user, get_test_users
+from helpers import base_url, get_deck, get_test_user, get_test_users
 
 import openapi_client as api
 import poker_bot.bot.poker_helpers as help
-from openapi_client.models.game_card_dto import GameCardDTO
 from openapi_client.models.game_game_id_hand_post_request import (
     GameGameIdHandPostRequest,
 )
 from openapi_client.models.game_new_hand_dto import GameNewHandDTO
 from poker_bot.bot import bot
-
-
-def get_deck(seed: int | None = None) -> list[GameCardDTO]:
-    ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"]
-    suits = ["s", "h", "c", "d"]
-    deck = [GameCardDTO(rank=ord(r), suit=ord(s)) for r in ranks for s in suits]
-
-    if seed is not None:
-        random.seed(seed)
-
-    random.shuffle(deck)
-    return deck
 
 
 @pytest.mark.asyncio
