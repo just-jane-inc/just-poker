@@ -99,7 +99,7 @@ func OnGetUsers(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Release()
 
-	stmt := `select username, id from poker_users where twitch_user=$1`
+	stmt := `select username, id, user_type from poker_users where twitch_user=$1`
 	rows, err := conn.Query(ctx, stmt, twitchID)
 	just.Logger.Debugf("querying rows")
 	if err != nil {
@@ -114,7 +114,7 @@ func OnGetUsers(w http.ResponseWriter, r *http.Request) {
 	users := make([]UserDTO, 0)
 	for rows.Next() {
 		var user UserDTO
-		err := rows.Scan(&user.DisplayName, &user.UserID)
+		err := rows.Scan(&user.DisplayName, &user.UserID, &user.UserType)
 		if err != nil {
 			just.Logger.Errorf("error scanning row when getting users: %v", err)
 			just.InternalError("internal server error").WriteJSONResponse(w)
