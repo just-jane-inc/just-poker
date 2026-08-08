@@ -101,7 +101,6 @@ func OnGetUsers(w http.ResponseWriter, r *http.Request) {
 
 	stmt := `select username, id, user_type from poker_users where twitch_user=$1`
 	rows, err := conn.Query(ctx, stmt, twitchID)
-	just.Logger.Debugf("querying rows")
 	if err != nil {
 		just.Logger.Errorf("encountered error acquiring db conn: %v", err)
 		just.InternalError("error with database").WriteJSONResponse(w)
@@ -109,7 +108,6 @@ func OnGetUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	defer rows.Close()
-	just.Logger.Debugf("row query success")
 
 	users := make([]UserDTO, 0)
 	for rows.Next() {
