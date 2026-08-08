@@ -15,6 +15,79 @@ import (
 	"github.com/just-jane-inc/just-poker/server/just"
 )
 
+var CurrentGames = CreateCurrentGamesCache()
+
+func (c *CurrentGamesCache) GetCurrentGames() []ActiveGameDTO {
+	c.currentGameMutex.RLock()
+	defer c.currentGameMutex.RUnlock()
+	activeGameDTOs := make([]ActiveGameDTO, 0)
+	for id, g := range c.games {
+		if g.table == nil {
+			continue
+		}
+
+		playerIDs := make([]string, len(g.table.players))
+		for i, p := range g.table.players {
+			playerIDs[i] = p.UserID
+		}
+
+		obj := ActiveGameDTO{
+			ID:      id,
+			Players: playerIDs,
+		}
+
+		activeGameDTOs = append(activeGameDTOs, obj)
+	}
+
+	return activeGameDTOs
+}
+
+func (c *CurrentGamesCache) InsertGame(g *game) error {
+	// TODO: is Lock/Unlock taking the write lock?
+	c.currentGameMutex.Lock()
+	defer c.currentGameMutex.Unlock()
+
+	_, ok := c.games[g.id]
+	if ok {
+		return errors.New("game with provided ID already exists")
+	}
+
+	c.games[g.id] = g
+	return nil
+}
+
+func (c *CurrentGamesCache) RemoveGame(id string) (*game, error) {
+	c.currentGameMutex.Lock()
+	defer c.currentGameMutex.Unlock()
+
+	g, ok := c.games[id]
+	if !ok {
+		return nil, fmt.Errorf("game with id %s does not exists", id)
+	}
+
+	delete(c.games, id)
+	return g, nil
+}
+
+func (c *CurrentGamesCache) GetGame(id string) (*game, bool) {
+	c.currentGameMutex.RLock()
+	defer c.currentGameMutex.RUnlock()
+
+	g, ok := c.games[id]
+	return g, ok
+}
+
+func CreateCurrentGamesCache() *CurrentGamesCache {
+	return &CurrentGamesCache{
+		games: make(map[string]*game),
+	}
+}
+
+type CurrentGamesCache struct {
+	games            map[string]*game
+	currentGameMutex sync.RWMutex
+}
+
 type JoinGameError error
 
 func (g *game) LogGameState(msg string) {

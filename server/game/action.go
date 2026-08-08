@@ -18,22 +18,6 @@ func (a PlayerActionDTO) ToString() string {
 	return fmt.Sprintf("player: %s chips: %#v intent: %s", a.PlayerID, a.Bet, a.Intent)
 }
 
-func (g *game) OnGameOver() {
-	delete(CurrentGames, g.id)
-	for _, p := range g.table.players {
-		if p.state != PlayerStateOut {
-			p.state = PlayerStateWon
-		}
-	}
-
-	for _, conn := range just.UpdateHub.GetChannelsForGame(g.id) {
-		conn.MessageChannel <- just.WebsocketMessage[any]{
-			EventType: "game_over",
-			Data:      g.AsDTO(),
-		}
-	}
-}
-
 func (g *game) TryPlayerAction(action PlayerActionDTO) error {
 	errorChannel := make(chan error)
 	successChannel := make(chan any)

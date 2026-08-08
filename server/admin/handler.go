@@ -53,7 +53,7 @@ func OnUpdateGameStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	gameID := r.PathValue("game_id")
-	g, ok := game.CurrentGames[gameID]
+	g, ok := game.CurrentGames.GetGame(gameID)
 	if !ok {
 		just.NotFound("game not found", int(just.GameNotFound)).WriteJSONResponse(w)
 		return
@@ -116,7 +116,7 @@ func OnUpdateGameTable(w http.ResponseWriter, r *http.Request) {
 	}
 
 	gameID := r.PathValue("game_id")
-	g, ok := game.CurrentGames[gameID]
+	g, ok := game.CurrentGames.GetGame(gameID)
 	if !ok {
 		just.NotFound("game not found", int(just.GameNotFound)).WriteJSONResponse(w)
 		return

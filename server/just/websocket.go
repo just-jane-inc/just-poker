@@ -32,7 +32,7 @@ func (h *ServerUpdateHub) GetChannelsForGame(gameID string) []*PlayerUpdateConne
 	}
 
 	connections := make([]*PlayerUpdateConnection, 0)
-	for _, c := range g.PlayerConnections {
+	for _, c := range g.playerConnections {
 		connections = append(connections, c)
 	}
 
@@ -47,16 +47,16 @@ func (h *ServerUpdateHub) AddPlayerToHub(gameID string, playerID string) *Player
 	if !ok {
 		hub = &GameUpdateHub{
 			GameID:            gameID,
-			PlayerConnections: make(map[string]*PlayerUpdateConnection),
+			playerConnections: make(map[string]*PlayerUpdateConnection),
 		}
 
 		h.Games[gameID] = hub
 	}
 
-	playerConnection, ok := hub.PlayerConnections[playerID]
+	playerConnection, ok := hub.playerConnections[playerID]
 	if ok {
 		playerConnection.SignalExit()
-		delete(hub.PlayerConnections, playerID)
+		delete(hub.playerConnections, playerID)
 	}
 
 	usertype, _ := GetUserType(playerID)
@@ -69,13 +69,33 @@ func (h *ServerUpdateHub) AddPlayerToHub(gameID string, playerID string) *Player
 		UserType:       usertype,
 	}
 
-	hub.PlayerConnections[playerID] = p
+	hub.playerConnections[playerID] = p
 	return p
 }
 
 type GameUpdateHub struct {
 	GameID            string
-	PlayerConnections map[string]*PlayerUpdateConnection
+	playerConnections map[string]*PlayerUpdateConnection
+	connectionsLock   sync.RWMutex
+}
+
+func (hub *GameUpdateHub) GetConnectionForPlayer(id string) (*PlayerUpdateConnection, bool) {
+	hub.connectionsLock.RLock()
+	defer hub.connectionsLock.RUnlock()
+	conn, ok := hub.playerConnections[id]
+	return conn, ok
+}
+
+func (hub *GameUpdateHub) CloseConnection(id string) bool {
+	hub.connectionsLock.Lock()
+	defer hub.connectionsLock.Unlock()
+	_, ok := hub.playerConnections[id]
+	if !ok {
+		return false
+	}
+
+	delete(hub.playerConnections, id)
+	return true
 }
 
 type PlayerUpdateConnection struct {
@@ -118,7 +138,13 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request, gameID string, play
 			return
 		}
 
-		delete(gameHub.PlayerConnections, playerID)
+		gameHub.connectionsLock.Lock()
+		defer gameHub.connectionsLock.Unlock()
+		delete(gameHub.playerConnections, playerID)
+
+		if len(gameHub.playerConnections) == 0 {
+			// we should be able to delete this hub now righht?
+		}
 	}()
 
 	playerConn.conn = conn

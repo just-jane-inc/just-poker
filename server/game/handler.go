@@ -10,8 +10,6 @@ import (
 	"github.com/just-jane-inc/just-poker/server/just"
 )
 
-var CurrentGames = make(map[string]*game)
-
 // OnEvalHand godoc
 // @Summary      Evaluate a Hand
 // @Description  Evaluator? I hardly...
@@ -45,7 +43,7 @@ func OnJoinGameRequest(w http.ResponseWriter, r *http.Request) {
 
 	gameID := r.PathValue("game_id")
 	just.Logger.Debugf("received request to join game [%s]", gameID)
-	g, ok := CurrentGames[gameID]
+	g, ok := CurrentGames.GetGame(gameID)
 	if !ok {
 		just.NotFound("game not found", int(just.GameNotFound)).WriteJSONResponse(w)
 		return
@@ -87,8 +85,8 @@ func OnGetCurrentGameState(w http.ResponseWriter, r *http.Request) {
 		just.Logger.Debug("getting game state")
 	}
 
-	gameIDString := r.PathValue("game_id")
-	g, ok := CurrentGames[gameIDString]
+	gameID := r.PathValue("game_id")
+	g, ok := CurrentGames.GetGame(gameID)
 	if !ok {
 		just.NotFound("game id does not exist", 0).WriteJSONResponse(w)
 		return
@@ -138,7 +136,11 @@ func OnCreateGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	CurrentGames[g.id] = g
+	if err = CurrentGames.InsertGame(g); err != nil {
+		just.InternalError(fmt.Sprintf("encountered error inserting game into cache: %v game could not be stored", err)).WriteJSONResponse(w)
+		return
+	}
+
 	just.OK("game_lobby_created", g.id).WriteJSONResponse(w)
 	just.Logger.Debugf("game lobby [%s] created for [%s]", g.id, userID)
 }
@@ -175,7 +177,7 @@ func OnExchangeChips(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	g, ok := CurrentGames[gameID]
+	g, ok := CurrentGames.GetGame(gameID)
 	if !ok {
 		just.BadRequest(
 			"game_id not found",
@@ -218,14 +220,15 @@ func OnStartGame(w http.ResponseWriter, r *http.Request) {
 	}
 
 	just.Logger.Debugf("start game request received from [%s]", userID)
-	gameIDString := r.PathValue("game_id")
-	g, ok := CurrentGames[gameIDString]
+	gameID := r.PathValue("game_id")
+	g, ok := CurrentGames.GetGame(gameID)
 	if !ok {
 		just.NotFound("game id does not exist", 0).WriteJSONResponse(w)
 		return
 	}
 
 	g.joinGameLock.Lock()
+	handleUpdates(g.AsDTO(), "starting_game")
 	err = g.TryStartGame()
 	g.joinGameLock.Unlock()
 	if err != nil {
@@ -233,7 +236,6 @@ func OnStartGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go handleUpdates(g.AsDTO(), "game_started")
 	go g.ProccessPlayerActions(make(chan any))
 
 	just.OK("game_started", struct{}{}).WriteJSONResponse(w)
@@ -273,7 +275,7 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 
 	playerAction.PlayerID = userID
 	gameID := r.PathValue("game_id")
-	g, ok := CurrentGames[gameID]
+	g, ok := CurrentGames.GetGame(gameID)
 	if !ok {
 		just.NotFound(fmt.Sprintf("could not find game with id %s", gameID), 0).WriteJSONResponse(w)
 		return
@@ -315,26 +317,7 @@ type ActiveGameDTO struct {
 // @Success      200 {object} []ActiveGameDTO
 // @Router       /game [get]
 func OnGetCurrentActiveGames(w http.ResponseWriter, _ *http.Request) {
-	games := make([]ActiveGameDTO, 0)
-	for id, g := range CurrentGames {
-		if g.table == nil {
-			continue
-		}
-
-		playerIDs := make([]string, len(g.table.players))
-		for i, p := range g.table.players {
-			playerIDs[i] = p.UserID
-		}
-
-		obj := ActiveGameDTO{
-			ID:      id,
-			Players: playerIDs,
-		}
-
-		games = append(games, obj)
-	}
-
-	just.WriteJSONResponse(w, 200, games)
+	just.WriteJSONResponse(w, 200, CurrentGames.GetCurrentGames())
 }
 
 // OnRegisterListener _liiiisten_
@@ -354,7 +337,7 @@ func OnRegisterListener(w http.ResponseWriter, r *http.Request) {
 	gameID := r.PathValue("game_id")
 	just.Logger.Debugf("received request to connect to game state updates from game [%s] from player [%s]", gameID, userID)
 
-	g, ok := CurrentGames[gameID]
+	g, ok := CurrentGames.GetGame(gameID)
 	if !ok {
 		just.NotFound("game not found", int(just.GameNotFound)).WriteJSONResponse(w)
 		return
@@ -385,21 +368,13 @@ func OnGetNextListenerEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	gameID := r.PathValue("game_id")
-	just.Logger.Debugf("received request to connect to game state updates from game [%s] from player [%s]", gameID, userID)
-
-	_, ok := CurrentGames[gameID]
-	if !ok {
-		just.NotFound("game not found", int(just.GameNotFound)).WriteJSONResponse(w)
-		return
-	}
-
 	h, ok := just.UpdateHub.Games[gameID]
 	if !ok {
 		just.NotFound("no listening hub found for game id", 0).WriteJSONResponse(w)
 		return
 	}
 
-	conn, ok := h.PlayerConnections[userID]
+	conn, ok := h.GetConnectionForPlayer(userID)
 	if !ok {
 		just.NotFound("no listening hub found for user", 0).WriteJSONResponse(w)
 		return
@@ -430,7 +405,7 @@ func OnCreateGameConnection(w http.ResponseWriter, r *http.Request) {
 	gameID := r.PathValue("game_id")
 	just.Logger.Debugf("received request to connect to game state updates from game [%s] from player [%s]", gameID, userID)
 
-	g, ok := CurrentGames[gameID]
+	g, ok := CurrentGames.GetGame(gameID)
 	if !ok {
 		just.NotFound("game not found", int(just.GameNotFound)).WriteJSONResponse(w)
 		return

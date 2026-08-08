@@ -22,7 +22,7 @@ type Config struct {
 	ElasticAPIKey    string `env:"ELASTIC_API_KEY"`
 	ElasticIndexRoot string `env:"ELASTIC_INDEX_ROOT"`
 
-	ElasticLoggingIndex string `env:"ELASTIC_API_KEY"`
+	ElasticLoggingIndex string `env:"ELASTIC_LOG_INDEX"`
 	FileLoggingFile     string `env:"FILE_LOG_PATH"`
 	LogLevel            string `env:"LOG_LEVEL"`
 

@@ -330,7 +330,11 @@ func (t *table) GetHand(position int) Hand {
 }
 
 func (t *table) OnGameOver() {
-	delete(CurrentGames, t.gameID)
+	_, err := CurrentGames.RemoveGame(t.gameID)
+	if err != nil {
+		just.Logger.Errorf("encountered error removing game in OnGameOver: %v", err)
+	}
+
 	for _, p := range t.players {
 		if p.state != PlayerStateOut {
 			p.state = PlayerStateWon
@@ -342,6 +346,8 @@ func (t *table) OnGameOver() {
 			EventType: "game_over",
 			Data:      t.AsDTO().Players,
 		}
+
+		close(conn.MessageChannel)
 	}
 }
 
