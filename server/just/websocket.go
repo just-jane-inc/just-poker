@@ -183,19 +183,13 @@ func (p *PlayerUpdateConnection) handleMessages() {
 	ticker := time.NewTicker(time.Duration(5) * time.Second)
 	defer Logger.Debugf("exiting handle message for [%s]", p.PlayerID)
 	defer ticker.Stop()
-	for {
+	keepRunning := true
+	for keepRunning {
 		select {
 		case <-p.Exit:
 			Logger.Infof("received exit signal for player [%s] connection, closing", p.PlayerID)
-			p.conn.Close()
+			keepRunning = false
 		case msg := <-p.MessageChannel:
-			if msg.EventType == "" {
-				select {
-				case p.Exit <- struct{}{}:
-				default:
-				}
-			}
-
 			Logger.Debugf("sending message [%d] to player [%s] ws connection", p.MsgIDCounter, p.PlayerID)
 			msg.ID = p.MsgIDCounter
 			msg.TimeSent = time.Now()
@@ -217,5 +211,23 @@ func (p *PlayerUpdateConnection) handleMessages() {
 				return
 			}
 		}
+	}
+
+	close(p.MessageChannel)
+	for msg := range p.MessageChannel {
+		Logger.Debugf("sending message [%d] to player [%s] ws connection", p.MsgIDCounter, p.PlayerID)
+		msg.ID = p.MsgIDCounter
+		msg.TimeSent = time.Now()
+		bytes, err := json.Marshal(msg)
+		if err != nil {
+			Logger.Errorf("error marshalling message [%d] in websocket handler: %v", p.MsgIDCounter, err)
+			continue
+		}
+
+		if err = p.conn.WriteMessage(1, bytes); err != nil {
+			Logger.Errorf("error writing message [%d] to connection for player [%s]", p.MsgIDCounter, p.PlayerID)
+		}
+
+		p.MsgIDCounter += 1
 	}
 }

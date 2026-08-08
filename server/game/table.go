@@ -331,24 +331,17 @@ func (t *table) GetHand(position int) Hand {
 }
 
 func (t *table) OnGameOver() {
-	_, err := CurrentGames.RemoveGame(t.gameID)
+	g, err := CurrentGames.RemoveGame(t.gameID)
 	if err != nil {
 		just.Logger.Errorf("encountered error removing game in OnGameOver: %v", err)
+	} else {
+		g.gameEnded = true
 	}
 
 	for _, p := range t.players {
 		if p.state != PlayerStateOut {
 			p.state = PlayerStateWon
 		}
-	}
-
-	for _, conn := range just.UpdateHub.GetChannelsForGame(t.gameID) {
-		conn.MessageChannel <- just.WebsocketMessage[any]{
-			EventType: "game_over",
-			Data:      t.AsDTO().Players,
-		}
-
-		close(conn.MessageChannel)
 	}
 }
 
@@ -407,8 +400,6 @@ func (t *table) nextHand(bb int, sb int) error {
 	}
 
 	if playersRemaining == 1 {
-		t.OnGameOver()
-		just.Logger.Infof("game [%s] completed", t.gameID)
 		return nil
 	}
 

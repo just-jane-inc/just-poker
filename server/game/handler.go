@@ -269,7 +269,7 @@ func OnStartGame(w http.ResponseWriter, r *http.Request) {
 	}
 
 	g.joinGameLock.Lock()
-	handleUpdates(g.AsDTO(), "starting_game")
+	handleUpdates(g, g.AsDTO(), "starting_game")
 	err = g.TryStartGame()
 	g.joinGameLock.Unlock()
 	if err != nil {
@@ -339,7 +339,7 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go handleUpdates(g.AsDTO(), "game_state_update")
+	go handleUpdates(g, g.AsDTO(), "game_state_update")
 	just.OK("action_accepted", struct{}{}).WriteJSONResponse(w)
 }
 
@@ -462,15 +462,14 @@ func OnCreateGameConnection(w http.ResponseWriter, r *http.Request) {
 	just.HandleWebSocket(w, r, gameID, userID, dto)
 }
 
-func handleUpdates(dto GameDTO, eventType string) {
+func handleUpdates(g *game, dto GameDTO, eventType string) {
 	err := just.RecordingHub.OnGameUpdate(dto)
 	if err != nil {
 		just.Logger.Errorf("error updating game state in elastic: %v", err)
 	}
 
-	just.Logger.Infof("sending update: %v", dto)
-
 	just.Logger.Debugf("sending updates for game with ID [%s]", dto.ID)
+
 	for _, conn := range just.UpdateHub.GetChannelsForGame(dto.ID) {
 		just.Logger.Debugf("sending update to player %s", conn.PlayerID)
 		dtoNew := dto.DeepCopy()
@@ -490,7 +489,16 @@ func handleUpdates(dto GameDTO, eventType string) {
 		}
 	}
 
-	if dto.EndedAt == nil {
+	if g.gameEnded {
+		for _, conn := range just.UpdateHub.GetChannelsForGame(g.id) {
+			conn.MessageChannel <- just.WebsocketMessage[any]{
+				EventType: "game_over",
+				Data:      dto.Table.Players,
+			}
+
+			conn.SignalExit()
+		}
+
 		return
 	}
 
