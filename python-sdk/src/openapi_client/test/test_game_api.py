@@ -40,6 +40,13 @@ class TestGameApi(unittest.IsolatedAsyncioTestCase):
         """
         pass
 
+    async def test_game_game_id_hand_post(self) -> None:
+        """Test case for game_game_id_hand_post
+
+        Start Next Hand
+        """
+        pass
+
     async def test_game_game_id_player_post(self) -> None:
         """Test case for game_game_id_player_post
 

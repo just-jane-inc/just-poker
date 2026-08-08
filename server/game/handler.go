@@ -67,6 +67,47 @@ func OnJoinGameRequest(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// OnStartNextHand godoc
+// @Summary      Start Next Hand
+// @Description  Starts the next poker hand
+// @Tags         Game
+// @Accept       json
+// @Produce      json
+// @Param game_id path string true "ID of the Game to join"
+// @Param new_hand body NewHandDTO true "a dto containing new hand information"
+// @Success      200
+// @Failure      400 {object} just.ResponseMessage[just.ErrorDTO]
+// @Security BearerAuth
+// @Router       /game/{game_id}/hand [post]
+func OnStartNextHand(w http.ResponseWriter, r *http.Request) {
+	_, _, err := just.GetAuthorizedUser(r)
+	if err != nil {
+		just.MissingToken().WriteJSONResponse(w)
+		return
+	}
+
+	gameID := r.PathValue("game_id")
+	g, ok := CurrentGames.GetGame(gameID)
+	if !ok {
+		just.NotFound("game id does not exist", 0).WriteJSONResponse(w)
+		return
+	}
+
+	var dto NewHandDTO
+	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
+		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
+		return
+	}
+
+	if err = g.table.nextHandWithDeck(dto.Deck, g.config.BigBlind, g.config.SmallBlind); err != nil {
+		just.Logger.Errorf("encountered error setting next hand: %v", err)
+		just.InternalError(err.Error()).WriteJSONResponse(w)
+		return
+	}
+
+	just.OK("hand_started", struct{}{}).WriteJSONResponse(w)
+}
+
 // OnGetCurrentGameState godoc
 // @Summary      Game State
 // @Description  gets the current state of the game from the perspective of the requesting user

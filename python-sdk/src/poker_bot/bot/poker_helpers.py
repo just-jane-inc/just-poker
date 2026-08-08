@@ -53,6 +53,7 @@ async def create_game(
     sb: int = 50,
     chips: dict[str, int] | None = None,
     player_count: int = 5,
+    auto_start_hands: bool = True,
 ) -> str | None:
     if not chips:
         chips = {"10": 10, "50": 5, "100": 2, "500": 1}
@@ -63,6 +64,7 @@ async def create_game(
         small_blind=sb,
         starting_chips=chips,
         player_count=player_count,
+        auto_starts_hands=auto_start_hands,
     )
 
     resp = await api.game_post(GamePostRequest(dto))

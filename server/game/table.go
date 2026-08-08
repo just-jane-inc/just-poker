@@ -351,6 +351,24 @@ func (t *table) OnGameOver() {
 	}
 }
 
+func (t *table) nextHandWithDeck(deck []CardDTO, bb int, sb int) error {
+	err := t.nextHand(bb, sb)
+	if err != nil {
+		return err
+	}
+
+	if len(deck) != 52 {
+		return nil
+	}
+
+	t.deck.cards = make([]card, 52)
+	for i, c := range deck {
+		t.deck.cards[i] = card{rank: c.Rank, suit: c.Suit}
+	}
+
+	return nil
+}
+
 func (t *table) nextHand(bb int, sb int) error {
 	just.Logger.Debugf("attempting to start hand [%d]", t.currentHand.ID+1)
 

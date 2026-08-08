@@ -17,22 +17,19 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Any, ClassVar, Dict, List, Optional
+from openapi_client.models.game_card_dto import GameCardDTO
 from typing import Optional, Set
 from typing_extensions import Self
 from pydantic_core import to_jsonable_python
 
-class GameNewGameConfigDTO(BaseModel):
+class GameNewHandDTO(BaseModel):
     """
-    the configuration used to setup the game
+    GameNewHandDTO
     """ # noqa: E501
-    auto_starts_hands: Optional[StrictBool] = Field(default=None, description="a flag which indicates true if the game server should wait for a signal to start hands or if it should do so automatically")
-    big_blind: Optional[StrictInt] = Field(default=None, description="the big blind")
-    player_count: Optional[StrictInt] = Field(default=None, description="the number of players (max) the game supports")
-    small_blind: Optional[StrictInt] = Field(default=None, description="the small blind")
-    starting_chips: Optional[Dict[str, StrictInt]] = Field(default=None, description="an optional mapping of chips that is required by some action types.")
-    __properties: ClassVar[List[str]] = ["auto_starts_hands", "big_blind", "player_count", "small_blind", "starting_chips"]
+    deck: Optional[List[GameCardDTO]] = Field(default=None, description="the deck, optionally provided to determine trhe order of cards if not provided the cards will be ordered randomly by the server")
+    __properties: ClassVar[List[str]] = ["deck"]
 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -52,7 +49,7 @@ class GameNewGameConfigDTO(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of GameNewGameConfigDTO from a JSON string"""
+        """Create an instance of GameNewHandDTO from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -73,11 +70,18 @@ class GameNewGameConfigDTO(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of each item in deck (list)
+        _items = []
+        if self.deck:
+            for _item_deck in self.deck:
+                if _item_deck:
+                    _items.append(_item_deck.to_dict())
+            _dict['deck'] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of GameNewGameConfigDTO from a dict"""
+        """Create an instance of GameNewHandDTO from a dict"""
         if obj is None:
             return None
 
@@ -85,11 +89,7 @@ class GameNewGameConfigDTO(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "auto_starts_hands": obj.get("auto_starts_hands"),
-            "big_blind": obj.get("big_blind"),
-            "player_count": obj.get("player_count"),
-            "small_blind": obj.get("small_blind"),
-            "starting_chips": obj.get("starting_chips")
+            "deck": [GameCardDTO.from_dict(_item) for _item in obj["deck"]] if obj.get("deck") is not None else None
         })
         return _obj
 

@@ -103,6 +103,11 @@ func main() {
 	)
 
 	apiMux.HandleFunc(
+		"POST /game/{game_id}/hand",
+		game.OnStartNextHand,
+	)
+
+	apiMux.HandleFunc(
 		"POST /game/{game_id}/action",
 		game.OnPlayerAction,
 	)

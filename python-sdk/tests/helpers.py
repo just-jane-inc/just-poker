@@ -17,3 +17,12 @@ def get_test_users() -> list[examples.TestUser]:
         users.append(user)
 
     return users
+
+
+def get_test_user(username: str) -> examples.TestUser | None:
+    users = examples.get_test_users()
+    for user in users:
+        if user.username == username:
+            return user
+
+    return None

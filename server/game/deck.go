@@ -40,6 +40,10 @@ func (d *deck) Reset() {
 	d.cards = deck
 }
 
+func (d *deck) Set(cards []card) {
+	d.cards = cards
+}
+
 func (d *deck) Draw() *card {
 	if len(d.cards) == 0 {
 		return nil

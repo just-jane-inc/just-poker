@@ -280,9 +280,11 @@ func (g *game) TryStartGame() error {
 		return err
 	}
 
-	err = g.table.nextHand(g.config.BigBlind, g.config.SmallBlind)
-	if err != nil {
-		return err
+	if g.config.AutoStartHands {
+		err = g.table.nextHand(g.config.BigBlind, g.config.SmallBlind)
+		if err != nil {
+			return err
+		}
 	}
 
 	t := time.Now()

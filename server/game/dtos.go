@@ -7,6 +7,13 @@ import (
 	"github.com/just-jane-inc/just-poker/server/just"
 )
 
+// NewHandDTO a dto describing data required to start a new hand
+type NewHandDTO struct {
+	// the deck, optionally provided to determine trhe order of cards
+	// if not provided the cards will be ordered randomly by the server
+	Deck []CardDTO `json:"deck"`
+}
+
 // ChipExchangeDTO a dto describing an exchange request between
 // two ChipStackDTO.
 type ChipExchangeDTO struct {
@@ -126,6 +133,10 @@ type NewGameConfigDTO struct {
 
 	// the small blind
 	SmallBlind int `json:"small_blind"`
+
+	// a flag which indicates true if the game server should wait
+	// for a signal to start hands or if it should do so automatically
+	AutoStartHands bool `json:"auto_starts_hands"`
 }
 
 // TableDTO a dto describing the full state of a table

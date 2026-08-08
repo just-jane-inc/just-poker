@@ -307,19 +307,6 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) error {
 		}
 
 		nextPlayer = nextRoundFirstPlayer
-		if g.table.currentRound.currentRoundType == RoundTypeCompleted {
-			err := g.table.nextHand(g.config.BigBlind, g.config.SmallBlind)
-			if err != nil {
-				return err
-			}
-
-			nextPlayer = g.table.players[g.table.currentRound.currentPlayerPosition]
-		}
-	}
-
-	if nextPlayer == nil {
-		just.Logger.Errorf("failed to find a next player...")
-		return just.NewPokerError("failed to find a player...", 67)
 	}
 
 	// the player state should only change back to inactive if it
@@ -331,15 +318,16 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) error {
 
 	// it is possible for p == nextPlayer, we need to ensure that
 	// this happens after setting p state to inactive.
-	g.table.currentRound.currentPlayerPosition = nextPlayer.position
-	nextPlayer.state = PlayerStateActive
-
-	just.Logger.Debugf("[%s] [%d] -> [%d]", g.table.currentRound.currentRoundType, p.position, nextPlayer.position)
+	if nextPlayer != nil {
+		g.table.currentRound.currentPlayerPosition = nextPlayer.position
+		nextPlayer.state = PlayerStateActive
+		just.Logger.Debugf("[%s] [%d] -> [%d]", g.table.currentRound.currentRoundType, p.position, nextPlayer.position)
+	}
 
 	g.table.currentTurn.StartedAt = time.Now()
 	g.table.currentTurn.ID += 1
 
-	if g.table.currentRound.currentRoundType == RoundTypeCompleted {
+	if g.table.currentRound.currentRoundType == RoundTypeCompleted && g.config.AutoStartHands {
 		// TODO: maybe we should wait for a signal from the outside before starting new hands
 		if err := g.table.nextHand(g.config.BigBlind, g.config.SmallBlind); err != nil {
 			just.Logger.Errorf("encountered error starting new hand: %v", err)

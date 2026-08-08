@@ -14,10 +14,10 @@
 
 import unittest
 
-from openapi_client.models.game_new_game_config_dto import GameNewGameConfigDTO
+from openapi_client.models.game_new_hand_dto import GameNewHandDTO
 
-class TestGameNewGameConfigDTO(unittest.TestCase):
-    """GameNewGameConfigDTO unit test stubs"""
+class TestGameNewHandDTO(unittest.TestCase):
+    """GameNewHandDTO unit test stubs"""
 
     def setUp(self):
         pass
@@ -25,31 +25,29 @@ class TestGameNewGameConfigDTO(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def make_instance(self, include_optional) -> GameNewGameConfigDTO:
-        """Test GameNewGameConfigDTO
+    def make_instance(self, include_optional) -> GameNewHandDTO:
+        """Test GameNewHandDTO
             include_optional is a boolean, when False only required
             params are included, when True both required and
             optional params are included """
-        # uncomment below to create an instance of `GameNewGameConfigDTO`
+        # uncomment below to create an instance of `GameNewHandDTO`
         """
-        model = GameNewGameConfigDTO()
+        model = GameNewHandDTO()
         if include_optional:
-            return GameNewGameConfigDTO(
-                auto_starts_hands = True,
-                big_blind = 56,
-                player_count = 56,
-                small_blind = 56,
-                starting_chips = {
-                    'key' : 56
-                    }
+            return GameNewHandDTO(
+                deck = [
+                    openapi_client.models.game/card_dto.game.CardDTO(
+                        rank = 56, 
+                        suit = 56, )
+                    ]
             )
         else:
-            return GameNewGameConfigDTO(
+            return GameNewHandDTO(
         )
         """
 
-    def testGameNewGameConfigDTO(self):
-        """Test GameNewGameConfigDTO"""
+    def testGameNewHandDTO(self):
+        """Test GameNewHandDTO"""
         # inst_req_only = self.make_instance(include_optional=False)
         # inst_req_and_optional = self.make_instance(include_optional=True)
 

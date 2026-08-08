@@ -35,6 +35,7 @@ class TestGamePostRequest(unittest.TestCase):
         model = GamePostRequest()
         if include_optional:
             return GamePostRequest(
+                auto_starts_hands = True,
                 big_blind = 56,
                 player_count = 56,
                 small_blind = 56,

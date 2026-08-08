@@ -23,8 +23,10 @@ from openapi_client.models.game_chip_exchange_dto import GameChipExchangeDTO
 from openapi_client.models.game_game_dto import GameGameDTO
 from openapi_client.models.game_game_id_action_post_request import GameGameIdActionPostRequest
 from openapi_client.models.game_game_id_chip_exchange_post_request import GameGameIdChipExchangePostRequest
+from openapi_client.models.game_game_id_hand_post_request import GameGameIdHandPostRequest
 from openapi_client.models.game_hand_dto import GameHandDTO
 from openapi_client.models.game_new_game_config_dto import GameNewGameConfigDTO
+from openapi_client.models.game_new_hand_dto import GameNewHandDTO
 from openapi_client.models.game_player_action_dto import GamePlayerActionDTO
 from openapi_client.models.game_player_dto import GamePlayerDTO
 from openapi_client.models.game_post_request import GamePostRequest

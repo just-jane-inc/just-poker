@@ -18,8 +18,10 @@ openapi_client/docs/GameChipExchangeDTO.md
 openapi_client/docs/GameGameDTO.md
 openapi_client/docs/GameGameIdActionPostRequest.md
 openapi_client/docs/GameGameIdChipExchangePostRequest.md
+openapi_client/docs/GameGameIdHandPostRequest.md
 openapi_client/docs/GameHandDTO.md
 openapi_client/docs/GameNewGameConfigDTO.md
+openapi_client/docs/GameNewHandDTO.md
 openapi_client/docs/GamePlayerActionDTO.md
 openapi_client/docs/GamePlayerDTO.md
 openapi_client/docs/GamePostRequest.md
@@ -46,8 +48,10 @@ openapi_client/models/game_chip_exchange_dto.py
 openapi_client/models/game_game_dto.py
 openapi_client/models/game_game_id_action_post_request.py
 openapi_client/models/game_game_id_chip_exchange_post_request.py
+openapi_client/models/game_game_id_hand_post_request.py
 openapi_client/models/game_hand_dto.py
 openapi_client/models/game_new_game_config_dto.py
+openapi_client/models/game_new_hand_dto.py
 openapi_client/models/game_player_action_dto.py
 openapi_client/models/game_player_dto.py
 openapi_client/models/game_post_request.py
@@ -75,8 +79,10 @@ openapi_client/test/test_game_chip_exchange_dto.py
 openapi_client/test/test_game_game_dto.py
 openapi_client/test/test_game_game_id_action_post_request.py
 openapi_client/test/test_game_game_id_chip_exchange_post_request.py
+openapi_client/test/test_game_game_id_hand_post_request.py
 openapi_client/test/test_game_hand_dto.py
 openapi_client/test/test_game_new_game_config_dto.py
+openapi_client/test/test_game_new_hand_dto.py
 openapi_client/test/test_game_player_action_dto.py
 openapi_client/test/test_game_player_dto.py
 openapi_client/test/test_game_post_request.py

@@ -114,6 +114,10 @@
             "game.NewGameConfigDTO": {
                 "description": "the configuration used to setup the game",
                 "properties": {
+                    "auto_starts_hands": {
+                        "description": "a flag which indicates true if the game server should wait\nfor a signal to start hands or if it should do so automatically",
+                        "type": "boolean"
+                    },
                     "big_blind": {
                         "description": "the big blind",
                         "type": "integer"
@@ -128,6 +132,19 @@
                     },
                     "starting_chips": {
                         "$ref": "#/components/schemas/game.ChipStackDTO"
+                    }
+                },
+                "type": "object"
+            },
+            "game.NewHandDTO": {
+                "properties": {
+                    "deck": {
+                        "description": "the deck, optionally provided to determine trhe order of cards\nif not provided the cards will be ordered randomly by the server",
+                        "items": {
+                            "$ref": "#/components/schemas/game.CardDTO"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
                     }
                 },
                 "type": "object"
@@ -700,6 +717,73 @@
                     }
                 ],
                 "summary": "Exchange Chips",
+                "tags": [
+                    "Game"
+                ]
+            }
+        },
+        "/game/{game_id}/hand": {
+            "post": {
+                "description": "Starts the next poker hand",
+                "parameters": [
+                    {
+                        "description": "ID of the Game to join",
+                        "in": "path",
+                        "name": "game_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/game.NewHandDTO",
+                                        "summary": "new_hand",
+                                        "description": "a dto containing new hand information"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "a dto containing new hand information",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Start Next Hand",
                 "tags": [
                     "Game"
                 ]

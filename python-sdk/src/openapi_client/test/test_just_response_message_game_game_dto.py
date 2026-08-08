@@ -38,6 +38,7 @@ class TestJustResponseMessageGameGameDTO(unittest.TestCase):
                 data = openapi_client.models.game/game_dto.game.GameDTO(
                     ended_at = '', 
                     game_config = openapi_client.models.game/new_game_config_dto.game.NewGameConfigDTO(
+                        auto_starts_hands = True, 
                         big_blind = 56, 
                         player_count = 56, 
                         small_blind = 56, 

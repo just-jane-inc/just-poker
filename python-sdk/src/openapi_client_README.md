@@ -80,6 +80,7 @@ Class | Method | HTTP request | Description
 *AdminApi* | [**admin_game_game_id_table_post**](openapi_client/docs/AdminApi.md#admin_game_game_id_table_post) | **POST** /admin/game/{game_id}/table | Change Game Table
 *GameApi* | [**game_game_id_action_post**](openapi_client/docs/GameApi.md#game_game_id_action_post) | **POST** /game/{game_id}/action | Player Action
 *GameApi* | [**game_game_id_chip_exchange_post**](openapi_client/docs/GameApi.md#game_game_id_chip_exchange_post) | **POST** /game/{game_id}/chip/exchange | Exchange Chips
+*GameApi* | [**game_game_id_hand_post**](openapi_client/docs/GameApi.md#game_game_id_hand_post) | **POST** /game/{game_id}/hand | Start Next Hand
 *GameApi* | [**game_game_id_player_post**](openapi_client/docs/GameApi.md#game_game_id_player_post) | **POST** /game/{game_id}/player | Join a Game
 *GameApi* | [**game_game_id_started_post**](openapi_client/docs/GameApi.md#game_game_id_started_post) | **POST** /game/{game_id}/started | Start Game
 *GameApi* | [**game_game_id_state_get**](openapi_client/docs/GameApi.md#game_game_id_state_get) | **GET** /game/{game_id}/state | Game State
@@ -104,8 +105,10 @@ Class | Method | HTTP request | Description
  - [GameGameDTO](openapi_client/docs/GameGameDTO.md)
  - [GameGameIdActionPostRequest](openapi_client/docs/GameGameIdActionPostRequest.md)
  - [GameGameIdChipExchangePostRequest](openapi_client/docs/GameGameIdChipExchangePostRequest.md)
+ - [GameGameIdHandPostRequest](openapi_client/docs/GameGameIdHandPostRequest.md)
  - [GameHandDTO](openapi_client/docs/GameHandDTO.md)
  - [GameNewGameConfigDTO](openapi_client/docs/GameNewGameConfigDTO.md)
+ - [GameNewHandDTO](openapi_client/docs/GameNewHandDTO.md)
  - [GamePlayerActionDTO](openapi_client/docs/GamePlayerActionDTO.md)
  - [GamePlayerDTO](openapi_client/docs/GamePlayerDTO.md)
  - [GamePostRequest](openapi_client/docs/GamePostRequest.md)
