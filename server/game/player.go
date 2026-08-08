@@ -26,13 +26,13 @@ const (
 //
 //goland:noinspection GoSnakeCaseUsage
 const (
-	PlayerIntentUnset = "unset"
-	PlayerIntentAnte  = "ante"
-	PlayerIntentCheck = "check"
-	PlayerIntentCall  = "call"
-	PlayerIntentRaise = "raise"
-	PlayerIntentAllIn = "all_in"
-	PlayerIntentFold  = "fold"
+	PlayerIntentUnset PlayerIntent = "unset"
+	PlayerIntentAnte  PlayerIntent = "ante"
+	PlayerIntentCheck PlayerIntent = "check"
+	PlayerIntentCall  PlayerIntent = "call"
+	PlayerIntentRaise PlayerIntent = "raise"
+	PlayerIntentAllIn PlayerIntent = "all_in"
+	PlayerIntentFold  PlayerIntent = "fold"
 )
 
 type stack map[int]int

@@ -45,7 +45,7 @@ func OnJoinGameRequest(w http.ResponseWriter, r *http.Request) {
 	just.Logger.Debugf("received request to join game [%s]", gameID)
 	g, ok := CurrentGames.GetGame(gameID)
 	if !ok {
-		just.NotFound("game not found", int(just.GameNotFound)).WriteJSONResponse(w)
+		just.NotFound("game not found", just.GameNotFound).WriteJSONResponse(w)
 		return
 	}
 
@@ -56,10 +56,10 @@ func OnJoinGameRequest(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var pokerErr *just.PokerError
 		if errors.As(err, &pokerErr) {
-			just.BadRequest(pokerErr.Message, int(pokerErr.Code)).WriteJSONResponse(w)
+			just.BadRequest(pokerErr.Message, pokerErr.Code).WriteJSONResponse(w)
 		} else {
 			just.Logger.Errorf("encountered error when processing join game request: %v", err)
-			just.BadRequest("unknown error occurred", int(just.Unknown)).WriteJSONResponse(w)
+			just.BadRequest("unknown error occurred", just.Unknown).WriteJSONResponse(w)
 		}
 	} else {
 		just.Logger.Debugf("[%s] joined game [%s]", userid, gameID)
@@ -101,7 +101,7 @@ func OnStartNextHand(w http.ResponseWriter, r *http.Request) {
 
 	if pokerError := g.table.nextHandWithDeck(dto.Deck, g.config.BigBlind, g.config.SmallBlind); pokerError != nil {
 		just.Logger.Errorf("encountered error setting next hand: %v", err)
-		just.InternalError(err.Error()).WriteJSONResponse(w)
+		just.BadRequest(pokerError.Message, pokerError.Code).WriteJSONResponse(w)
 		return
 	}
 
@@ -173,7 +173,7 @@ func OnCreateGame(w http.ResponseWriter, r *http.Request) {
 
 	g, pokerError := createGameFromConfig(config)
 	if pokerError != nil {
-		just.BadRequest(pokerError.Message, int(pokerError.Code)).WriteJSONResponse(w)
+		just.BadRequest(pokerError.Message, pokerError.Code).WriteJSONResponse(w)
 		return
 	}
 
@@ -204,7 +204,7 @@ func OnExchangeChips(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		just.BadRequest(
 			err.Error(),
-			int(just.UserNotFound),
+			just.UserNotFound,
 		).WriteJSONResponse(w)
 		return
 	}
@@ -213,7 +213,7 @@ func OnExchangeChips(w http.ResponseWriter, r *http.Request) {
 	if gameID == "" {
 		just.BadRequest(
 			"game_id is required in route",
-			int(just.GameNotFound),
+			just.GameNotFound,
 		).WriteJSONResponse(w)
 		return
 	}
@@ -222,7 +222,7 @@ func OnExchangeChips(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		just.BadRequest(
 			"game_id not found",
-			int(just.GameNotFound),
+			just.GameNotFound,
 		).WriteJSONResponse(w)
 		return
 	}
@@ -296,8 +296,6 @@ func OnStartGame(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router       /game/{game_id}/action [post]
 func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
-	// TODO: assert that the player producing the action dto is the one in the auth token
-
 	var err error
 	var userID string
 
@@ -307,20 +305,22 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	just.Logger.Debug("player action received")
-	var playerAction PlayerActionDTO
-	if err := json.NewDecoder(r.Body).Decode(&playerAction); err != nil {
-		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
-		return
-	}
-
-	playerAction.PlayerID = userID
 	gameID := r.PathValue("game_id")
 	g, ok := CurrentGames.GetGame(gameID)
 	if !ok {
 		just.NotFound(fmt.Sprintf("could not find game with id %s", gameID), 0).WriteJSONResponse(w)
 		return
 	}
+
+	var playerAction PlayerActionDTO
+	if err := json.NewDecoder(r.Body).Decode(&playerAction); err != nil {
+		just.BadRequest(err.Error(), just.MalformedRequestBody).WriteJSONResponse(w)
+		return
+	}
+
+	just.Logger.Debugf("player action request received from [%s] for [%s]", userID, gameID)
+
+	playerAction.PlayerID = userID
 
 	if g.isPaused {
 		just.InvalidPlayerActionGameIsPaused().WriteJSONResponse(w)
@@ -329,15 +329,13 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 
 	err = g.TryPlayerAction(playerAction)
 	if err != nil {
-		just.Logger.Warn(err.Error())
-
 		var pokerError *just.PokerError
 		if errors.As(err, &pokerError) {
-			just.BadRequest(pokerError.Message, int(pokerError.Code)).WriteJSONResponse(w)
+			just.BadRequest(pokerError.Message, pokerError.Code).WriteJSONResponse(w)
 			return
 		}
 
-		just.BadRequest(err.Error(), int(just.Unknown)).WriteJSONResponse(w)
+		just.BadRequest(err.Error(), just.Unknown).WriteJSONResponse(w)
 		return
 	}
 
@@ -380,7 +378,7 @@ func OnRegisterListener(w http.ResponseWriter, r *http.Request) {
 
 	g, ok := CurrentGames.GetGame(gameID)
 	if !ok {
-		just.NotFound("game not found", int(just.GameNotFound)).WriteJSONResponse(w)
+		just.NotFound("game not found", just.GameNotFound).WriteJSONResponse(w)
 		return
 	}
 
@@ -448,7 +446,7 @@ func OnCreateGameConnection(w http.ResponseWriter, r *http.Request) {
 
 	g, ok := CurrentGames.GetGame(gameID)
 	if !ok {
-		just.NotFound("game not found", int(just.GameNotFound)).WriteJSONResponse(w)
+		just.NotFound("game not found", just.GameNotFound).WriteJSONResponse(w)
 		return
 	}
 

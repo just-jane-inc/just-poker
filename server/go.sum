@@ -34,8 +34,6 @@ github.com/jackc/puddle/v2 v2.2.2 h1:PR8nw+E/1w0GLuRFSmiioY6UooMp6KJv0/61nB7icHo
 github.com/jackc/puddle/v2 v2.2.2/go.mod h1:vriiEXHvEE654aYKXXjOvZM39qJ0q+azkZFrfEOc3H4=
 github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
 github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
-github.com/just-jane-inc/just-services/just-logger v0.0.0-20260807221259-a9ea4420456f h1:Fa60lGg8kEjOrVBYusaUH9ZukiL8udmOaN8vgwzH6p4=
-github.com/just-jane-inc/just-services/just-logger v0.0.0-20260807221259-a9ea4420456f/go.mod h1:vF0vywMZy5Xu08J8W+wvD2KBwFl5Ms+NprhQ6v7bCkQ=
 github.com/just-jane-inc/just-services/just-logger v0.0.0-20260807222607-121d9ed0762f h1:UFtFDGErrU6rdxmkmO9sEr0ECYE8Pfw2D6FkGl19m7k=
 github.com/just-jane-inc/just-services/just-logger v0.0.0-20260807222607-121d9ed0762f/go.mod h1:vF0vywMZy5Xu08J8W+wvD2KBwFl5Ms+NprhQ6v7bCkQ=
 github.com/mattn/go-colorable v0.1.14 h1:9A9LHSqF/7dyVVX6g0U9cwm9pG3kP9gSzcuIPHPsaIE=

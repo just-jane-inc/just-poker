@@ -14,8 +14,8 @@ type ResponseMessage[T any] struct {
 }
 
 type ErrorDTO struct {
-	ErrorCode int    `json:"error_code"`
-	Error     string `json:"error"`
+	ErrorCode ErrorCode `json:"error_code"`
+	Error     string    `json:"error"`
 }
 
 type HTTPResponse struct {
@@ -34,7 +34,7 @@ func IgnoreTrailingSlash(next http.Handler) http.Handler {
 	})
 }
 
-func NotFound(message string, code int) HTTPResponse {
+func NotFound(message string, code ErrorCode) HTTPResponse {
 	return HTTPResponse{
 		Code: http.StatusNotFound,
 		Object: ResponseMessage[ErrorDTO]{
@@ -53,7 +53,7 @@ func MissingToken() HTTPResponse {
 		Object: ResponseMessage[ErrorDTO]{
 			Type: "error",
 			Data: ErrorDTO{
-				ErrorCode: 0,
+				ErrorCode: TokenMissing,
 				Error:     "access token not provided with request",
 			},
 		},
@@ -66,14 +66,14 @@ func InternalError(message string) HTTPResponse {
 		Object: ResponseMessage[ErrorDTO]{
 			Type: "error",
 			Data: ErrorDTO{
-				ErrorCode: int(Unknown),
+				ErrorCode: Unknown,
 				Error:     message,
 			},
 		},
 	}
 }
 
-func BadRequest(message string, code int) HTTPResponse {
+func BadRequest(message string, code ErrorCode) HTTPResponse {
 	return HTTPResponse{
 		Code: http.StatusBadRequest,
 		Object: ResponseMessage[ErrorDTO]{
@@ -92,8 +92,8 @@ func InvalidPlayerActionGameIsPaused() HTTPResponse {
 		Object: ResponseMessage[ErrorDTO]{
 			Type: "error",
 			Data: ErrorDTO{
-				ErrorCode: int(GameIsPaused),
-				Error:     "the game is current paused",
+				ErrorCode: GameIsPaused,
+				Error:     "the game is currently paused",
 			},
 		},
 	}

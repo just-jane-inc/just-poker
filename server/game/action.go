@@ -15,7 +15,7 @@ type playerAction struct {
 }
 
 func (a PlayerActionDTO) ToString() string {
-	return fmt.Sprintf("player: %s chips: %#v intent: %s", a.PlayerID, a.Bet, a.Intent)
+	return fmt.Sprintf("chips: %#v intent: %s", a.Bet, a.Intent)
 }
 
 func (g *game) TryPlayerAction(action PlayerActionDTO) error {
@@ -54,21 +54,12 @@ func (g *game) ProccessPlayerActions(exit chan any) {
 	}
 }
 
-func (g *game) coverBet(p *player, chips ChipStackDTO) error {
+func (g *game) coverBet(p *player, chips ChipStackDTO) *just.PokerError {
 	// first we go through and ensure that the player can cover
 	// every chip they want to bet, we do this before changing any chips
 	// in case there is an error (we dont want to unwind)
 	stack := chips.asStack()
 	for d, c := range stack {
-		playerCount, ok := p.chips[d]
-		if !ok {
-			just.Logger.Errorf("invalid denomination %d", d)
-			return &just.PokerError{
-				Message: fmt.Sprintf("player has no chips with %d denomination", d),
-				Code:    just.NotEnoughChips,
-			}
-		}
-
 		if c < 0 {
 			return &just.PokerError{
 				Message: "received negative chip amount",
@@ -76,13 +67,25 @@ func (g *game) coverBet(p *player, chips ChipStackDTO) error {
 			}
 		}
 
-		if playerCount < c {
+		if c == 0 {
+			continue
+		}
+
+		chipCount, ok := p.chips[d]
+		if !ok {
+			return &just.PokerError{
+				Message: fmt.Sprintf("player has no chips with %d denomination", d),
+				Code:    just.NotEnoughChips,
+			}
+		}
+
+		if chipCount < c {
 			return &just.PokerError{
 				Message: fmt.Sprintf(
 					"player cannot cover %d of %d chips with their current count of %d",
 					c,
 					d,
-					playerCount,
+					chipCount,
 				),
 				Code: just.NotEnoughChips,
 			}
@@ -144,19 +147,44 @@ best hand according to the hand rankings above will win the pot. If two or more 
 same hand, the pot is split evenly between them. After each hand, the button moves one seat to the
 left, as do the responsibilities of posting the small and big blinds.
 */
-func (g *game) handlePlayerAction(action PlayerActionDTO) error {
-	just.Logger.Debugf("current round type [%s] received action [%s]", g.table.currentRound.currentRoundType, action.ToString())
-	p := g.table.players[g.table.currentRound.currentPlayerPosition]
+func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
+	just.Logger.Debugf(
+		"process action [%s] from [%s] in game [%s] - current round type [%s]",
+		action.ToString(),
+		action.PlayerID,
+		g.id,
+		g.table.currentRound.currentRoundType,
+	)
 
-	// we need to first ensure that it is this players turn
-	if action.PlayerID != p.UserID {
+	if g.table.currentRound.currentRoundType == RoundTypeCompleted {
+		return just.NewPokerError(
+			"round type is completed - no actions can be received",
+			just.TurnOrderViolation,
+		)
+	}
+
+	p := g.table.players[g.table.currentRound.currentPlayerPosition]
+	var actingPlayer *player
+	if actingPlayer = g.table.GetPlayerWithID(action.PlayerID); actingPlayer == nil {
 		return &just.PokerError{
-			Message: fmt.Sprintf("turn order violation - play is currently at player in position %d", p.position),
-			Code:    just.TurnOrderViolation,
+			Message: fmt.Sprintf("player [%s] not found in game [%s]", action.PlayerID, g.id),
+			Code:    just.UserNotFound,
 		}
 	}
 
-	// the setup 'round' has unique logic and should not mix
+	// we need to first ensure that it is this players turn
+	if actingPlayer.UserID != p.UserID {
+		return &just.PokerError{
+			Message: fmt.Sprintf(
+				"turn order violation - [%d] attempted to act during [%d] turn",
+				actingPlayer.position,
+				p.position,
+			),
+			Code: just.TurnOrderViolation,
+		}
+	}
+
+	// the ante 'round' has unique logic and should not mix
 	// with the other round types
 	if g.table.currentRound.currentRoundType == RoundTypeAnte {
 		if err := g.handleAnte(action, p); err != nil {
@@ -201,6 +229,10 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) error {
 				),
 				Code: just.InvalidBetAmount,
 			}
+		}
+
+		if action.Bet.Sum() == 0 {
+			return just.NewPokerError("did you mean to check?", just.InvalidActionType)
 		}
 
 		if err := g.coverBet(p, action.Bet); err != nil {
@@ -251,10 +283,14 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) error {
 		p.state = PlayerStateFolded
 
 	default:
-		return fmt.Errorf("erm dunno what %s means, sorry", action.Intent)
+		return just.NewPokerError("unknown intent encountered - please read documentation", just.SkillIssue)
 	}
 
 	just.Logger.Debugf("accepted action [%s] for player with id [%s]", action.Intent, action.PlayerID)
+
+	// the signal to websocket listeners for a player action
+	// if any errors are encountered after this happens we are
+	// in big touble
 	g.table.sendMessageToConnections("player_action", action)
 
 	// after we get to this state we know that the player action
@@ -328,7 +364,6 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) error {
 	g.table.currentTurn.ID += 1
 
 	if g.table.currentRound.currentRoundType == RoundTypeCompleted && g.config.AutoStartHands {
-		// TODO: maybe we should wait for a signal from the outside before starting new hands
 		if err := g.table.nextHand(g.config.BigBlind, g.config.SmallBlind); err != nil {
 			just.Logger.Errorf("encountered error starting new hand: %v", err)
 		}
@@ -343,15 +378,18 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) error {
 // or if the provided action is invalid in some way.
 //
 // it is assumed that the provided player (p) preforms the provided action.
-func (g *game) handleAnte(action PlayerActionDTO, p *player) error {
+func (g *game) handleAnte(action PlayerActionDTO, p *player) *just.PokerError {
 	if g.table.currentRound.currentRoundType != RoundTypeAnte {
-		errorMessage := fmt.Sprintf(
-			"internal error, setup handler invoked when round type was [ %s ]",
+		err, id := just.NewCriticalInternalError()
+		just.Logger.Errorf(
+			"game [%s] invoked handleAnte during the [%s] round on turn [%d] ERROR-ID={%s}",
+			g.id,
 			g.table.currentRound.currentRoundType,
+			g.table.currentTurn.ID,
+			id,
 		)
 
-		// TODO: make error type for internal/server
-		return just.NewPokerError(errorMessage, just.InvalidActionType)
+		return err
 	}
 
 	if action.Intent != PlayerIntentAnte {
@@ -380,15 +418,16 @@ func (g *game) handleAnte(action PlayerActionDTO, p *player) error {
 		}
 
 	default:
+		err, id := just.NewCriticalInternalError()
 		just.Logger.Errorf(
-			"play is currently at %d turn during setup round however they are neither the big nor small blind. game is deadlocked.",
-			p.position,
+			"error in game [%s] during turn [%d] in handleAnte player [%s] is neither big nore small blind, game cannot continue ERROR-ID={%s}",
+			g.id,
+			g.table.currentTurn.ID,
+			p.UserID,
+			id,
 		)
 
-		return &just.PokerError{
-			Message: "critical error - game state cannot progress - alert game master",
-			Code:    just.Unknown,
-		}
+		return err
 	}
 
 	if err := g.coverBet(p, action.Bet); err != nil {

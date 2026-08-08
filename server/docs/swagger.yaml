@@ -116,8 +116,7 @@ components:
         chips:
           $ref: '#/components/schemas/game.ChipStackDTO'
         intent:
-          description: the type of action a player intended to preform
-          type: string
+          $ref: '#/components/schemas/game.PlayerIntent'
         player_id:
           description: the id of the player preforming the action
           type: string
@@ -158,6 +157,25 @@ components:
         user_type:
           $ref: '#/components/schemas/just.UserType'
       type: object
+    game.PlayerIntent:
+      description: the type of action a player intended to preform
+      enum:
+      - unset
+      - ante
+      - check
+      - call
+      - raise
+      - all_in
+      - fold
+      type: string
+      x-enum-varnames:
+      - PlayerIntentUnset
+      - PlayerIntentAnte
+      - PlayerIntentCheck
+      - PlayerIntentCall
+      - PlayerIntentRaise
+      - PlayerIntentAllIn
+      - PlayerIntentFold
     game.RoundDTO:
       description: the current round
       properties:
@@ -225,12 +243,52 @@ components:
           type: array
           uniqueItems: false
       type: object
+    just.ErrorCode:
+      enum:
+      - 67
+      - 1000
+      - 1001
+      - 1002
+      - 1003
+      - 1004
+      - 2000
+      - 2001
+      - 2002
+      - 2003
+      - 2004
+      - 2005
+      - 2020
+      - 2021
+      - 2022
+      - 2023
+      - 2024
+      - 2025
+      type: integer
+      x-enum-varnames:
+      - SkillIssue
+      - Unknown
+      - UserNotFound
+      - GameNotFound
+      - TokenMissing
+      - MalformedRequestBody
+      - TurnOrderViolation
+      - InvalidActionType
+      - NotEnoughChips
+      - InvalidBetAmount
+      - InvalidChipExchange
+      - ExpectedAnteAction
+      - GameAlreadyStarted
+      - GameIsFull
+      - PlayerAlreadyJoined
+      - GameIsPaused
+      - InvalidGameConfiguration
+      - HandAlreadyInProgress
     just.ErrorDTO:
       properties:
         error:
           type: string
         error_code:
-          type: integer
+          $ref: '#/components/schemas/just.ErrorCode'
       type: object
     just.ResponseMessage-any:
       properties:

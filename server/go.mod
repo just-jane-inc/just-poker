@@ -5,6 +5,7 @@ go 1.25.0
 require (
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/elastic/go-elasticsearch/v8 v8.19.0
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/joho/godotenv v1.5.1

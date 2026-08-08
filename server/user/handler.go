@@ -143,7 +143,7 @@ func OnRenewKey(w http.ResponseWriter, r *http.Request) {
 	stmt := `select username from poker_users where id=$1`
 	if err = conn.QueryRow(ctx, stmt, userID).Scan(&username); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			just.NotFound("user not found", int(just.UserNotFound)).WriteJSONResponse(w)
+			just.NotFound("user not found", just.UserNotFound).WriteJSONResponse(w)
 		} else {
 			just.Logger.Errorf("error getting row: %v", err)
 			just.InternalError("internal server errror").WriteJSONResponse(w)

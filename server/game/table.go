@@ -252,7 +252,7 @@ func (t *table) nextRound() {
 		t.sendMessageToConnections("payout", msg)
 		t.pot = make(map[int]int)
 		just.Logger.Debugf("the winner maybe is: [%v]", winners)
-		t.currentRound.currentRoundType = RoundTypeCompleted // blow up?
+		t.currentRound.currentRoundType = RoundTypeCompleted
 	}
 
 	if t.currentRound.currentRoundType == RoundTypeUnset {
@@ -354,12 +354,12 @@ func (t *table) OnGameOver() {
 
 func (t *table) nextHandWithDeck(deck []CardDTO, bb int, sb int) *just.PokerError {
 	if t.currentRound.currentRoundType != RoundTypeCompleted && t.currentRound.currentRoundType != RoundTypeUnset {
-		return just.NewPokerError("a hand is already in progress - can not start a new hand", 0)
+		return just.NewPokerError("a hand is already in progress - can not start a new hand", just.HandAlreadyInProgress)
 	}
 
 	err := t.nextHand(bb, sb)
 	if err != nil {
-		return just.NewPokerError(fmt.Sprintf("encountered error: %v", err), 0)
+		return just.NewPokerError(fmt.Sprintf("encountered error: %v", err), 2025)
 	}
 
 	if len(deck) != 52 {

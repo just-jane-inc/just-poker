@@ -92,7 +92,7 @@ type PlayerActionDTO struct {
 	PlayerID string `json:"player_id"`
 
 	// the type of action a player intended to preform
-	Intent string `json:"intent"`
+	Intent PlayerIntent `json:"intent"`
 
 	// an optional mapping of chips that is required by some action types.
 	Bet ChipStackDTO `json:"chips"`

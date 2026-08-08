@@ -160,7 +160,7 @@ func DeleteUser(userIDStr string, w http.ResponseWriter) {
 	stmt := `delete from poker_users where id=$1`
 	_, err = conn.Exec(ctx, stmt, userID)
 	if err != nil {
-		NotFound("user not found", int(UserNotFound)).WriteJSONResponse(w)
+		NotFound("user not found", UserNotFound).WriteJSONResponse(w)
 		return
 	}
 
