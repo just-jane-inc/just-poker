@@ -24,7 +24,7 @@ from poker_bot.bot.websocket_events import (
 logging.basicConfig(
     filename="app.log",  # Name of the file
     filemode="a",  # 'a' to append, 'w' to overwrite each run
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    format="%(asctime)s - %(levelname)s - [%(name)s] %(message)s",
     level=logging.DEBUG,  # Capture INFO, WARNING, ERROR, and CRITICAL
 )
 
@@ -122,6 +122,9 @@ class PokerBot:
 
         self._listener = self.websocket_listener()
 
+        if self._listener is None:
+            return
+
         @self._listener.on_event(
             ws.WebSocketEventType.WELCOME, ws.WebSocketEventType.GAME_STATE_UPDATE
         )
@@ -162,14 +165,17 @@ class PokerBot:
             **kwargs,
         )
 
-    def websocket_listener(self, **kwargs) -> WebSocketListener:
-        return WebSocketListener(
+    def websocket_listener(self, **kwargs) -> WebSocketListener | None:
+        if self._listener is not None:
+            return self._listener
+        self._listener = WebSocketListener(
             self._base_url,
             self._token,
             self._game_id,
             on_game_state=self._ingest_state,
             **kwargs,
         )
+        return self._listener
 
     async def exchange_chips(self, give: list[Chips], receive: list[Chips]):
         give_stack = {str(s.denomination): s.count for s in give}
@@ -356,7 +362,7 @@ class PokerBot:
             await self.connect_game_state_listener()
 
         while not self.is_my_turn():
-            await asyncio.sleep(0.25)
+            await asyncio.sleep(0.5)
 
     def is_my_turn(self) -> bool:
         if self._current_state is None:

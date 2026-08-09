@@ -5,19 +5,48 @@ import logging
 from collections.abc import AsyncGenerator, AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, List, get_origin, get_args, Optional, Union
 from urllib.parse import urlsplit, urlunsplit
 
 import websockets
 
 import poker_bot.bot.poker_exceptions as ex
-from openapi_client import GameGameDTO, GamePlayerActionDTO, GameRoundDTO
+from openapi_client import GameGameDTO, GamePlayerActionDTO, GameRoundDTO, GamePlayerDTO
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger("websocket")
 
 GameStateCallback = Callable[[GameGameDTO], Awaitable[None] | None]
 EventCallback = Callable[["WebSocketEvent"], Awaitable[None] | None]
+
+
+def deserialize(data: Any, data_class: Any) -> Any:
+    if data is None:
+        return None
+
+    if data_class is dict:
+        return data
+
+    origin = get_origin(data_class)
+
+    if origin is Union:
+        # Handles if enum dataclass uses Optional
+        for subtype in get_args(data_class):
+            if subtype is type(None):
+                continue
+            try:
+                return deserialize(data, subtype)
+            except (TypeError, ValueError):
+                continue
+
+    if origin is list:
+        subtype = get_args(data_class)[0]
+        return [deserialize(item, subtype) for item in data]
+
+    if hasattr(data_class, "from_dict"):
+        return data_class.from_dict(data)
+
+    return data
 
 
 class UnknownWebSocketEventType:
@@ -41,13 +70,15 @@ class WebSocketEventType(Enum):
         obj.obj_type = obj_type
         return obj
 
-    UNKNOWN = "", dict
+    UNKNOWN = "", Any
     WELCOME = "welcome", GameGameDTO
     GAME_STATE_UPDATE = "game_state_update", GameGameDTO
     PLAYER_ACTION = "player_action", GamePlayerActionDTO
     PAYOUT = "payout", dict
     ROUND_START = "round_start", GameRoundDTO
     HAND_STARTED = "hand_started", dict
+    GAME_OVER = "game_over", List[GamePlayerDTO]
+    STARTING_GAME = "starting_game", GameGameDTO
 
     @property
     def data_class(self):
@@ -71,7 +102,7 @@ class WebSocketEventType(Enum):
 @dataclass(frozen=True)
 class WebSocketEvent:
     event_type: WebSocketEventType | UnknownWebSocketEventType
-    _data: dict | None
+    _data: dict | list | None
     id: int = 0
     time_sent: str = ""
     raw: dict[str, Any] = field(default_factory=dict)
@@ -80,16 +111,19 @@ class WebSocketEvent:
     def data(self) -> Any:
         if self._data is None:
             return self._data
-        if isinstance(self.event_type, WebSocketEventType):
-            if self.event_type.data_class == dict:
-                return self._data
-            if hasattr(self.event_type.data_class, "from_dict"):
-                try:
-                    return self.event_type.data_class.from_dict(self._data)
-                except Exception as e:
-                    logger.warning(f"could not parse event data: {e}")
-                    return self._data
-        return self._data
+
+        if not isinstance(self.event_type, WebSocketEventType):
+            return self._data
+
+        data_class = self.event_type.data_class
+        if data_class is dict:
+            return self._data
+
+        try:
+            return deserialize(self._data, self.event_type.data_class)
+        except Exception as e:
+            logger.warning(f"could not parse event data: {e}")
+            return self._data
 
 
 def build_state_ws_url(base_url: str, game_id: str) -> str:
@@ -226,16 +260,20 @@ class WebSocketStream:
                     if not isinstance(event.event_type, WebSocketEventType):
                         continue
 
-                    if event.data is not None and self._on_state is not None:
+                    if event is None:
+                        continue
+
+                    if event is not None and self._on_state is not None:
                         try:
-                            await _call(self._on_state, event.data)
+                            await _call(self._on_state, event)
                         except asyncio.CancelledError:
                             raise
                         except Exception as e:
                             logger.error(f"error in on_state hook: {e}", exc_info=True)
 
                     if (
-                        event.data is not None
+                        event is not None
+                        and event.data is not None
                         and self._on_game_state is not None
                         and isinstance(event.data, GameGameDTO)
                     ):
@@ -248,14 +286,28 @@ class WebSocketStream:
                                 f"error in on_game_state hook: {e}", exc_info=True
                             )
 
-                    yield event
+                    if event is not None:
+                        yield event
+
+                    if event is not None and event.event_type == WebSocketEventType.GAME_OVER:
+                        # We do not get a 404 on connect retry attempts on ended games, so we have to
+                        logger.debug("Game Over state received")
+                        self._reconnect = False
+                        await self.close()
 
             except asyncio.CancelledError:
                 raise
             except Exception as e:
-                self._conn = None
+                if self._conn is not None and self._conn.response is not None:
+                    if self._conn.response.status_code == 404:
+                        logger.warning(f"game state feed dropped - game id {self._game_id} not found")
+                        self._closed = True
+                        self._reconnect = False
+
                 if self._closed:
                     return
+
+                await self.close()
 
                 if not self._reconnect:
                     raise ex.CustomException(f"game state feed failed: {e}")
@@ -280,7 +332,7 @@ class WebSocketStream:
 
     async def states(self) -> AsyncGenerator[WebSocketEvent, None]:
         async for event in self.events():
-            if event.data is not None:
+            if event is not None and event.data is not None:
                 yield event
 
     def __aiter__(self) -> AsyncIterator[WebSocketEvent]:
@@ -330,6 +382,7 @@ class WebSocketListener:
         Ex.
         @listener.on_event(WebSocketEventType.WELCOME,
                            WebSocketEventType.GAME_STATE_UPDATE)
+        # @listener.on_event("*") # to subscribe to all events
         async def on_update(event: WebSocketEvent):
         """
         if not event_types:
@@ -375,6 +428,7 @@ class WebSocketListener:
         async for event in self._stream.events():
             handlers: list[tuple[EventCallback | GameStateCallback, Any]] = []
 
+            # Send to listeners subscribed to *all* events
             for handler in self._event_handlers.get("*", []):
                 handlers.append((handler, event))
 

@@ -2,6 +2,8 @@
 import argparse
 import asyncio
 import os
+from typing import List
+import logging
 
 from dotenv import load_dotenv
 from textual import on
@@ -15,7 +17,7 @@ import poker_bot.bot.poker_helpers as help
 from openapi_client.models import GameGameDTO, GamePlayerDTO, GameTableDTO
 from poker_bot.bot.bot import PokerBot
 from poker_bot.bot.websocket_events import (
-    WebSocketListener,
+    WebSocketListener, WebSocketEventType, WebSocketEvent,
 )
 from poker_bot.tools.tui.setup_tui_example import get_test_user, setup
 
@@ -26,6 +28,9 @@ parser = argparse.ArgumentParser(prog="test tui")
 parser.add_argument("--game-id", type=str, required=False, help="game id")
 parser.add_argument("--player-name", type=str, required=False, help="")
 parser.add_argument("--setup", type=int, default=0, required=False, help="")
+
+logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger("tui")
 
 if os.name == "nt":
     # For windows only tool usage, fix for cert stuff
@@ -210,18 +215,31 @@ class PokerApp(App):
         self.listener = me.websocket_listener()
         if self.listener is not None:
             # Example of using as a decorator with specific event types
-            # @self.listener.on_event(WebSocketEventType.WELCOME, WebSocketEventType.GAME_STATE_UPDATE)
-            # async def _on_update(event: WebSocketEvent) -> None:
-            #     await self.apply_state(event.data)
+            @self.listener.on_event(WebSocketEventType.WELCOME,
+                                    WebSocketEventType.GAME_STATE_UPDATE,
+                                    #WebSocketEventType.STARTING_GAME,
+                                    WebSocketEventType.GAME_OVER)
+            async def _on_update(event: WebSocketEvent) -> None:
+                logger.info(f"Received in TUI for Player [{me._user_id}]:\t{event.event_type} - {event.data}") # TODO:  Change to debug
+                if isinstance(event.data, GameGameDTO):
+                    await self.apply_state(event.data)
+                elif event.event_type == WebSocketEventType.GAME_OVER:
+                    await self.apply_game_over(event.data)
 
             # alternative - using the specific game state listener
-            self.listener.on_game_state(self.apply_state)
+            # self.listener.on_game_state(self.apply_state)
             await self.listener.start()
 
         # Fetch initial via POST if desired, but welcome msg on websocket should return it.
         # state = await me.get_game_state()
         # if state is not None and self.game_state is None:
         #     await self.apply_state(state)
+
+    async def apply_game_over(self, data: List[GamePlayerDTO]) -> None:
+        if data is None:
+            return
+        self.query_one(Players).players = data
+        self.query_one(Table).table.pot.clear()
 
     async def apply_state(self, state: GameGameDTO) -> None:
         self.game_state = state
