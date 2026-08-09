@@ -102,6 +102,7 @@ func (g *game) LogGameState(msg string) {
 
 type game struct {
 	startedAt           *time.Time
+	endedAt             *time.Time
 	id                  string
 	joinGameLock        sync.Mutex
 	isPaused            bool
@@ -109,7 +110,6 @@ type game struct {
 	table               *table
 	pauseGameSemaphor   chan any
 	playerActionChannel chan *playerAction
-	gameEnded           bool
 }
 
 func (g *GameDTO) MaskCards(userID string) {
@@ -131,6 +131,7 @@ func (g *GameDTO) DeepCopy() GameDTO {
 func (g *game) AsDTO() GameDTO {
 	return GameDTO{
 		StartedAt: g.startedAt,
+		EndedAt:   g.endedAt,
 		ID:        g.id,
 		Config:    g.config,
 		Table:     g.table.AsDTO(),
@@ -249,6 +250,9 @@ func (g *game) TryStartGame() error {
 	if g.startedAt != nil {
 		return fmt.Errorf("game already started")
 	}
+
+	now := time.Now()
+	g.startedAt = &now
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()

@@ -1,4 +1,3 @@
-import logging
 from enum import Enum
 
 from openapi_client import (
@@ -13,15 +12,6 @@ from openapi_client import (
     UserApi,
 )
 from poker_bot.bot.poker_exceptions import CustomException
-
-logging.basicConfig(
-    filename="app.log",  # Name of the file
-    filemode="a",  # 'a' to append, 'w' to overwrite each run
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    level=logging.DEBUG,  # Capture INFO, WARNING, ERROR, and CRITICAL
-)
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger("helpers")
 
 
 async def get_game_state(client: ApiClient, game_id: str) -> GameGameDTO | None:

@@ -468,7 +468,7 @@ func handleUpdates(g *game, dto GameDTO, eventType string) {
 		just.Logger.Errorf("error updating game state in elastic: %v", err)
 	}
 
-	just.Logger.Debugf("sending updates for game with ID [%s]", dto.ID)
+	just.Logger.Debugf("sending [%s] update for game with ID [%s]", eventType, dto.ID)
 
 	for _, conn := range just.UpdateHub.GetChannelsForGame(dto.ID) {
 		just.Logger.Debugf("sending update to player %s", conn.PlayerID)
@@ -489,36 +489,18 @@ func handleUpdates(g *game, dto GameDTO, eventType string) {
 		}
 	}
 
-	if g.gameEnded {
+	if g.endedAt != nil {
+		just.Logger.Infof("game has ended sending game_over and closing connections game=[%s]", g.id)
 		for _, conn := range just.UpdateHub.GetChannelsForGame(g.id) {
 			conn.MessageChannel <- just.WebsocketMessage[any]{
 				EventType: "game_over",
 				Data:      dto.Table.Players,
 			}
 
-			conn.SignalExit()
+			conn.SignalExit("game ended")
 		}
 
+		delete(CurrentGames.games, g.id)
 		return
 	}
-
-	// TODO: send a useful message
-	for _, conn := range just.UpdateHub.GetChannelsForGame(dto.ID) {
-		just.Logger.Debugf("sending update to player %s", conn.PlayerID)
-		dtoNew := dto.DeepCopy()
-		dtoNew.MaskCards(conn.PlayerID)
-		msg := just.WebsocketMessage[any]{
-			Data:      dtoNew,
-			EventType: "game_state_update",
-		}
-
-		select {
-		case conn.MessageChannel <- msg:
-		default:
-		}
-
-		just.Logger.Debugf("send message to player %s success", conn.PlayerID)
-	}
-
-	delete(just.UpdateHub.Games, dto.ID)
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"slices"
+	"time"
 
 	"github.com/just-jane-inc/just-poker/server/just"
 )
@@ -335,7 +336,8 @@ func (t *table) OnGameOver() {
 	if err != nil {
 		just.Logger.Errorf("encountered error removing game in OnGameOver: %v", err)
 	} else {
-		g.gameEnded = true
+		now := time.Now()
+		g.endedAt = &now
 	}
 
 	for _, p := range t.players {

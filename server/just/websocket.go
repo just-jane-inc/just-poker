@@ -55,7 +55,7 @@ func (h *ServerUpdateHub) AddPlayerToHub(gameID string, playerID string) *Player
 
 	playerConnection, ok := hub.playerConnections[playerID]
 	if ok {
-		playerConnection.SignalExit()
+		playerConnection.SignalExit("connection already exists")
 		delete(hub.playerConnections, playerID)
 	}
 
@@ -106,6 +106,7 @@ type PlayerUpdateConnection struct {
 	conn           *websocket.Conn
 	MsgIDCounter   int
 	UserType       UserType
+	exitLock       sync.Mutex
 }
 
 // upgrader configures the WebSocket upgrade parameters
@@ -131,7 +132,7 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request, gameID string, play
 	Logger.Infof("Client connected: %s", conn.RemoteAddr())
 
 	playerConn := UpdateHub.AddPlayerToHub(gameID, playerID)
-	defer playerConn.SignalExit()
+	defer playerConn.SignalExit("defered from HandleWebSocket closure")
 	defer func() {
 		gameHub, ok := UpdateHub.Games[gameID]
 		if !ok {
@@ -172,9 +173,17 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request, gameID string, play
 	Logger.Infof("client disconnected: %s", conn.RemoteAddr())
 }
 
-func (p *PlayerUpdateConnection) SignalExit() {
+func (p *PlayerUpdateConnection) SignalExit(reason string) {
+	// this lock is taken but never released - only one exit signal
+	// should ever reach the channel
+	if !p.exitLock.TryLock() {
+		return
+	}
+
 	select {
 	case p.Exit <- true:
+		Logger.Debugf("exit signal sent for player [%s] in game [%s] with reason [%s]", p.PlayerID, p.GameID, reason)
+		close(p.Exit)
 	default:
 	}
 }
@@ -183,6 +192,7 @@ func (p *PlayerUpdateConnection) handleMessages() {
 	ticker := time.NewTicker(time.Duration(5) * time.Second)
 	defer Logger.Debugf("exiting handle message for [%s]", p.PlayerID)
 	defer ticker.Stop()
+	defer p.conn.Close()
 	keepRunning := true
 	for keepRunning {
 		select {
@@ -207,12 +217,13 @@ func (p *PlayerUpdateConnection) handleMessages() {
 		case <-ticker.C:
 			_ = p.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if err := p.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				p.SignalExit()
+				p.SignalExit("write deadline exceeded")
 				return
 			}
 		}
 	}
 
+	Logger.Infof("closing connection for [%s] in game [%s]", p.PlayerID, p.GameID)
 	close(p.MessageChannel)
 	for msg := range p.MessageChannel {
 		Logger.Debugf("sending message [%d] to player [%s] ws connection", p.MsgIDCounter, p.PlayerID)

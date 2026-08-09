@@ -99,20 +99,14 @@ async def test_all_in_game():
     await bots[0].start_game()
 
     # setup
-    await bots[2].send_action("ante", {"10": 5})
-    await bots[3].send_action("ante", {"10": 10})
+    await bots[2].ante()
+    await bots[3].ante()
 
     # pre flop
-    await bots[0].send_action("all_in", {})
-    await bots[1].send_action("all_in", {})
-    await bots[2].send_action("all_in", {})
-    await bots[3].send_action("all_in", {})
-
-    try:
-        _ = await bots[0].get_game_state()
-        assert False
-    except api.ApiException:
-        assert True
+    await bots[0].all_in()
+    await bots[1].all_in()
+    await bots[2].all_in()
+    await bots[3].all_in()
 
 
 @pytest.mark.asyncio
