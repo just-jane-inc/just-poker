@@ -402,6 +402,7 @@ func (t *table) nextHand(bb int, sb int) error {
 	}
 
 	if playersRemaining == 1 {
+		t.OnGameOver()
 		return nil
 	}
 
