@@ -252,7 +252,7 @@ class PokerApp(App):
 
     async def action_fold(self) -> None:
         players = self.query_one(Players)
-        await players.me.send_action("fold", {})
+        await players.me.fold()
         self.notify("folded!")
 
     async def action_call(self) -> None:
@@ -267,12 +267,12 @@ class PokerApp(App):
 
     async def action_check(self) -> None:
         players = self.query_one(Players)
-        await players.me.send_action("check", {})
+        await players.me.check()
         self.notify("check!")
 
     async def action_all_in(self) -> None:
         players = self.query_one(Players)
-        await players.me.send_action("all_in", {})
+        await players.me.all_in()
         self.notify("all in!")
 
 

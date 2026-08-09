@@ -15,17 +15,11 @@ from openapi_client import (
     UserApi,
 )
 from openapi_client.models.game_player_dto import GamePlayerDTO
+from openapi_client.models.game_player_intent import GamePlayerIntent
 from poker_bot.bot.websocket_events import (
     WebSocketEvent,
     WebSocketListener,
     WebSocketStream,
-)
-
-logging.basicConfig(
-    filename="app.log",  # Name of the file
-    filemode="a",  # 'a' to append, 'w' to overwrite each run
-    format="%(asctime)s - %(levelname)s - [%(name)s] %(message)s",
-    level=logging.DEBUG,  # Capture INFO, WARNING, ERROR, and CRITICAL
 )
 
 logger = logging.getLogger("bot")
@@ -293,7 +287,11 @@ class PokerBot:
 
     async def check(self):
         await self.wait_for_my_turn()
-        await self.send_action("check", {})
+        await self.send_action(GamePlayerIntent.PlayerIntentCheck, {})
+
+    async def all_in(self):
+        await self.wait_for_my_turn()
+        await self.send_action(GamePlayerIntent.PlayerIntentAllIn, {})
 
     async def raise_bet(self, raise_to: int):
         await self.wait_for_my_turn()
@@ -305,7 +303,7 @@ class PokerBot:
         await self.try_cover_bet(raise_to, bet)
         stack = convert_chips(bet)
 
-        await self.send_action("raise", stack)
+        await self.send_action(GamePlayerIntent.PlayerIntentRaise, stack)
 
     async def ante(self):
         await self.wait_for_my_turn()
@@ -317,7 +315,7 @@ class PokerBot:
         await self.try_cover_bet(amount, bet)
         stack = convert_chips(bet)
 
-        await self.send_action("ante", stack)
+        await self.send_action(GamePlayerIntent.PlayerIntentAnte, stack)
 
     async def call(self):
         await self.wait_for_my_turn()
@@ -332,11 +330,11 @@ class PokerBot:
         await self.try_cover_bet(amount, bet)
         stack = convert_chips(bet)
 
-        await self.send_action("call", stack)
+        await self.send_action(GamePlayerIntent.PlayerIntentCall, stack)
 
     async def fold(self):
         await self.wait_for_my_turn()
-        await self.send_action("fold")
+        await self.send_action(GamePlayerIntent.PlayerIntentFold)
 
     async def send_action(self, intent: str, bet: dict[str, int] | None = None):
         """send an action to the joined game

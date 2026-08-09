@@ -143,10 +143,10 @@ async def test_action_errors():
     assert game_state.table.players[1].state == "out"
     assert game_state.table.players[3].state == "out"
 
-    # await bots[2].send_action("ante", {"50": 1})
-    # await bots[0].send_action("ante", {"100": 1})
-    # await bots[2].send_action("call", {"50": 1})
+    await bots[2].send_action(api.GamePlayerIntent.PlayerIntentAnte, {"50": 1})
+    await bots[0].send_action(api.GamePlayerIntent.PlayerIntentAnte, {"100": 1})
+    await bots[2].send_action(api.GamePlayerIntent.PlayerIntentCall, {"50": 1})
 
-    await bots[2].ante()
-    await bots[0].ante()
-    await bots[2].call()
+    # await bots[2].ante()
+    # await bots[0].ante()
+    # await bots[2].call()
