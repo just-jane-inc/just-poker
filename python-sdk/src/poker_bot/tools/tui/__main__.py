@@ -16,9 +16,7 @@ from textual.widgets import Button, Footer, Input, Label, Static
 import poker_bot.bot.poker_helpers as help
 from openapi_client.models import GameGameDTO, GamePlayerDTO, GameTableDTO
 from poker_bot.bot.bot import PokerBot
-from poker_bot.bot.websocket_events import (
-    WebSocketListener, WebSocketEventType, WebSocketEvent,
-)
+from poker_bot.bot.event_hub import Event, EventHub, EventType
 from poker_bot.tools.tui.setup_tui_example import get_test_user, setup
 
 load_dotenv("config/.env")
@@ -29,7 +27,6 @@ parser.add_argument("--game-id", type=str, required=False, help="game id")
 parser.add_argument("--player-name", type=str, required=False, help="")
 parser.add_argument("--setup", type=int, default=0, required=False, help="")
 
-logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger("tui")
 
 if os.name == "nt":
@@ -189,7 +186,7 @@ class PokerApp(App):
     ]
 
     game_state: GameGameDTO | None = None
-    listener: WebSocketListener | None = None
+    events: EventHub | None = None
 
     def compose(self) -> ComposeResult:
         with Horizontal(id="main"):
@@ -216,23 +213,26 @@ class PokerApp(App):
         me = PokerBot(base_url, user.token, user.user_id, args.game_id)
         self.query_one(Players).me = me
 
-        self.listener = me.websocket_listener()
-        if self.listener is not None:
+        self.events = me.events
+
+        if self.events:
             # Example of using as a decorator with specific event types
-            @self.listener.on_event(WebSocketEventType.WELCOME,
-                                    WebSocketEventType.GAME_STATE_UPDATE,
-                                    # WebSocketEventType.STARTING_GAME,
-                                    WebSocketEventType.GAME_OVER)
-            async def _on_update(event: WebSocketEvent) -> None:
+            @self.events.on_event(EventType.WELCOME,
+                                  EventType.GAME_STATE_UPDATE,
+                                  # EventType.STARTING_GAME,
+                                  EventType.GAME_OVER)
+            async def _on_update(event: Event) -> None:
                 logger.debug(f"received for Player [{me._user_id}]:\t{event.event_type} - {event.data}")
                 if isinstance(event.data, GameGameDTO):
                     await self.apply_state(event.data)
-                elif event.event_type == WebSocketEventType.GAME_OVER:
+                elif event.event_type == EventType.GAME_OVER:
                     await self.apply_game_over(event.data)
 
-            # alternative - using the specific game state listener
-            # self.listener.on_game_state(self.apply_state)
-            await self.listener.start()
+            # alternative - subscribe inline with reference hook
+            # sub = self.events.subscribe(EventType.GAME_OVER, self.apply_game_over)
+
+            # start it anyways
+            await self.events.start()
 
         # Fetch initial via POST if desired, but welcome msg on websocket should return it.
         # state = await me.get_game_state()
@@ -258,8 +258,8 @@ class PokerApp(App):
             self.query_one(Players).players = state.table.players
 
     async def on_unmount(self) -> None:
-        if self.listener is not None:
-            await self.listener.stop()
+        if self.events is not None:
+            await self.events.stop()
 
     async def action_fold(self) -> None:
         players = self.query_one(Players)

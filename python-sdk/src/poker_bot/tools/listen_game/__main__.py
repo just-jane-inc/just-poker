@@ -1,5 +1,4 @@
 import argparse
-import asyncio
 import json
 import os
 
@@ -40,12 +39,13 @@ if os.name == "nt":
 async def listen_as(user: str, game_id: str):
     test_user = get_test_user(user)
     bot = PokerBot(base_url, test_user.token, test_user.user_id, game_id)
-    stream = bot.websocket_stream()
-    await stream.connect()
 
-    async for e in stream.events():
-        print(f"received event: [{e.id}] [{e.time_sent}] {e.event_type}")
-        print(json.dumps(e._data, indent=2))
+    try:
+        async for e in bot.stream_events():
+            print(f"received event: [{e.id}] [{e.time_sent}] {e.event_type}")
+            print(json.dumps(e._data, indent=2))
+    finally:
+        await bot.stop_events()
 
 
 def main():

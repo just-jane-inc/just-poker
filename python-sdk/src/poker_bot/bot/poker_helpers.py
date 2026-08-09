@@ -15,12 +15,6 @@ from openapi_client import (
 )
 from poker_bot.bot.poker_exceptions import CustomException
 
-logging.basicConfig(
-    filename="app.log",  # Name of the file
-    filemode="a",  # 'a' to append, 'w' to overwrite each run
-    format="%(asctime)s - %(levelname)s - [%(name)s] %(message)s",
-    level=logging.INFO,  # Capture INFO, WARNING, ERROR, and CRITICAL
-)
 logger = logging.getLogger("helper")
 
 async def get_game_state(client: ApiClient, game_id: str) -> GameGameDTO | None:

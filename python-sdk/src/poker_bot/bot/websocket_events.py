@@ -13,7 +13,6 @@ import websockets
 import poker_bot.bot.poker_exceptions as ex
 from openapi_client import GameGameDTO, GamePlayerActionDTO, GameRoundDTO, GamePlayerDTO
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("websocket")
 
 GameStateCallback = Callable[[GameGameDTO], Awaitable[None] | None]
@@ -162,7 +161,7 @@ def parse_event(message: str | bytes) -> WebSocketEvent:
 
         event_type = WebSocketEventType.from_str(_event_type)
 
-        logger.info(f"received event [{_event_type}]: {recv_data}")  # TODO: Make Debug
+        logger.info(f"received event [{_event_type}]: {recv_data}")
 
         time_sent = payload.get("time_sent", "")
         try:
@@ -178,7 +177,7 @@ def parse_event(message: str | bytes) -> WebSocketEvent:
         logger.debug(f"unknown event type from websocket: {_event_type}")
 
     state = None
-    if isinstance(recv_data, dict):
+    if isinstance(recv_data, dict) or isinstance(recv_data, list):
         state = recv_data
 
     return WebSocketEvent(
@@ -313,9 +312,10 @@ class WebSocketStream:
 
                     if event is not None and event.event_type == WebSocketEventType.GAME_OVER:
                         # We do not get a 404 on connect retry attempts on ended games, so we have to
-                        logger.info("Game Over state received")
                         self._reconnect = False
+                        await asyncio.sleep(0.5)
                         await self.close()
+                        return # Closes generator
 
                 if self._conn is not None:
                     await self._fire_close_event(code=self._conn.close_code, reason=self._conn.close_reason or "")

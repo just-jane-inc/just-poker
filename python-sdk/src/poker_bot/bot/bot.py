@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 
 import poker_bot.bot.poker_exceptions as ex
@@ -16,18 +17,21 @@ from openapi_client import (
 )
 from openapi_client.models.game_player_dto import GamePlayerDTO
 from openapi_client.models.game_player_intent import GamePlayerIntent
+from poker_bot.bot.event_hub import (
+    Event,
+    EventHandler,
+    EventHub,
+    EventSubscriber,
+    EventType,
+    EventTypeArg,
+    websocket_event_hub,
+)
 from poker_bot.bot.websocket_events import (
     WebSocketEvent,
     WebSocketListener,
     WebSocketStream,
 )
 
-logging.basicConfig(
-    filename="app.log",  # Name of the file
-    filemode="a",  # 'a' to append, 'w' to overwrite each run
-    format="%(asctime)s - %(levelname)s - [%(name)s] %(message)s",
-    level=logging.INFO,  # Capture INFO, WARNING, ERROR, and CRITICAL
-)
 logger = logging.getLogger("bot")
 
 
@@ -97,6 +101,8 @@ class PokerBot:
         self._current_stack: list[Chips] = []
         self._current_state: GameGameDTO | None = None
         self._listener: ws.WebSocketListener | None = None
+        self._hub: EventHub | None = None
+        self._state_subscription: EventSubscriber | None = None
 
     async def join_game(self):
         if self._joined:
@@ -116,25 +122,58 @@ class PokerBot:
         self._ingest_state(resp.data)
         return resp.data
 
-    async def connect_game_state_listener(self):
-        if self._listener is not None:
-            raise ex.CustomException("already have a listener")
+    @property
+    def events(self) -> EventHub:
+        if self._hub is None:
+            self._hub = websocket_event_hub(
+                self._base_url, self._token, self._game_id
+            )
+            if self._hub is None:
+                raise ex.CustomException("could not create eventhub")
 
-        self._listener = self.websocket_listener()
+            # Listen to gamestate updates immediately to bake in helpers
+            # Requires something to call x.events somehow for setup, many paths automatically do it but not all
+            self._state_subscription = self._hub.subscribe(
+                (EventType.WELCOME, EventType.GAME_STATE_UPDATE, EventType.STARTING_GAME),
+                self._ingest_update,
+            )
 
-        if self._listener is None:
-            return
+        return self._hub
 
-        @self._listener.on_event(
-            ws.WebSocketEventType.WELCOME, ws.WebSocketEventType.GAME_STATE_UPDATE
-        )
-        async def thing(e: ws.WebSocketEvent) -> None:
-            self._ingest_state(e.data)
+    def subscribe(self, event_type: EventTypeArg, callback: EventHandler
+    ) -> EventSubscriber:
+        return self.events.subscribe(event_type, callback)
 
-        await self._listener.start()
+    def on_event(self, *event_types: "EventType | str"
+    ) -> Callable[[EventHandler], EventHandler]:
+        return self.events.on_event(*event_types)
+
+    def stream_events(self, event_type: EventTypeArg = "*"):
+        return self.events.stream(event_type)
+
+    async def start_events(self) -> EventHub:
+        """ Only necessary to call if manually setting up all listeners """
+        return await self.events.start()
+
+    async def stop_events(self) -> None:
+        if self._hub is not None:
+            await self._hub.stop()
+
+    async def wait_for_event(self, event_type: EventTypeArg, timeout: float | None = None
+    ) -> Event:
+        return await self.events.wait_for(event_type, timeout)
+
+    async def __aenter__(self) -> "PokerBot":
+        await self.start_events()
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb) -> None:
+        await self.stop_events()
 
     def _ingest_state(self, state: GameGameDTO):
         # TODO: get the LSP to stop being insane
+        if state is not None:
+            self._current_state = state
         if state is None or state.table is None or state.table.players is None:
             logger.warning("state is none in _ingest_state")
             return
@@ -152,11 +191,11 @@ class PokerBot:
         self._current_state = state
 
     def _ingest_update(self, event: WebSocketEvent):
-        # Note: not doing anything else from data stream atm, mainly placeholder
         if event.data is not None and isinstance(event.data, GameGameDTO):
             self._ingest_state(event.data)
 
     def websocket_stream(self, **kwargs) -> WebSocketStream:
+        """ Raw Stream """
         return WebSocketStream(
             self._base_url,
             self._token,
@@ -166,6 +205,7 @@ class PokerBot:
         )
 
     def websocket_listener(self, **kwargs) -> WebSocketListener | None:
+        """ Raw Listener """
         if self._listener is not None:
             return self._listener
         self._listener = WebSocketListener(
@@ -362,20 +402,26 @@ class PokerBot:
         await self._game_api.game_game_id_action_post(self._game_id, req)
 
     async def wait_for_my_turn(self):
-        if self._listener is None:
-            await self.connect_game_state_listener()
+        manual_running = self._listener is not None and self._listener.running
+        if not manual_running and not self.events.running:
+            await self.start_events()
 
         while not self.is_my_turn():
             await asyncio.sleep(0.5)
 
+    def _current_position(self) -> int | None:
+        if self._current_state is None or self._current_state.table is None:
+            return None
+        if self._current_state.table.current_round is None:
+            return None
+        return self._current_state.table.current_round.current_player_position
+
     def is_my_turn(self) -> bool:
-        if self._current_state is None:
+        if self._player is None:
             return False
 
-        if self._current_state.table is None:
-            return None
+        current_player_position = self._current_position()
+        if current_player_position is None:
+            return False
 
-        current_player_position = (
-            self._current_state.table.current_round.current_player_position
-        )
         return current_player_position == self._player.position
