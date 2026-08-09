@@ -2,7 +2,7 @@
 import argparse
 import asyncio
 import os
-from typing import List
+from typing import List, Callable
 import logging
 
 from dotenv import load_dotenv
@@ -187,6 +187,7 @@ class PokerApp(App):
 
     game_state: GameGameDTO | None = None
     events: EventHub | None = None
+    _unsubscribe: Callable[[], None] | None = None
 
     def compose(self) -> ComposeResult:
         with Horizontal(id="main"):
@@ -231,6 +232,7 @@ class PokerApp(App):
             # alternative - subscribe inline with reference hook
             # sub = self.events.subscribe(EventType.GAME_OVER, self.apply_game_over)
 
+            self._unsubscribe = _on_update.unsubscribe
             # start it anyways
             await self.events.start()
 
@@ -258,6 +260,8 @@ class PokerApp(App):
             self.query_one(Players).players = state.table.players
 
     async def on_unmount(self) -> None:
+        if self._unsubscribe is not None:
+            self._unsubscribe()
         if self.events is not None:
             await self.events.stop()
 
