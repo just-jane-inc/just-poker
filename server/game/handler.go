@@ -105,6 +105,7 @@ func OnStartNextHand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	go handleUpdates(g, g.AsDTO(), "game_state_update")
 	just.OK("hand_started", struct{}{}).WriteJSONResponse(w)
 }
 
