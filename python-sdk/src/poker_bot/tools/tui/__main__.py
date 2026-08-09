@@ -90,16 +90,20 @@ class InputPopup(ModalScreen[str]):
 class Table(Static):
     table: reactive[GameTableDTO | None] = reactive(GameTableDTO(), layout=True)
     card_map = help.get_unicode_mapping()
+    winner: str | None = None
 
     def render(self) -> str:
         view = "====TABLE====\n"
-
+        if self.winner:
+            view += f"WINNER: {self.winner}\n"
         if self.table is None or self.table.street is None:
             return view
 
         to_call = self.table.current_round.bet
-        view += f"POT: {chip_sum(self.table.pot)} STREET: {self.table.current_round.current_round_type.upper()} TO CALL: {to_call}"
-        view += "\n"
+
+        if not self.winner:
+            view += f"POT: {chip_sum(self.table.pot)} STREET: {self.table.current_round.current_round_type.upper()} TO CALL: {to_call}"
+            view += "\n"
         for card in self.table.street:
             rank = help.CardRank(card.rank)
             suit = help.CardSuit(card.suit)
@@ -217,10 +221,10 @@ class PokerApp(App):
             # Example of using as a decorator with specific event types
             @self.listener.on_event(WebSocketEventType.WELCOME,
                                     WebSocketEventType.GAME_STATE_UPDATE,
-                                    #WebSocketEventType.STARTING_GAME,
+                                    # WebSocketEventType.STARTING_GAME,
                                     WebSocketEventType.GAME_OVER)
             async def _on_update(event: WebSocketEvent) -> None:
-                logger.info(f"Received in TUI for Player [{me._user_id}]:\t{event.event_type} - {event.data}") # TODO:  Change to debug
+                logger.debug(f"received for Player [{me._user_id}]:\t{event.event_type} - {event.data}")
                 if isinstance(event.data, GameGameDTO):
                     await self.apply_state(event.data)
                 elif event.event_type == WebSocketEventType.GAME_OVER:
@@ -241,10 +245,17 @@ class PokerApp(App):
         self.query_one(Players).players = data
         self.query_one(Table).table.pot.clear()
 
+        for player in data:
+            if player.stack is not None and chip_sum(player.stack) > 0:
+                self.query_one(Table).winner = player.display_name
+                break
+
+
     async def apply_state(self, state: GameGameDTO) -> None:
         self.game_state = state
-        self.query_one(Table).table = state.table
-        self.query_one(Players).players = state.table.players
+        if state.table is not None:
+            self.query_one(Table).table = state.table
+            self.query_one(Players).players = state.table.players
 
     async def on_unmount(self) -> None:
         if self.listener is not None:
@@ -252,27 +263,32 @@ class PokerApp(App):
 
     async def action_fold(self) -> None:
         players = self.query_one(Players)
-        await players.me.fold()
+        if hasattr(players.me, "fold"):
+            await players.me.fold()
         self.notify("folded!")
 
     async def action_call(self) -> None:
         players = self.query_one(Players)
-        await players.me.call()
+        if hasattr(players.me, "call"):
+            await players.me.call()
         self.notify("call!")
 
     async def action_ante(self) -> None:
         players = self.query_one(Players)
-        await players.me.ante()
+        if hasattr(players.me, "ante"):
+            await players.me.ante()
         self.notify("ante!")
 
     async def action_check(self) -> None:
         players = self.query_one(Players)
-        await players.me.check()
+        if hasattr(players.me, "check"):
+            await players.me.check()
         self.notify("check!")
 
     async def action_all_in(self) -> None:
         players = self.query_one(Players)
-        await players.me.all_in()
+        if hasattr(players.me, "all_in"):
+            await players.me.all_in()
         self.notify("all in!")
 
 

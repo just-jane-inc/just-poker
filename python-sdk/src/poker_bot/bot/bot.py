@@ -22,6 +22,12 @@ from poker_bot.bot.websocket_events import (
     WebSocketStream,
 )
 
+logging.basicConfig(
+    filename="app.log",  # Name of the file
+    filemode="a",  # 'a' to append, 'w' to overwrite each run
+    format="%(asctime)s - %(levelname)s - [%(name)s] %(message)s",
+    level=logging.INFO,  # Capture INFO, WARNING, ERROR, and CRITICAL
+)
 logger = logging.getLogger("bot")
 
 

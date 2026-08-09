@@ -13,12 +13,17 @@ import websockets
 import poker_bot.bot.poker_exceptions as ex
 from openapi_client import GameGameDTO, GamePlayerActionDTO, GameRoundDTO, GamePlayerDTO
 
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("websocket")
 
 GameStateCallback = Callable[[GameGameDTO], Awaitable[None] | None]
 EventCallback = Callable[["WebSocketEvent"], Awaitable[None] | None]
+CloseCallback = Callable[["CloseInfo"], Awaitable[None] | None]
 
+@dataclass(frozen=True)
+class CloseInfo:
+    code: int | None
+    reason: str
 
 def deserialize(data: Any, data_class: Any) -> Any:
     if data is None:
@@ -157,6 +162,8 @@ def parse_event(message: str | bytes) -> WebSocketEvent:
 
         event_type = WebSocketEventType.from_str(_event_type)
 
+        logger.info(f"received event [{_event_type}]: {recv_data}")  # TODO: Make Debug
+
         time_sent = payload.get("time_sent", "")
         try:
             event_id = int(payload.get("id", "0"))
@@ -198,6 +205,7 @@ class WebSocketStream:
         max_retry_backoff: float = 30.0,
         on_state: EventCallback | None = None,
         on_game_state: GameStateCallback | None = None,
+        on_close: CloseCallback | None = None,
     ):
         if not token:
             raise ex.CustomException("api token not provided")
@@ -211,8 +219,9 @@ class WebSocketStream:
         self._max_retry_backoff = max_retry_backoff
         self._on_state = on_state
         self._on_game_state = on_game_state
-        self._conn = None
+        self._conn: websockets.ClientConnection | None = None
         self._closed = False
+        self._on_close = on_close
 
     @property
     def url(self) -> str:
@@ -230,7 +239,20 @@ class WebSocketStream:
         logger.debug(f"connected to game state feed for game {self._game_id}")
         return self
 
+    async def _fire_close_event(self, *, code: int | None, reason: str) -> None:
+        if self._on_close is None:
+            return
+        info = CloseInfo(code=code, reason=reason)
+        try:
+            await _call(self._on_close, info)
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            logger.error(f"error in on_close handler: {e}")
+
     async def close(self):
+        if self._closed and self._conn and self._conn.state.OPEN:
+            await self._fire_close_event(code=-1, reason="Manual close requested")
         self._closed = True
         if self._conn is not None:
             await self._conn.close()
@@ -291,19 +313,31 @@ class WebSocketStream:
 
                     if event is not None and event.event_type == WebSocketEventType.GAME_OVER:
                         # We do not get a 404 on connect retry attempts on ended games, so we have to
-                        logger.debug("Game Over state received")
+                        logger.info("Game Over state received")
                         self._reconnect = False
                         await self.close()
 
+                if self._conn is not None:
+                    await self._fire_close_event(code=self._conn.close_code, reason=self._conn.close_reason or "")
+
             except asyncio.CancelledError:
                 raise
-            except Exception as e:
-                if self._conn is not None and self._conn.response is not None:
-                    if self._conn.response.status_code == 404:
-                        logger.warning(f"game state feed dropped - game id {self._game_id} not found")
-                        self._closed = True
-                        self._reconnect = False
 
+            except (websockets.exceptions.ConnectionClosedError, websockets.exceptions.ConnectionClosedOK) as e:
+                close = e.rcvd or e.sent
+                if close is not None:
+                    await self._fire_close_event(code=close.code, reason=close.reason)
+
+                if e.rcvd is not None and e.rcvd.code in [websockets.CloseCode.NORMAL_CLOSURE, websockets.CloseCode.BAD_GATEWAY,
+                                                          websockets.CloseCode.GOING_AWAY, websockets.CloseCode.NO_STATUS_RCVD]:
+                    logger.info(f"received normal close event: {e}")
+                    self._reconnect = False
+                    await self.close()
+
+                else:
+                    logger.warning(f"received abnormal close event: {e}")
+
+            except Exception as e:
                 if self._closed:
                     return
 
