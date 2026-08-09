@@ -232,7 +232,7 @@ async def test_stream_queued_events():
     received = []
     async for e in hub.stream():
         received.append(e)
-        await asyncio.sleep(0.05)  # consumer slower than the feed
+        await asyncio.sleep(0.05)  # delay consumption from feed to verify it's still there
 
     assert [e.data["pot"] for e in received] == [0, 1, 2, 3, 4]
 

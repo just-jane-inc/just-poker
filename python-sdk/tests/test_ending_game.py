@@ -30,7 +30,8 @@ async def test_receive_game_over():
     async def on_game_over(e: Event):
         received.append(e)
 
-    await jane_bot.start_events() # If you subscribe, you are responsible for starting listening
+    # If you subscribe, you are responsible for starting listening
+    await jane_bot.start_events()
     # But red_bot doesn't need to, because this is implicitly started in the helper functions for send action
     # as they wait for turn, which needs this input
     # AKA The above is not needed if you don't use send_action directly like this
@@ -86,7 +87,8 @@ async def test_receive_game_over_via_subscribe():
     subscriber = jane_bot.subscribe(EventType.GAME_OVER, on_game_over)
     subscriber2 = jane_bot.subscribe(EventType.PLAYER_ACTION, on_player_action)
 
-    await jane_bot.start_events() # If you subscribe, you are responsible for starting listening
+    # If you subscribe, you are responsible for starting listening
+    await jane_bot.start_events()
 
     assert jane_bot._hub is not None
     assert jane_bot._hub.subscriber_count(EventType.PLAYER_ACTION) == 1
@@ -148,7 +150,9 @@ async def test_receive_game_over_via_subscribe_and_unhook():
 
     # Do not need to unsubscribe if using with syntax
     with jane_bot.subscribe(EventType.GAME_OVER, on_game_over):
-        await jane_bot.start_events() # If you subscribe, you are responsible for starting listening
+        # If you subscribe, you are responsible for starting listening
+        await jane_bot.start_events()
+
         await jane_bot.start_game()
 
         assert jane_bot._hub is not None
@@ -190,6 +194,7 @@ async def test_receive_game_over_better_closure():
 
     async with jane_bot, red_bot:
         # Avoids need to ensure events need starting, regardless of what is later used
+        # As start_events is in the aenter
 
         game_over = asyncio.Event()
         received: list[Event] = []
@@ -207,6 +212,8 @@ async def test_receive_game_over_better_closure():
         await jane_bot.all_in()
 
         await asyncio.wait_for(game_over.wait(), timeout=10)
+
+        # still need to unsubscribe as aexit doesn't track each
         on_game_over.unsubscribe()
 
     assert len(received) == 1
