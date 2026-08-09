@@ -1,7 +1,7 @@
 import json
 
 import pytest
-from helpers import base_url, get_deck, get_test_user, get_test_users
+from helpers import base_url, get_deck, get_test_user, get_test_users, make_tests_work_for_fricking_windows
 
 import openapi_client as api
 import poker_bot.bot.poker_helpers as help
@@ -11,6 +11,7 @@ from openapi_client.models.game_game_id_hand_post_request import (
 from openapi_client.models.game_new_hand_dto import GameNewHandDTO
 from poker_bot.bot import bot
 
+make_tests_work_for_fricking_windows()
 
 @pytest.mark.asyncio
 async def test_post_new_hand_with_deck():

@@ -80,6 +80,8 @@ pydantic_core==2.46.4
 Pygments==2.20.0
 pytest==9.1.1
 pytest-asyncio==1.4.0
+pytest-xdist==3.8.0
+pytest-timeout>=2.4.0
 python-dateutil==2.9.0.post0
 python-json-logger==4.1.0
 pytokens==0.4.1

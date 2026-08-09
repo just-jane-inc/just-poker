@@ -1,9 +1,10 @@
 import pytest
-from helpers import base_url, get_test_users
+from helpers import base_url, get_test_users, make_tests_work_for_fricking_windows
 
 import openapi_client as api
 import poker_bot.bot.poker_helpers as help
 
+make_tests_work_for_fricking_windows()
 
 @pytest.mark.asyncio
 async def test_create_game_player_count_too_high_error():

@@ -10,6 +10,15 @@ load_dotenv("config/.env")
 base_url = os.getenv("BASE_URL")
 
 
+def make_tests_work_for_fricking_windows():
+    if os.name == "nt":
+        try:
+            import truststore
+            truststore.inject_into_ssl()
+        finally:
+            pass
+
+
 def get_deck(seed: int | None = None) -> list[GameCardDTO]:
     ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"]
     suits = ["s", "h", "c", "d"]
