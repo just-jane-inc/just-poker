@@ -53,6 +53,12 @@ async def test_receive_game_over():
     await jane_bot.stop_events()
     await red_bot.stop_events()
 
+    # We basically attach an unsubscribe function to each callback fn during attaching
+    on_game_over.unsubscribe()
+
+    assert jane_bot._hub is not None
+    assert jane_bot._hub.subscriber_count(EventType.GAME_OVER) == 0
+
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(30)
@@ -74,8 +80,21 @@ async def test_receive_game_over_via_subscribe():
     async def on_game_over(e: Event):
         received.append(e)
 
-    jane_bot.subscribe(EventType.GAME_OVER, on_game_over)
+    async def on_player_action(e: Event):
+        pass
+
+    subscriber = jane_bot.subscribe(EventType.GAME_OVER, on_game_over)
+    subscriber2 = jane_bot.subscribe(EventType.PLAYER_ACTION, on_player_action)
+
     await jane_bot.start_events() # If you subscribe, you are responsible for starting listening
+
+    assert jane_bot._hub is not None
+    assert jane_bot._hub.subscriber_count(EventType.PLAYER_ACTION) == 1
+
+    with subscriber2:
+        ## just to invoke its unsubscribe
+        pass
+    assert jane_bot._hub.subscriber_count(EventType.PLAYER_ACTION) == 0
 
     await jane_bot.start_game()
 
@@ -91,6 +110,65 @@ async def test_receive_game_over_via_subscribe():
     assert e is not None
     assert e.event_type == EventType.GAME_OVER
     assert e.data is not None and isinstance(e.data, list) and len(e.data) > 0
+
+    assert jane_bot._hub is not None
+    assert jane_bot._hub.subscriber_count(EventType.GAME_OVER) == 1
+
+    subscriber.unsubscribe()
+    assert jane_bot._hub is not None
+    assert jane_bot._hub.subscriber_count(EventType.GAME_OVER) == 0
+
+    # show it noops on unsubscribing already unsubbed
+    subscriber2.unsubscribe()
+    assert jane_bot._hub.subscriber_count(EventType.PLAYER_ACTION) == 0
+
+    await jane_bot.stop_events()
+    await red_bot.stop_events()
+
+
+@pytest.mark.asyncio
+@pytest.mark.timeout(30)
+async def test_receive_game_over_via_subscribe_and_unhook():
+    jane = get_test_user("jane")
+    red = get_test_user("red")
+
+    game_id = await help.create_game(base_url, str(jane.token))
+    assert game_id
+
+    jane_bot = bot.PokerBot(base_url, jane.token, jane.user_id, game_id)
+    red_bot = bot.PokerBot(base_url, red.token, red.user_id, game_id)
+
+    await jane_bot.join_game()
+    await red_bot.join_game()
+
+    received: list[Event] = []
+
+    async def on_game_over(e: Event):
+        received.append(e)
+
+    # Do not need to unsubscribe if using with syntax
+    with jane_bot.subscribe(EventType.GAME_OVER, on_game_over):
+        await jane_bot.start_events() # If you subscribe, you are responsible for starting listening
+        await jane_bot.start_game()
+
+        assert jane_bot._hub is not None
+        assert jane_bot._hub.subscriber_count(EventType.GAME_OVER) == 1
+
+        await red_bot.ante()
+        await jane_bot.send_action("ante", {"100": 1})
+
+        await red_bot.all_in()
+        await jane_bot.send_action("all_in", {})
+        await asyncio.sleep(3)
+
+    assert len(received) == 1
+    e = received[0]
+    assert e is not None
+    assert e.event_type == EventType.GAME_OVER
+    assert e.data is not None and isinstance(e.data, list) and len(e.data) > 0
+
+    assert jane_bot._hub is not None
+    assert jane_bot._hub.subscriber_count(EventType.GAME_OVER) == 0
 
     await jane_bot.stop_events()
     await red_bot.stop_events()
@@ -129,8 +207,12 @@ async def test_receive_game_over_better_closure():
         await jane_bot.all_in()
 
         await asyncio.wait_for(game_over.wait(), timeout=10)
+        on_game_over.unsubscribe()
 
     assert len(received) == 1
     e = received[0]
     assert e.event_type == EventType.GAME_OVER
     assert isinstance(e.data, list) and len(e.data) > 0
+
+    assert jane_bot._hub is not None
+    assert jane_bot._hub.subscriber_count(EventType.GAME_OVER) == 0

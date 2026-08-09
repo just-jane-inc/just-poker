@@ -168,6 +168,8 @@ class PokerBot:
         return self
 
     async def __aexit__(self, exc_type, exc, tb) -> None:
+        if self._state_subscription and hasattr(self._state_subscription, "unsubscribe"):
+            self._state_subscription.unsubscribe()
         await self.stop_events()
 
     def _ingest_state(self, state: GameGameDTO):
