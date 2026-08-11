@@ -30,6 +30,8 @@ const (
 	GameIsPaused             ErrorCode = 2023
 	InvalidGameConfiguration ErrorCode = 2024
 	HandAlreadyInProgress    ErrorCode = 2025
+	InvalidChipDenomination  ErrorCode = 2026
+	InvalidChipCount         ErrorCode = 2027
 )
 
 type PokerError struct {

@@ -44,6 +44,8 @@ class JustErrorCode(int, Enum):
     GameIsPaused = 2023
     InvalidGameConfiguration = 2024
     HandAlreadyInProgress = 2025
+    InvalidChipDenomination = 2026
+    InvalidChipCount = 2027
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:

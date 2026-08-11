@@ -39,6 +39,10 @@
 
 * `HandAlreadyInProgress` (value: `2025`)
 
+* `InvalidChipDenomination` (value: `2026`)
+
+* `InvalidChipCount` (value: `2027`)
+
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 
 

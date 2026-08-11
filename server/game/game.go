@@ -17,6 +17,19 @@ import (
 
 var CurrentGames = CreateCurrentGamesCache()
 
+type game struct {
+	startedAt           *time.Time
+	endedAt             *time.Time
+	id                  string
+	joinGameLock        sync.Mutex
+	isPaused            bool
+	config              NewGameConfigDTO
+	table               *table
+	pauseGameSemaphor   chan any
+	playerActionChannel chan *playerAction
+	denominations       map[int]any
+}
+
 func (c *CurrentGamesCache) GetCurrentGames() []ActiveGameDTO {
 	c.currentGameMutex.RLock()
 	defer c.currentGameMutex.RUnlock()
@@ -88,8 +101,6 @@ type CurrentGamesCache struct {
 	currentGameMutex sync.RWMutex
 }
 
-type JoinGameError error
-
 func (g *game) LogGameState(msg string) {
 	s, err := json.Marshal(g.AsDTO())
 	if err != nil {
@@ -98,18 +109,6 @@ func (g *game) LogGameState(msg string) {
 	}
 
 	just.Logger.Debugf("%s \n %s", msg, s)
-}
-
-type game struct {
-	startedAt           *time.Time
-	endedAt             *time.Time
-	id                  string
-	joinGameLock        sync.Mutex
-	isPaused            bool
-	config              NewGameConfigDTO
-	table               *table
-	pauseGameSemaphor   chan any
-	playerActionChannel chan *playerAction
 }
 
 func (g *GameDTO) MaskCards(userID string) {
@@ -159,6 +158,14 @@ func createGameFromConfig(config NewGameConfigDTO) (*game, *just.PokerError) {
 		return nil, just.NewPokerError("no more then 8 players can poker at once", just.InvalidGameConfiguration)
 	}
 
+	if err := config.StartingChips.validate(); err != nil {
+		return nil, err
+	}
+
+	if config.StartingChips.Sum() <= config.BigBlind {
+		return nil, just.NewPokerError("insufficient starting chips to poker", just.InvalidGameConfiguration)
+	}
+
 	if config.SmallBlind >= config.BigBlind {
 		return nil, just.NewPokerError("small blind must be greater then the big blind", just.InvalidGameConfiguration)
 	}
@@ -167,8 +174,25 @@ func createGameFromConfig(config NewGameConfigDTO) (*game, *just.PokerError) {
 		return nil, just.NewPokerError("blinds must be greater then 0", just.InvalidGameConfiguration)
 	}
 
-	if config.StartingChips.Sum() <= config.BigBlind {
-		return nil, just.NewPokerError("insufficient starting chips to poker", just.InvalidGameConfiguration)
+	if len(config.ChipDenominations) == 0 {
+		return nil, just.NewPokerError("no denominations made available for chips", just.InvalidGameConfiguration)
+	}
+
+	denominations := make(map[int]any)
+	for _, d := range config.ChipDenominations {
+		denominations[d] = struct{}{}
+	}
+
+	for d := range config.StartingChips {
+		denomination, err := strconv.Atoi(d)
+		if err != nil {
+			return nil, just.NewPokerError("provided denomination [%s] from StartingChips does not parse to an integer", just.InvalidGameConfiguration)
+		}
+
+		_, ok := denominations[denomination]
+		if !ok {
+			return nil, just.NewPokerError("provided starting chip denomination [%s] from StartingChips is not available in ChipDenominations", just.InvalidGameConfiguration)
+		}
 	}
 
 	g := &game{
@@ -177,6 +201,7 @@ func createGameFromConfig(config NewGameConfigDTO) (*game, *just.PokerError) {
 		table:               &table{},
 		pauseGameSemaphor:   make(chan any),
 		playerActionChannel: make(chan *playerAction, 5),
+		denominations:       denominations,
 	}
 
 	g.table.currentTurnChannel = nil

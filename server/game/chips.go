@@ -7,6 +7,25 @@ import (
 	"github.com/just-jane-inc/just-poker/server/just"
 )
 
+func (s ChipStackDTO) validate() *just.PokerError {
+	for d, c := range s {
+		denomination, err := strconv.Atoi(d)
+		if err != nil {
+			return just.NewPokerError(d+" in stack does not parse as an integer", just.InvalidChipDenomination)
+		}
+
+		if denomination <= 0 {
+			return just.NewPokerError(d+" provided denomination is invalid", just.InvalidChipDenomination)
+		}
+
+		if c < 0 {
+			return just.NewPokerError("provided a chip count less then 0", just.InvalidChipCount)
+		}
+	}
+
+	return nil
+}
+
 func (s ChipStackDTO) asStack() stack {
 	createStack := make(map[int]int)
 	for d, c := range s {
@@ -54,6 +73,30 @@ func (s stack) mergeWith(other stack) stack {
 }
 
 func (g *game) ExchangeChips(playerID string, exchange ChipExchangeDTO) error {
+	if err := exchange.Give.validate(); err != nil {
+		return err
+	}
+
+	if err := exchange.Receive.validate(); err != nil {
+		return err
+	}
+
+	for d := range exchange.Give {
+		denomination, _ := strconv.Atoi(d)
+		_, ok := g.denominations[denomination]
+		if !ok {
+			return just.NewPokerError(fmt.Sprintf("%s is not available for exchange", d), just.InvalidChipDenomination)
+		}
+	}
+
+	for d := range exchange.Receive {
+		denomination, _ := strconv.Atoi(d)
+		_, ok := g.denominations[denomination]
+		if !ok {
+			return just.NewPokerError(fmt.Sprintf("%s is not available for exchange", d), just.InvalidChipDenomination)
+		}
+	}
+
 	if exchange.Give.Sum() != exchange.Receive.Sum() {
 		return &just.PokerError{
 			Message: "Give and Recieve sum to different values, exchange is invalid",

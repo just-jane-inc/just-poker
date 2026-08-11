@@ -1,5 +1,4 @@
 import logging
-
 from enum import Enum
 
 from openapi_client import (
@@ -16,6 +15,7 @@ from openapi_client import (
 from poker_bot.bot.poker_exceptions import CustomException
 
 logger = logging.getLogger("helper")
+
 
 async def get_game_state(client: ApiClient, game_id: str) -> GameGameDTO | None:
     game_api = GameApi(client)
@@ -47,9 +47,13 @@ async def create_game(
     chips: dict[str, int] | None = None,
     player_count: int = 5,
     auto_start_hands: bool = True,
+    denominations: list[int] | None = None,
 ) -> str | None:
     if not chips:
         chips = {"10": 10, "50": 5, "100": 2, "500": 1}
+
+    if not denominations:
+        denominations = [10, 50, 100, 500]
     conn = create_connection(base_url, token)
     api = GameApi(conn)
     dto = GameNewGameConfigDTO(
@@ -58,6 +62,7 @@ async def create_game(
         starting_chips=chips,
         player_count=player_count,
         auto_starts_hands=auto_start_hands,
+        chip_denominations=denominations,
     )
 
     resp = await api.game_post(GamePostRequest(dto))

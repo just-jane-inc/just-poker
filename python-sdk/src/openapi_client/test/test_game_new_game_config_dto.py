@@ -37,6 +37,9 @@ class TestGameNewGameConfigDTO(unittest.TestCase):
             return GameNewGameConfigDTO(
                 auto_starts_hands = True,
                 big_blind = 56,
+                chip_denominations = [
+                    56
+                    ],
                 player_count = 56,
                 small_blind = 56,
                 starting_chips = {

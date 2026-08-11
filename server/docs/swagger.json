@@ -122,6 +122,14 @@
                         "description": "the big blind",
                         "type": "integer"
                     },
+                    "chip_denominations": {
+                        "description": "a collection of denominations that are available for chips at the table",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
                     "player_count": {
                         "description": "the number of players (max) the game supports",
                         "type": "integer"
@@ -337,7 +345,9 @@
                     2022,
                     2023,
                     2024,
-                    2025
+                    2025,
+                    2026,
+                    2027
                 ],
                 "type": "integer",
                 "x-enum-varnames": [
@@ -358,7 +368,9 @@
                     "PlayerAlreadyJoined",
                     "GameIsPaused",
                     "InvalidGameConfiguration",
-                    "HandAlreadyInProgress"
+                    "HandAlreadyInProgress",
+                    "InvalidChipDenomination",
+                    "InvalidChipCount"
                 ]
             },
             "just.ErrorDTO": {

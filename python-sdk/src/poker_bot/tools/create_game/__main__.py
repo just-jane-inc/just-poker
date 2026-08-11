@@ -18,9 +18,11 @@ parser.add_argument(
     default=4,
     help="number of players that can join the game",
 )
+
 parser.add_argument(
     "--bb", type=int, required=False, default=100, help="the big blind to configure"
 )
+
 parser.add_argument(
     "--sb", type=int, required=False, default=50, help="the small blind to configure"
 )
