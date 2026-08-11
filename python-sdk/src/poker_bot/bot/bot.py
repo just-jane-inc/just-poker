@@ -125,26 +125,30 @@ class PokerBot:
     @property
     def events(self) -> EventHub:
         if self._hub is None:
-            self._hub = websocket_event_hub(
-                self._base_url, self._token, self._game_id
-            )
+            self._hub = websocket_event_hub(self._base_url, self._token, self._game_id)
             if self._hub is None:
                 raise ex.CustomException("could not create eventhub")
 
             # Listen to gamestate updates immediately to bake in helpers
             # Requires something to call x.events somehow for setup, many paths automatically do it but not all
             self._state_subscription = self._hub.subscribe(
-                (EventType.WELCOME, EventType.GAME_STATE_UPDATE, EventType.STARTING_GAME),
+                (
+                    EventType.WELCOME,
+                    EventType.GAME_STATE_UPDATE,
+                    EventType.STARTING_GAME,
+                ),
                 self._ingest_update,
             )
 
         return self._hub
 
-    def subscribe(self, event_type: EventTypeArg, callback: EventHandler
+    def subscribe(
+        self, event_type: EventTypeArg, callback: EventHandler
     ) -> EventSubscriber:
         return self.events.subscribe(event_type, callback)
 
-    def on_event(self, *event_types: "EventType | str"
+    def on_event(
+        self, *event_types: "EventType | str"
     ) -> Callable[[EventHandler], EventHandler]:
         return self.events.on_event(*event_types)
 
@@ -152,14 +156,15 @@ class PokerBot:
         return self.events.stream(event_type)
 
     async def start_events(self) -> EventHub:
-        """ Only necessary to call if manually setting up all listeners """
+        """Only necessary to call if manually setting up all listeners"""
         return await self.events.start()
 
     async def stop_events(self) -> None:
         if self._hub is not None:
             await self._hub.stop()
 
-    async def wait_for_event(self, event_type: EventTypeArg, timeout: float | None = None
+    async def wait_for_event(
+        self, event_type: EventTypeArg, timeout: float | None = None
     ) -> Event:
         return await self.events.wait_for(event_type, timeout)
 
@@ -168,7 +173,9 @@ class PokerBot:
         return self
 
     async def __aexit__(self, exc_type, exc, tb) -> None:
-        if self._state_subscription and hasattr(self._state_subscription, "unsubscribe"):
+        if self._state_subscription and hasattr(
+            self._state_subscription, "unsubscribe"
+        ):
             self._state_subscription.unsubscribe()
         await self.stop_events()
 
@@ -197,7 +204,7 @@ class PokerBot:
             self._ingest_state(event.data)
 
     def websocket_stream(self, **kwargs) -> WebSocketStream:
-        """ Raw Stream """
+        """Raw Stream"""
         return WebSocketStream(
             self._base_url,
             self._token,
@@ -207,7 +214,7 @@ class PokerBot:
         )
 
     def websocket_listener(self, **kwargs) -> WebSocketListener | None:
-        """ Raw Listener """
+        """Raw Listener"""
         if self._listener is not None:
             return self._listener
         self._listener = WebSocketListener(
@@ -280,9 +287,12 @@ class PokerBot:
             f"try cover bet for [{amount_needed}] current bet: [{bet}] stack: {self._current_stack}"
         )
 
+        if self._current_state is None:
+            raise ex.CustomException("try_cover_bet invoked before a state received")
+
         # TODO: get rid of this hardcoding of denominations, the rack
         # should be determined by the game and available via a query
-        denominations = [500, 100, 50, 10]
+        denominations = self._current_state.game_config.chip_denominations
         if sum(s.denomination * s.count for s in self._current_stack) <= amount_needed:
             bet = self._current_stack
             return  # all in

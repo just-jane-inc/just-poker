@@ -5,13 +5,13 @@ import logging
 from collections.abc import AsyncGenerator, AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, List, get_origin, get_args, Optional, Union
+from typing import Any, Union, get_args, get_origin
 from urllib.parse import urlsplit, urlunsplit
 
 import websockets
 
 import poker_bot.bot.poker_exceptions as ex
-from openapi_client import GameGameDTO, GamePlayerActionDTO, GameRoundDTO, GamePlayerDTO
+from openapi_client import GameGameDTO, GamePlayerActionDTO, GamePlayerDTO, GameRoundDTO
 
 logger = logging.getLogger("websocket")
 
@@ -19,10 +19,12 @@ GameStateCallback = Callable[[GameGameDTO], Awaitable[None] | None]
 EventCallback = Callable[["WebSocketEvent"], Awaitable[None] | None]
 CloseCallback = Callable[["CloseInfo"], Awaitable[None] | None]
 
+
 @dataclass(frozen=True)
 class CloseInfo:
     code: int | None
     reason: str
+
 
 def deserialize(data: Any, data_class: Any) -> Any:
     if data is None:
@@ -81,7 +83,7 @@ class WebSocketEventType(Enum):
     PAYOUT = "payout", dict
     ROUND_START = "round_start", GameRoundDTO
     HAND_STARTED = "hand_started", dict
-    GAME_OVER = "game_over", List[GamePlayerDTO]
+    GAME_OVER = "game_over", list[GamePlayerDTO]
     STARTING_GAME = "starting_game", GameGameDTO
 
     @property
@@ -310,32 +312,46 @@ class WebSocketStream:
                     if event is not None:
                         yield event
 
-                    if event is not None and event.event_type == WebSocketEventType.GAME_OVER:
+                    if (
+                        event is not None
+                        and event.event_type == WebSocketEventType.GAME_OVER
+                    ):
                         # We do not get a 404 on connect retry attempts on ended games, so we have to
                         self._reconnect = False
                         await asyncio.sleep(0.5)
                         await self.close()
-                        return # Closes generator
+                        return  # Closes generator
 
                 if self._conn is not None:
-                    await self._fire_close_event(code=self._conn.close_code, reason=self._conn.close_reason or "")
+                    await self._fire_close_event(
+                        code=self._conn.close_code, reason=self._conn.close_reason or ""
+                    )
 
             except asyncio.CancelledError:
                 raise
 
-            except (websockets.exceptions.ConnectionClosedError, websockets.exceptions.ConnectionClosedOK) as e:
+            except (
+                websockets.exceptions.ConnectionClosedError,
+                websockets.exceptions.ConnectionClosedOK,
+            ) as e:
                 close = e.rcvd or e.sent
                 if close is not None:
                     await self._fire_close_event(code=close.code, reason=close.reason)
 
-                if e.rcvd is not None and e.rcvd.code in [websockets.CloseCode.NORMAL_CLOSURE, websockets.CloseCode.BAD_GATEWAY,
-                                                          websockets.CloseCode.GOING_AWAY, websockets.CloseCode.NO_STATUS_RCVD]:
+                if e.rcvd is not None and e.rcvd.code in [
+                    websockets.CloseCode.NORMAL_CLOSURE,
+                    websockets.CloseCode.BAD_GATEWAY,
+                    websockets.CloseCode.GOING_AWAY,
+                    websockets.CloseCode.NO_STATUS_RCVD,
+                ]:
                     logger.info(f"received normal close event: {e}")
                     self._reconnect = False
                     await self.close()
 
                 else:
                     logger.warning(f"received abnormal close event: {e}")
+                    self._reconnect = False
+                    await self.close()
 
             except Exception as e:
                 if self._closed:

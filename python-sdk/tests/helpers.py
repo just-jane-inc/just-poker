@@ -14,6 +14,7 @@ def make_tests_work_for_fricking_windows():
     if os.name == "nt":
         try:
             import truststore
+
             truststore.inject_into_ssl()
         finally:
             pass
@@ -29,6 +30,23 @@ def get_deck(seed: int | None = None) -> list[GameCardDTO]:
 
     random.shuffle(deck)
     return deck
+
+
+def fill_deck_remainder(deck: list[GameCardDTO]) -> list[GameCardDTO]:
+    new_deck = deck[:]
+    taken_cards = set()
+    for card in new_deck:
+        taken_cards.add((card.rank, card.suit))
+
+    random_deck = get_deck()
+    for card in random_deck:
+        if (card.rank, card.suit) in taken_cards:
+            continue
+
+        taken_cards.add((card.rank, card.suit))
+        new_deck.append(card)
+
+    return new_deck
 
 
 def get_test_users() -> list[examples.TestUser]:

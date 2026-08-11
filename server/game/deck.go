@@ -21,8 +21,10 @@ func (c card) AsDTO() CardDTO {
 
 func (d *deck) Burn() {
 	if len(d.cards) == 0 {
-		d.cards = d.cards[1:]
+		return
 	}
+
+	d.cards = d.cards[1:]
 }
 
 func (d *deck) Reset() {

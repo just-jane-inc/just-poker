@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"slices"
+	"sort"
 	"time"
 
 	"github.com/just-jane-inc/just-poker/server/just"
@@ -29,28 +30,10 @@ type table struct {
 	gameID             string
 	currentTurnChannel chan just.WebsocketMessage[any]
 	isHeadsUp          bool
+	denominations      []int
 }
 
-func (t table) GetPlayerWithID(playerID string) *player {
-	for _, p := range t.players {
-		if p.UserID == playerID {
-			return p
-		}
-	}
-
-	return nil
-}
-
-func (dto RoundDTO) AsRound() round {
-	// TODO: why is this not a DTO?
-	return round{
-		bet:                   dto.Bet,
-		currentRoundType:      dto.CurrentRoundType,
-		currentPlayerPosition: dto.CurrentPlayerPosition,
-		currentAggressor:      dto.CurrentAggressor,
-	}
-}
-
+// AsTable converts a DTO table into the model for a table
 func (dto TableDTO) AsTable() *table {
 	t := table{
 		players:            make([]*player, len(dto.Players)),
@@ -113,6 +96,16 @@ func (t table) AsDTO() TableDTO {
 	return dto
 }
 
+func (t table) GetPlayerWithID(playerID string) *player {
+	for _, p := range t.players {
+		if p.UserID == playerID {
+			return p
+		}
+	}
+
+	return nil
+}
+
 func (t *table) NextPlayer(offset int) *player {
 	for i := range len(t.players) {
 		idx := (offset + i + 1) % len(t.players)
@@ -136,18 +129,26 @@ func (t *table) NextInactivePlayer(offset int) *player {
 		}
 	}
 
+	just.Logger.Debug("no inactive players")
 	return nil
 }
 
+// nextRound handles progressing the round in a game
+// unset    -> ante is the initial transition the ensures the round DTO is initialized correctly
+// ante     -> pre-flop will deal cards to each player's hole
+// pre-flop -> flop will deal the first street (flop)
+// flop     -> turn will deal the second street (turn)
+// turn     -> river will deal the final street (river)
+// river    -> completed will determine winners and give chips to each player, from here a new hand is required
 func (t *table) nextRound() {
-	// at the begining of a round all active players
-	// need to be set to inactive?
+	// ensure that all players are in a nominal state when we start the next round
 	for _, p := range t.players {
 		if p.state == PlayerStateActive {
 			p.state = PlayerStateInactive
 		}
 
 		if t.currentRound.currentRoundType != RoundTypeAnte {
+			p.potContribution += p.currentBet.Sum()
 			p.currentBet = make(stack)
 		}
 	}
@@ -179,6 +180,7 @@ func (t *table) nextRound() {
 			p.pocket = make([]*card, 2)
 			p.pocket[0] = t.deck.Draw()
 		}
+
 		for idx := range len(t.players) {
 			p := t.players[(idx+offset)%len(t.players)]
 
@@ -219,41 +221,63 @@ func (t *table) nextRound() {
 	case RoundTypeRiver: // GOTO end
 		// He beat me... Straight up... Pay him... Pay that man his money
 		// Captain_Onosa
-		handEvaluations := t.Showdown()
-
-		bestHand := math.MaxInt
-		winners := make([]int, 0)
-		for position, eval := range handEvaluations {
-			if bestHand > eval {
-				winners = make([]int, 0)
-				bestHand = eval
+		handEvaluations := t.GetHandEvaluations()
+		payouts := make(map[int]int)
+		pots := t.getSplitPots()
+		for _, p := range pots {
+			just.Logger.Debugf("processing pot for payout: %v", p)
+			payout, err := t.handlePayout(handEvaluations, p)
+			if err != nil {
+				just.Logger.Errorf("encountered error computing payout: %v", err)
+				continue
 			}
 
-			if bestHand == eval {
-				winners = append(winners, position)
+			for position, amount := range payout {
+				payouts[position] += amount
 			}
 		}
 
-		if len(winners) == 0 {
-			just.Logger.Errorf("critical error, hand terminated with no winners")
-			t.currentRound.currentRoundType = RoundTypeCompleted // blow up?
-			return
+		just.Logger.Debugf("payouts calculated: %v", payouts)
+
+		payoutEvents := make([]PayoutEventDTO, 0)
+		// we now need to construct from our available denominations a chipstack
+		// equal to the required payout
+		for position, payout := range payouts {
+			currentPlayer := t.players[position]
+			e := PayoutEventDTO{PlayerID: currentPlayer.UserID}
+			chips := make(stack)
+			for _, denomination := range t.denominations {
+				if payout >= denomination {
+					available, ok := t.pot[denomination]
+					if !ok {
+						continue
+					}
+
+					take := min(available, payout/denomination)
+					t.pot[denomination] -= take
+					chips[denomination] = take
+					payout -= (take * denomination)
+				}
+
+				if payout == 0 {
+					break
+				}
+			}
+
+			e.Chips = chips.AsDto()
+			payoutEvents = append(payoutEvents, e)
+			currentPlayer.chips = currentPlayer.chips.mergeWith(chips)
 		}
 
-		p := t.players[winners[0]]
-		for denomination, count := range t.pot {
-			p.chips[denomination] += count
+		if t.pot.Sum() > 0 {
+			just.Logger.Errorf("pot was not exhausted during payout %v", t.pot)
 		}
 
-		msg := PayoutEventDTO{
-			PlayerID: p.UserID,
-			Chips:    t.pot.AsDto(),
-		}
-
-		t.sendMessageToConnections("payout", msg)
+		t.sendMessageToConnections("payout", payoutEvents)
 		t.pot = make(map[int]int)
-		just.Logger.Debugf("the winner maybe is: [%v]", winners)
 		t.currentRound.currentRoundType = RoundTypeCompleted
+
+		// oh also if the game is over we do stuff about it here??
 	}
 
 	if t.currentRound.currentRoundType == RoundTypeUnset {
@@ -283,7 +307,11 @@ func (t *table) sendMessageToConnections(eventType string, data any) {
 	}
 }
 
-func (t *table) Showdown() map[int]int {
+// Showdown evaluates all hands at the table
+// and returns a mapping of [position]=evaluation
+// where the lower an evaluation is numerically the
+// better it is as a poker hand.
+func (t *table) GetHandEvaluations() map[int]int {
 	remainingPlayers := make([]*player, 0)
 	for _, p := range t.players {
 		if p.state == PlayerStateFolded {
@@ -384,6 +412,9 @@ func (t *table) nextHand(bb int, sb int) error {
 			p.state = PlayerStateOut
 		}
 
+		p.potContribution = 0
+		p.currentBet = make(stack)
+
 		// if a player is out we do not want to include them in the hand,
 		// this state should be locked in place by everything which updates
 		// player state.
@@ -401,7 +432,7 @@ func (t *table) nextHand(bb int, sb int) error {
 		}
 	}
 
-	if playersRemaining == 1 {
+	if playersRemaining < 2 {
 		t.OnGameOver()
 		return nil
 	}
@@ -410,6 +441,7 @@ func (t *table) nextHand(bb int, sb int) error {
 
 	t.currentHand.SmallBlind = sb
 	t.currentHand.BigBlind = bb
+
 	t.buttonPosition = t.NextInactivePlayer(t.buttonPosition).position
 
 	if t.isHeadsUp {
@@ -441,4 +473,118 @@ func (t *table) nextHand(bb int, sb int) error {
 	t.sendMessageToConnections("hand_started", msg)
 	t.nextRound()
 	return nil
+}
+
+// a structure that tracks a pot - particular in split pot
+// situations. contains all players that have contributed to the pot
+// and their contribution amount.
+type pot struct {
+	// the set of all players who contributed to this pot
+	players map[int]any
+
+	// the amount of chips from each player that has been
+	// contributed to this pot
+	contribution int
+}
+
+// Sum gets the sum of all chips in this pot
+func (p pot) Sum() int {
+	return len(p.players) * p.contribution
+}
+
+// IsEntitled indicates true if the provided player is a contributor to this pot
+func (p pot) IsEntitled(position int) bool {
+	_, ok := p.players[position]
+	return ok
+}
+
+// getSplitPots gathers all pots that are created from short stacks going all in.
+// this depends on the potContribution field of players and returns a data structure
+// which maps total pot contribution to the pot struct.
+//
+// note that the contribution field of the pot struct is not _total_ contribution,
+// that value is encoded in the mapping key, it is strictly the amount contributed
+// to that specific pot
+func (t *table) getSplitPots() map[int]pot {
+	contributions := make([]*player, len(t.players))
+	copy(contributions, t.players)
+
+	sort.Slice(contributions, func(i int, j int) bool {
+		return contributions[i].potContribution < contributions[j].potContribution
+	})
+
+	pots := make(map[int]pot)
+	current := 0
+	for _, p := range contributions {
+		// if this players total pot contribution is not in the mapping yet
+		// we need to add it
+		_, ok := pots[p.potContribution]
+		if !ok {
+			pots[p.potContribution] = pot{
+				players: make(map[int]any),
+
+				// we subtract current because this value tracks how much
+				// all players have contributed to already created pots
+				contribution: p.potContribution - current,
+			}
+
+			// we update current, this reflects the current amount of total
+			// chips that we have put into pots. this relies
+			// on the ascending order of contributions being iterated.
+			current = p.potContribution
+		}
+
+		// add this player to all pots already computed, they have contributed
+		// to all previous pots
+		for _, pot := range pots {
+			pot.players[p.position] = struct{}{}
+		}
+	}
+
+	return pots
+}
+
+// handPayout computes winnings that sould be paid from the current table state.
+// it requires a map of position -> eval and a map of position -> payout as arguments.
+// when the function terminates the values in winnings will hold the amount from the pot
+// that each position should be awarded.
+func (t *table) handlePayout(
+	handEvaluations map[int]int,
+	pot pot,
+) (winnings map[int]int, err error) {
+	winners := make([]int, 0)
+	bestHandEval := math.MaxInt
+	for position, eval := range handEvaluations {
+		// if this player is not entitled to the pot we skip them
+		if !pot.IsEntitled(position) {
+			continue
+		}
+
+		// if this eval is strictly less then our current best
+		// we need to reset the winners array for this hand
+		if eval < bestHandEval {
+			winners = make([]int, 0)
+			bestHandEval = eval
+		}
+
+		if eval == bestHandEval {
+			winners = append(winners, position)
+		}
+	}
+
+	if len(winners) == 0 {
+		return nil, just.NewPokerError("critical error - no winner for a given pot", just.Unknown)
+	}
+
+	winnings = make(map[int]int)
+	for _, position := range winners {
+		winnings[position] = pot.Sum() / len(winners)
+	}
+
+	remainder := pot.Sum() % len(winners)
+
+	// need to update this to get the player from winners who is nearest the button
+	winnings[winners[0]] += remainder
+
+	return winnings, nil
 }

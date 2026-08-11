@@ -7,6 +7,15 @@ import (
 	"github.com/just-jane-inc/just-poker/server/just"
 )
 
+func (s stack) AsDto() ChipStackDTO {
+	dto := make(ChipStackDTO)
+	for d, c := range s {
+		dto[strconv.Itoa(d)] = c
+	}
+
+	return dto
+}
+
 func (s ChipStackDTO) validate() *just.PokerError {
 	for d, c := range s {
 		denomination, err := strconv.Atoi(d)
@@ -59,6 +68,8 @@ func (s stack) Contains(that stack) bool {
 	return true
 }
 
+// mergeWith returns a stack that is the combination of
+// two stacks, it does not modify either stack
 func (s stack) mergeWith(other stack) stack {
 	result := make(stack)
 	for d, c := range other {

@@ -17,6 +17,11 @@ from poker_bot.bot.poker_exceptions import CustomException
 logger = logging.getLogger("helper")
 
 
+def chip_sum(stack: dict[str, int]) -> int:
+    """a function used for getting the sum of a stack of chips"""
+    return sum((int(k) * v for k, v in stack.items()))
+
+
 async def get_game_state(client: ApiClient, game_id: str) -> GameGameDTO | None:
     game_api = GameApi(client)
     resp = await game_api.game_game_id_state_get(game_id)

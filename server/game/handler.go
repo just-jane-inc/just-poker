@@ -105,7 +105,8 @@ func OnStartNextHand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go handleUpdates(g, g.AsDTO(), "game_state_update")
+	just.Logger.Debug("sending game state updates serially in next hand handler")
+	handleUpdates(g, g.AsDTO(), "game_state_update")
 	just.OK("hand_started", struct{}{}).WriteJSONResponse(w)
 }
 
@@ -464,11 +465,6 @@ func OnCreateGameConnection(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleUpdates(g *game, dto GameDTO, eventType string) {
-	err := just.RecordingHub.OnGameUpdate(dto)
-	if err != nil {
-		just.Logger.Errorf("error updating game state in elastic: %v", err)
-	}
-
 	just.Logger.Debugf("sending [%s] update for game with ID [%s]", eventType, dto.ID)
 
 	for _, conn := range just.UpdateHub.GetChannelsForGame(dto.ID) {
@@ -502,6 +498,9 @@ func handleUpdates(g *game, dto GameDTO, eventType string) {
 		}
 
 		delete(CurrentGames.games, g.id)
-		return
+	}
+
+	if err := just.RecordingHub.OnGameUpdate(dto); err != nil {
+		just.Logger.Errorf("error updating game state in elastic: %v", err)
 	}
 }

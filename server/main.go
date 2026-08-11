@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "embed"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -193,7 +194,7 @@ func main() {
 		Handler: rootMux,
 	}
 
-	just.Logger.Info("just__started")
+	fmt.Println("just__started")
 
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)

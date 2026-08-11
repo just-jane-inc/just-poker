@@ -5,4 +5,5 @@ python-sdk/lib
 **/__pycache__/*
 .venv/
 **/.ipynb_checkpoints/*
-app.log
+*.log
+

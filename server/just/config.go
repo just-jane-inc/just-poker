@@ -24,7 +24,9 @@ type Config struct {
 
 	ElasticLoggingIndex string `env:"ELASTIC_LOG_INDEX"`
 	FileLoggingFile     string `env:"FILE_LOG_PATH"`
-	LogLevel            string `env:"LOG_LEVEL"`
+	ConsoleLogLevel     string `env:"CONSOLE_LOG_LEVEL"`
+	ElasticLogLevel     string `env:"ELASATIC_LOG_LEVEL"`
+	FileLogLevel        string `env:"FILE_LOG_LEVEL"`
 
 	Pepper []byte
 	pepper string `env:"JUST_POKER_PEPPER,required"`
@@ -36,9 +38,28 @@ var (
 	DBConnPool *pgxpool.Pool
 )
 
+func getLogLevel(lvl string) jlog.JustLevel {
+	switch lvl {
+	case "TRACE":
+		return jlog.TRACE
+	case "DEBUG":
+		return jlog.DEBUG
+	case "INFO":
+		return jlog.INFO
+	case "WARN":
+		return jlog.WARN
+	case "ERROR":
+		return jlog.ERROR
+	case "FATAL":
+		return jlog.FATAL
+	case "PANIC":
+		return jlog.PANIC
+	default:
+		return jlog.ERROR
+	}
+}
+
 func init() {
-	Logger.WithConsole(jlog.DEBUG)
-	Logger.Info("initializing config...")
 	_ = godotenv.Load()
 	var err error
 	err = env.Parse(&Env)
@@ -46,14 +67,17 @@ func init() {
 		log.Fatalf("unable to parse ennvironment variables: %e", err)
 	}
 
+	Logger.WithConsole(getLogLevel(Env.ConsoleLogLevel))
+	Logger.Info("initializing config...")
+
 	if Env.ElasticLoggingIndex != "" {
 		Logger.Info("enabling elastic logger...")
-		Logger = Logger.WithElastic(Env.ElasticHost, Env.ElasticAPIKey, Env.ElasticLoggingIndex, jlog.TRACE)
+		Logger = Logger.WithElastic(Env.ElasticHost, Env.ElasticAPIKey, Env.ElasticLoggingIndex, getLogLevel(Env.ElasticLogLevel))
 	}
 
 	if Env.FileLoggingFile != "" {
 		Logger.Info("enabling file logger...")
-		Logger = Logger.WithFile(Env.FileLoggingFile, jlog.DEBUG)
+		Logger = Logger.WithFile(Env.FileLoggingFile, getLogLevel(Env.FileLogLevel))
 	}
 
 	Env.Pepper = []byte(Env.pepper)

@@ -1,7 +1,5 @@
 package game
 
-import "strconv"
-
 type RoundType string
 
 // reason: we use snake case for enumerated constants
@@ -24,13 +22,14 @@ type round struct {
 	currentRoundType      RoundType
 }
 
-func (s stack) AsDto() ChipStackDTO {
-	dto := make(ChipStackDTO)
-	for d, c := range s {
-		dto[strconv.Itoa(d)] = c
+func (dto RoundDTO) AsRound() round {
+	// TODO: why is this not a DTO?
+	return round{
+		bet:                   dto.Bet,
+		currentRoundType:      dto.CurrentRoundType,
+		currentPlayerPosition: dto.CurrentPlayerPosition,
+		currentAggressor:      dto.CurrentAggressor,
 	}
-
-	return dto
 }
 
 func (r round) AsDto() RoundDTO {

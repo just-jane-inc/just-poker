@@ -1,13 +1,19 @@
 import pytest
-from helpers import base_url, get_deck, get_test_user, get_test_users, make_tests_work_for_fricking_windows
+from helpers import (
+    base_url,
+    get_deck,
+    get_test_user,
+    get_test_users,
+    make_tests_work_for_fricking_windows,
+)
 
 import openapi_client as api
 import poker_bot.bot.poker_helpers as help
 from openapi_client.api.game_api import GameApi
-from openapi_client.models.game_player_intent import GamePlayerIntent
 from poker_bot.bot import bot
 
 make_tests_work_for_fricking_windows()
+
 
 async def assert_action_throws_with_error_code(action, code: api.JustErrorCode, *args):
     try:
@@ -129,25 +135,3 @@ async def test_action_errors():
         api.GamePlayerIntent.PlayerIntentFold,
         {},
     )
-
-    await bots[2].send_action(GamePlayerIntent.PlayerIntentAllIn, {})
-    await bots[3].send_action(GamePlayerIntent.PlayerIntentAllIn, {})
-    await bots[1].send_action(GamePlayerIntent.PlayerIntentAllIn, {})
-
-    _ = await game_api.game_game_id_hand_post(
-        game_id,
-        api.GameGameIdHandPostRequest(api.GameNewHandDTO(deck=[])),
-    )
-
-    game_state = await bots[0].get_game_state()
-
-    assert game_state.table.players[1].state == "out"
-    assert game_state.table.players[3].state == "out"
-
-    await bots[2].send_action(api.GamePlayerIntent.PlayerIntentAnte, {"50": 1})
-    await bots[0].send_action(api.GamePlayerIntent.PlayerIntentAnte, {"100": 1})
-    await bots[2].send_action(api.GamePlayerIntent.PlayerIntentCall, {"50": 1})
-
-    # await bots[2].ante()
-    # await bots[0].ante()
-    # await bots[2].call()

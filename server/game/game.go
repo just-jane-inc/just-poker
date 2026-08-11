@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"sort"
 	"strconv"
 	"sync"
 	"time"
@@ -207,6 +208,14 @@ func createGameFromConfig(config NewGameConfigDTO) (*game, *just.PokerError) {
 	g.table.currentTurnChannel = nil
 	g.table.players = make([]*player, 0)
 	g.table.deck = &deck{}
+	g.table.denominations = make([]int, 0)
+	for denomination := range denominations {
+		g.table.denominations = append(g.table.denominations, denomination)
+	}
+
+	sort.Slice(g.table.denominations, func(i, j int) bool {
+		return g.table.denominations[i] > g.table.denominations[j]
+	})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
