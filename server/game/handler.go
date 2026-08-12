@@ -341,6 +341,10 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if g.IsGameOver() {
+		g.table.OnGameOver()
+	}
+
 	go handleUpdates(g, g.AsDTO(), "game_state_update")
 	just.OK("action_accepted", struct{}{}).WriteJSONResponse(w)
 }

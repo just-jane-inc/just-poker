@@ -78,7 +78,6 @@ async def test_receive_game_over():
     await jane_bot.send_action("all_in", {})
 
     # this is self documenting, the game does not end until a hand begins, duh
-    await start_hand(game_id, jane)
     await asyncio.sleep(3)
 
     assert len(received) == 1
@@ -122,10 +121,9 @@ async def test_receive_game_over_via_subscribe():
 
     subscriber = jane_bot.subscribe(EventType.GAME_OVER, on_game_over)
     subscriber2 = jane_bot.subscribe(EventType.PLAYER_ACTION, on_player_action)
-
-    # If you subscribe, you are responsible for starting listening
     await jane_bot.start_events()
 
+    # If you subscribe, you are responsible for starting listening
     assert jane_bot._hub is not None
     assert jane_bot._hub.subscriber_count(EventType.PLAYER_ACTION) == 1
 
@@ -143,7 +141,6 @@ async def test_receive_game_over_via_subscribe():
     await red_bot.all_in()
     await jane_bot.send_action("all_in", {})
 
-    await start_hand(game_id, jane)
     await asyncio.sleep(3)
 
     assert len(received) == 1
@@ -204,7 +201,6 @@ async def test_receive_game_over_via_subscribe_and_unhook():
         await red_bot.all_in()
         await jane_bot.send_action("all_in", {})
 
-        await start_hand(game_id, jane)
         await asyncio.sleep(3)
 
     assert len(received) == 1
@@ -254,7 +250,6 @@ async def test_receive_game_over_better_closure():
         await red_bot.send_action("all_in", {})
         await jane_bot.all_in()
 
-        await start_hand(game_id, jane)
         await asyncio.wait_for(game_over.wait(), timeout=10)
 
         # still need to unsubscribe as aexit doesn't track each

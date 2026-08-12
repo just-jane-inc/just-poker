@@ -363,13 +363,34 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 	g.table.currentTurn.StartedAt = time.Now()
 	g.table.currentTurn.ID += 1
 
-	if g.table.currentRound.currentRoundType == RoundTypeCompleted && g.config.AutoStartHands {
-		if err := g.table.nextHand(g.config.BigBlind, g.config.SmallBlind); err != nil {
-			just.Logger.Errorf("encountered error starting new hand: %v", err)
+	if g.table.currentRound.currentRoundType == RoundTypeCompleted {
+		for _, p := range g.table.players {
+			if p.chips.Sum() == 0 {
+				p.state = PlayerStateOut
+			}
+		}
+
+		if g.config.AutoStartHands {
+			if err := g.table.nextHand(g.config.BigBlind, g.config.SmallBlind); err != nil {
+				just.Logger.Errorf("encountered error starting new hand: %v", err)
+			}
 		}
 	}
 
 	return nil
+}
+
+func (g *game) IsGameOver() bool {
+	playersRemaining := 0
+	for _, p := range g.table.players {
+		if p.state == PlayerStateOut {
+			continue
+		}
+
+		playersRemaining += 1
+	}
+
+	return playersRemaining <= 1
 }
 
 // handleAnte handles provided player action for the setup round type

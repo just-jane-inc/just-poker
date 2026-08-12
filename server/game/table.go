@@ -407,11 +407,6 @@ func (t *table) nextHand(bb int, sb int) error {
 
 	for _, p := range t.players {
 		p.pocket = make([]*card, 0)
-
-		if p.chips.Sum() == 0 {
-			p.state = PlayerStateOut
-		}
-
 		p.potContribution = 0
 		p.currentBet = make(stack)
 
@@ -432,13 +427,7 @@ func (t *table) nextHand(bb int, sb int) error {
 		}
 	}
 
-	if playersRemaining < 2 {
-		t.OnGameOver()
-		return nil
-	}
-
 	t.isHeadsUp = playersRemaining == 2
-
 	t.currentHand.SmallBlind = sb
 	t.currentHand.BigBlind = bb
 
