@@ -80,6 +80,7 @@ Class | Method | HTTP request | Description
 *AdminApi* | [**admin_game_game_id_table_post**](openapi_client/docs/AdminApi.md#admin_game_game_id_table_post) | **POST** /admin/game/{game_id}/table | Change Game Table
 *GameApi* | [**game_game_id_action_post**](openapi_client/docs/GameApi.md#game_game_id_action_post) | **POST** /game/{game_id}/action | Player Action
 *GameApi* | [**game_game_id_chip_exchange_post**](openapi_client/docs/GameApi.md#game_game_id_chip_exchange_post) | **POST** /game/{game_id}/chip/exchange | Exchange Chips
+*GameApi* | [**game_game_id_delete**](openapi_client/docs/GameApi.md#game_game_id_delete) | **DELETE** /game/{game_id} | Delete a Game
 *GameApi* | [**game_game_id_hand_post**](openapi_client/docs/GameApi.md#game_game_id_hand_post) | **POST** /game/{game_id}/hand | Start Next Hand
 *GameApi* | [**game_game_id_player_post**](openapi_client/docs/GameApi.md#game_game_id_player_post) | **POST** /game/{game_id}/player | Join a Game
 *GameApi* | [**game_game_id_started_post**](openapi_client/docs/GameApi.md#game_game_id_started_post) | **POST** /game/{game_id}/started | Start Game

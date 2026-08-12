@@ -104,6 +104,11 @@ func main() {
 	)
 
 	apiMux.HandleFunc(
+		"DELETE /game/{game_id}",
+		game.OnDeleteGame,
+	)
+
+	apiMux.HandleFunc(
 		"POST /game/{game_id}/hand",
 		game.OnStartNextHand,
 	)

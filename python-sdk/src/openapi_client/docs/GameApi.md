@@ -6,6 +6,7 @@ Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**game_game_id_action_post**](GameApi.md#game_game_id_action_post) | **POST** /game/{game_id}/action | Player Action
 [**game_game_id_chip_exchange_post**](GameApi.md#game_game_id_chip_exchange_post) | **POST** /game/{game_id}/chip/exchange | Exchange Chips
+[**game_game_id_delete**](GameApi.md#game_game_id_delete) | **DELETE** /game/{game_id} | Delete a Game
 [**game_game_id_hand_post**](GameApi.md#game_game_id_hand_post) | **POST** /game/{game_id}/hand | Start Next Hand
 [**game_game_id_player_post**](GameApi.md#game_game_id_player_post) | **POST** /game/{game_id}/player | Join a Game
 [**game_game_id_started_post**](GameApi.md#game_game_id_started_post) | **POST** /game/{game_id}/started | Start Game
@@ -159,6 +160,87 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **game_id** | **str**| ID of the Game exchange chips in | 
  **game_game_id_chip_exchange_post_request** | [**GameGameIdChipExchangePostRequest**](GameGameIdChipExchangePostRequest.md)| a specification for the chips to exchange | 
+
+### Return type
+
+[**JustResponseMessageAny**](JustResponseMessageAny.md)
+
+### Authorization
+
+[BearerAuth](../README.md#BearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | OK |  -  |
+**400** | Bad Request |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **game_game_id_delete**
+> JustResponseMessageAny game_game_id_delete(game_id, body=body)
+
+Delete a Game
+
+Delete a game
+
+### Example
+
+* Bearer Authentication (BearerAuth):
+
+```python
+import openapi_client
+from openapi_client.models.just_response_message_any import JustResponseMessageAny
+from openapi_client.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to https://game.bahms.org/api/poker
+# See configuration.py for a list of all supported configuration parameters.
+configuration = openapi_client.Configuration(
+    host = "https://game.bahms.org/api/poker"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+# Configure Bearer authorization: BearerAuth
+configuration = openapi_client.Configuration(
+    access_token = os.environ["BEARER_TOKEN"]
+)
+
+# Enter a context with an instance of the API client
+async with openapi_client.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = openapi_client.GameApi(api_client)
+    game_id = 'game_id_example' # str | ID of the Game to delete
+    body = None # object |  (optional)
+
+    try:
+        # Delete a Game
+        api_response = await api_instance.game_game_id_delete(game_id, body=body)
+        print("The response of GameApi->game_game_id_delete:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling GameApi->game_game_id_delete: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **game_id** | **str**| ID of the Game to delete | 
+ **body** | **object**|  | [optional] 
 
 ### Return type
 

@@ -512,6 +512,39 @@ paths:
       summary: Create Game
       tags:
       - Game
+  /game/{game_id}:
+    delete:
+      description: Delete a game
+      parameters:
+      - description: ID of the Game to delete
+        in: path
+        name: game_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/just.ResponseMessage-any'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/just.ResponseMessage-just_ErrorDTO'
+          description: Bad Request
+      security:
+      - BearerAuth: []
+      summary: Delete a Game
+      tags:
+      - Game
   /game/{game_id}/action:
     post:
       description: post the action preformed by a player

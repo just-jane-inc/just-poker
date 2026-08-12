@@ -47,6 +47,19 @@ func NotFound(message string, code ErrorCode) HTTPResponse {
 	}
 }
 
+func Unauthorized() HTTPResponse {
+	return HTTPResponse{
+		Code: http.StatusUnauthorized,
+		Object: ResponseMessage[ErrorDTO]{
+			Type: "error",
+			Data: ErrorDTO{
+				ErrorCode: 67,
+				Error:     "=^-^=",
+			},
+		},
+	}
+}
+
 func MissingToken() HTTPResponse {
 	return HTTPResponse{
 		Code: http.StatusUnauthorized,

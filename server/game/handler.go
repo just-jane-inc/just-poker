@@ -21,6 +21,50 @@ import (
 // @Router       /hand-evaluator/evaluate [post]
 func OnEvalHand() {}
 
+// OnDeleteGame godoc
+// @Summary      Delete a Game
+// @Description  Delete a game
+// @Tags         Game
+// @Accept       json
+// @Produce      json
+// @Param game_id path string true "ID of the Game to delete"
+// @Success      200 {object} just.ResponseMessage[any]
+// @Failure      400 {object} just.ResponseMessage[just.ErrorDTO]
+// @Security BearerAuth
+// @Router       /game/{game_id} [delete]
+func OnDeleteGame(w http.ResponseWriter, r *http.Request) {
+	gameID := r.PathValue("game_id")
+	userID, _, err := just.GetAuthorizedUser(r)
+	if err != nil {
+		just.MissingToken().WriteJSONResponse(w)
+		return
+	}
+
+	userType, err := just.GetUserType(userID)
+	if err != nil {
+		just.Logger.Errorf("usertype not found for user with ID %s", userID)
+		just.NotFound("user type not found", just.Unknown).WriteJSONResponse(w)
+		return
+	}
+
+	if userType != just.UserTypeAdmin {
+		just.Unauthorized().WriteJSONResponse(w)
+		return
+	}
+
+	g, err := CurrentGames.RemoveGame(gameID)
+	if err != nil {
+		just.NotFound("game not found", just.GameNotFound).WriteJSONResponse(w)
+		return
+	}
+
+	t := time.Now()
+	g.endedAt = &t
+
+	go handleUpdates(g, g.AsDTO(), "game_delete")
+	just.OK("success", struct{}{})
+}
+
 // OnJoinGameRequest godoc
 // @Summary      Join a Game
 // @Description  Join an open game
