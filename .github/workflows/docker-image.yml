@@ -132,6 +132,8 @@ jobs:
         with:
           context: ./server
           file: ./server/Dockerfile
+          secrets: |
+            netrc=machine github.com login x-access-token password ${{ secrets.JUST_SERVICES_READ_TOKEN }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
