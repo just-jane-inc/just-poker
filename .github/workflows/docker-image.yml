@@ -7,8 +7,16 @@ on:
     branches: [ "main", "dev" ]
     # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
+    paths:
+      - 'hand-evaluator/**'
+      - 'server/**'
+      - '.github/workflows/docker-image.yml'
   pull_request:
     branches: [ "main", "dev" ]
+    paths:
+      - 'hand-evaluator/**'
+      - 'server/**'
+      - '.github/workflows/docker-image.yml'
 
   workflow_dispatch:
     inputs:
@@ -36,8 +44,8 @@ env:
 jobs:
   changes:
     # Checks for changes for both evaluator and server prior to running either
-    # Could make it a filter in the triggers, but this provides flexible use with dispatches
-    # and at least logging with actions
+    # In addition to the trigger filters, this allows some flexible actions logging for diagnosis later
+    # For pull requests, this does the change comparison to the target branch on each push
     runs-on: ubuntu-latest
     if: (github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')) || github.event_name == 'pull_request'
     permissions:
