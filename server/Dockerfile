@@ -1,11 +1,19 @@
 FROM golang:1.25-alpine AS builder
 ARG SWAG_VERSION=latest
+ENV GOPRIVATE=github.com/just-jane-inc/*
 
 WORKDIR /build
 
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go install github.com/swaggo/swag/v2/cmd/swag@${SWAG_VERSION}
+
+COPY go.mod go.sum ./
+
+RUN --mount=type=secret,id=netrc,target=/root/.netrc,mode=0400 \
+    --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    go mod download
 
 COPY . .
 
@@ -30,7 +38,7 @@ RUN mkdir -p /opt/var/log && chown 65532:65532 /opt/var/log
 FROM gcr.io/distroless/static-debian12:nonroot
 
 COPY --from=builder /out/just-poker /just-poker
-COPY --from=builder /opt/var/log --chown=nonroot
+COPY --from=builder /opt/var/log /opt/var/log
 
 # documentation port only
 EXPOSE 8080
