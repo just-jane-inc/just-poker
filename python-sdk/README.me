@@ -1,24 +1,34 @@
 # Setup PIP enviornment
 `pip install -e .`
 
-# the tui
-`poker-tui`
+# Bot
+the library in src/bot is the primary entry point for users of this SDK, this contains a wrapper around the openapi_client with some convienence methods.
 
-# create a new game
-`new-game`
+# Available Executable CLI tools
+the enviornment includes the folowing executable scripts to help interact with the game server.
+these CLI tools all contain a --help option that prints information about how to use them.
 
-# join a game with test users
-`join-game`
+### `poker-tui`
+a textual user interface that can be used to view/play a game from the perspective of a player
 
-# create a game listener
-`listen-game`
+### `new-game`
+creates a game on the server
 
-# start game from id
-`start-game`
+### `join-game`
+join a created game with a set of users
 
-# get game state
-`get-game`
+### `start-game`
+start a created game - locking the ability to join and begining play
 
-# run tests
+### `get-game`
+get the state of a running game
+
+### `listen-game`
+attach a listener to a running game that echos websocket messages to stdout
+
+# Tests
+the tests in test/ all have side effects in that they create games on the server.
+these are for developers and should not generally be ran.
+
 `pytest -n auto tests`
 `pytest -v -n auto tests`

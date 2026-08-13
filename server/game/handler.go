@@ -420,15 +420,23 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// we send the update here to snapshot the state how it is in this moment, further checks will alter the tate
+	// and would require a new update afterwards.
+	handleUpdates(g, g.AsDTO(), "game_state_update")
+
 	if g.IsGameOver() {
+		// update the game state and send a new update
 		g.table.OnGameOver()
-	} else {
-		if g.table.currentRound.currentRoundType == RoundTypeCompleted && g.config.AutoStartHands {
-			go g.table.nextHand(g.config.SmallBlind, g.config.BigBlind)
+		handleUpdates(g, g.AsDTO(), "game_state_update")
+	} else if g.table.currentRound.currentRoundType == RoundTypeCompleted {
+		// if the game is configured for auto-starting the next hand we do so now
+		if g.config.AutoStartHands {
+			// we need to block here until this completes, the handleUpdates snapshot should include the completed state here.
+			g.table.nextHand(g.config.BigBlind, g.config.SmallBlind)
+			handleUpdates(g, g.AsDTO(), "game_state_update")
 		}
 	}
 
-	go handleUpdates(g, g.AsDTO(), "game_state_update")
 	just.OK("action_accepted", struct{}{}).WriteJSONResponse(w)
 }
 

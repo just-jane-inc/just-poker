@@ -23,9 +23,12 @@ from poker_bot.tools.tui.setup_tui_example import get_test_user, setup
 load_dotenv("config/.env")
 base_url = os.getenv("BASE_URL")
 
-parser = argparse.ArgumentParser(prog="test tui")
-parser.add_argument("--game-id", type=str, required=False, help="game id")
-parser.add_argument("--player-name", type=str, required=False, help="")
+parser = argparse.ArgumentParser(
+    prog="just__poker: TUI", description="a TUI that can be used to play a game of poker on the server"
+)
+
+parser.add_argument("--game-id", "--id", type=str, required=False, help="game id")
+parser.add_argument("--user", type=str, required=False, help="")
 parser.add_argument("--setup", type=int, default=0, required=False, help="")
 
 logger = logging.getLogger("tui")
@@ -211,7 +214,7 @@ class PokerApp(App):
     async def on_mount(self) -> None:
         args = parser.parse_args()
         self.game_state = None
-        user = get_test_user(args.player_name)
+        user = get_test_user(args.user)
 
         me = PokerBot(base_url, user.token, user.user_id, args.game_id, timeout=5)
         self.query_one(Players).me = me

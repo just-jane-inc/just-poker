@@ -46,9 +46,7 @@ async def get_test_setup(base_url: str, player_count: int) -> TestSetup:
     bots: dict[str, TestBot] = dict()
     users = get_test_users()
 
-    game_id = await help.create_game(
-        base_url, users[0].token, player_count=player_count
-    )
+    game_id = await help.create_game(base_url, users[0].token, player_count=player_count)
     assert game_id
 
     for user in get_test_users()[:player_count]:

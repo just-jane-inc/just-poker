@@ -1,0 +1,14 @@
+{
+  "auto_starts_hands": true,
+  "big_blind": 100,
+  "small_blind":50,
+  "chip_denominations": [10, 50, 100, 500],
+  "player_count": 4,
+  "starting_chips": {
+    "10": 10,
+    "25": 5,
+    "50": 5,
+    "100": 5,
+    "500": 1
+  }
+}

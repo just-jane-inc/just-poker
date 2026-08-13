@@ -11,11 +11,21 @@ from openapi_client import (
     GameGameDTO,
     GameNewGameConfigDTO,
     GamePostRequest,
+    JustErrorDTO,
+    JustResponseMessageJustErrorDTO,
     UserApi,
 )
 from poker_bot.bot.poker_exceptions import CustomException
 
 logger = logging.getLogger("helper")
+
+
+def get_error_from_exception(e: ApiException) -> JustErrorDTO | None:
+    poker_error = JustResponseMessageJustErrorDTO.from_json(e.body)
+    if poker_error.type != "error":
+        return None
+
+    return poker_error.data
 
 
 def chip_sum(stack: dict[str, int]) -> int:
@@ -45,6 +55,13 @@ def create_connection(base_url: str, token: str = "") -> ApiClient:
     return ApiClient(config)
 
 
+async def create_game_from_config(*, base_url: str, token: str, config: GameNewGameConfigDTO) -> str | None:
+    conn = create_connection(base_url, token)
+    api = GameApi(conn)
+    resp = await api.game_post(GamePostRequest(config))
+    return resp.data
+
+
 async def create_game(
     base_url: str,
     token: str,
@@ -60,8 +77,6 @@ async def create_game(
 
     if not denominations:
         denominations = [10, 50, 100, 500]
-    conn = create_connection(base_url, token)
-    api = GameApi(conn)
     dto = GameNewGameConfigDTO(
         big_blind=bb,
         small_blind=sb,
@@ -71,8 +86,7 @@ async def create_game(
         chip_denominations=denominations,
     )
 
-    resp = await api.game_post(GamePostRequest(dto))
-    return resp.data
+    return await create_game_from_config(base_url=base_url, token=token, config=dto)
 
 
 async def delete_user(base_url: str, token: str) -> str | None:
