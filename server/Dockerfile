@@ -10,12 +10,12 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go install github.com/swaggo/swag/v2/cmd/swag@${SWAG_VERSION}
 
-# COPY go.mod go.sum ./
+COPY go.mod go.sum ./
 
-# RUN --mount=type=secret,id=netrc,target=/root/.netrc,mode=0400 \
-#     --mount=type=cache,target=/go/pkg/mod \
-#     --mount=type=cache,target=/root/.cache/go-build \
-#     go mod download
+RUN --mount=type=secret,id=netrc,target=/root/.netrc,mode=0400 \
+    --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    go mod download
 
 COPY . .
 
