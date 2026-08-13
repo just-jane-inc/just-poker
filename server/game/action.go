@@ -369,12 +369,6 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 				p.state = PlayerStateOut
 			}
 		}
-
-		if g.config.AutoStartHands {
-			if err := g.table.nextHand(g.config.BigBlind, g.config.SmallBlind); err != nil {
-				just.Logger.Errorf("encountered error starting new hand: %v", err)
-			}
-		}
 	}
 
 	return nil

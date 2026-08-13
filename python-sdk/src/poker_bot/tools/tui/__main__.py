@@ -1,18 +1,19 @@
 # import openapi_client as poker_api
 import argparse
 import asyncio
-import os
-from typing import List, Callable
 import logging
+import os
+from collections.abc import Callable
 
 from dotenv import load_dotenv
 from textual import on
 from textual.app import App, ComposeResult
-from textual.containers import Horizontal
+from textual.containers import Container, Horizontal
 from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widgets import Button, Footer, Input, Label, Static
 
+import openapi_client as api
 import poker_bot.bot.poker_helpers as help
 from openapi_client.models import GameGameDTO, GamePlayerDTO, GameTableDTO
 from poker_bot.bot.bot import PokerBot
@@ -88,23 +89,30 @@ class Table(Static):
     table: reactive[GameTableDTO | None] = reactive(GameTableDTO(), layout=True)
     card_map = help.get_unicode_mapping()
     winner: str | None = None
+    game_id: str | None = None
 
     def render(self) -> str:
-        view = "====TABLE====\n"
+        view = f"♠♥ ༻❁ ⊱༻{self.game_id!s:^6}༺⊰ ❀༺ ♦♣\n"
+        view += f"║|{'-' * 18}|║\n"
         if self.winner:
-            view += f"WINNER: {self.winner}\n"
+            view += f"║| ♠♥{self.winner[:12]:^12}♦♣ |║\n"
         if self.table is None or self.table.street is None:
             return view
 
         to_call = self.table.current_round.bet
 
         if not self.winner:
-            view += f"POT: {chip_sum(self.table.pot)} STREET: {self.table.current_round.current_round_type.upper()} TO CALL: {to_call}"
-            view += "\n"
+            view += f"║| POT: {chip_sum(self.table.pot):>11} |║\n"
+            view += f"║| STREET: {self.table.current_round.current_round_type.upper():>8} |║\n"
+            view += f"║| TO CALL: {to_call:>7} |║\n"
+            view += f"║|{'-' * 18}|║\n"
+        cards_view = ""
         for card in self.table.street:
             rank = help.CardRank(card.rank)
             suit = help.CardSuit(card.suit)
-            view += self.card_map[suit][rank] + " "
+            cards_view += self.card_map[suit][rank] + " "
+        view += f"║| {cards_view:^16} |║\n"
+        view += f"║|{'-' * 18}|║\n"
 
         return view
 
@@ -124,12 +132,11 @@ class Players(Static):
             chip_stack = chip_sum(player.stack)
             current_bet = chip_sum(player.current_bet)
 
-            name = player.display_name
+            name = player.display_name[:8]
             if player.user_id == self.me._user_id:
-                name = f"{name} <"
+                name = f"<{name}>"
 
-            view += f"{player.state} {name}\t{chip_stack}\t({current_bet})\n"
-
+            card_view = ""
             if player.hole:
                 rank = help.CardRank(player.hole[0].rank)
                 suit = help.CardSuit(player.hole[0].suit)
@@ -138,11 +145,12 @@ class Players(Static):
                 rank = help.CardRank(player.hole[1].rank)
                 suit = help.CardSuit(player.hole[1].suit)
                 card_two = self.card_map[suit][rank]
-                view += f"{card_one} {card_two}"
+                card_view += f"{card_one} {card_two}"
+
+            view += f"{name:<10} {player.state:^8} {card_view:^4} {current_bet:>6}◉\n{chip_stack:<6}⛀⛁\n"
 
             view += "\n"
 
-        view += f"\nlength: {len(self.players)}"
         return view
 
 
@@ -161,17 +169,20 @@ class PokerApp(App):
     }
 
     #players {
+        padding-right: 3;
+    }
+
+    #playersbox {
+        width: 1fr;
         height: 100%;
-        width: 50;
-        min-width: 26;
-        padding: 1 2;
-        border-right: solid $primary;
+        overflow-y: auto;
     }
 
     #table {
         height: 100%;
-        width: 1fr;
-        padding: 1 3;
+        width: 1.5fr;
+        padding-top: 2;
+        padding-left: 5;
     }
     """
 
@@ -191,37 +202,30 @@ class PokerApp(App):
 
     def compose(self) -> ComposeResult:
         with Horizontal(id="main"):
-            yield Players(id="players")
+            with Container(id="playersbox"):
+                yield Players(id="players")
             yield Table(id="table")
 
         yield Footer()
-
-    async def action_raise_bet(self) -> None:
-        async def check_result(result: str | None) -> None:
-            if result is not None:
-                players = self.query_one(Players)
-                await players.me.raise_bet(int(result))
-            else:
-                self.query_one("#info", Static).update("Cancelled")
-
-        self.push_screen(InputPopup(), check_result)
 
     async def on_mount(self) -> None:
         args = parser.parse_args()
         self.game_state = None
         user = get_test_user(args.player_name)
 
-        me = PokerBot(base_url, user.token, user.user_id, args.game_id)
+        me = PokerBot(base_url, user.token, user.user_id, args.game_id, timeout=5)
         self.query_one(Players).me = me
 
         self.events = me.events
 
         if self.events:
             # Example of using as a decorator with specific event types
-            @self.events.on_event(EventType.WELCOME,
-                                  EventType.GAME_STATE_UPDATE,
-                                  # EventType.STARTING_GAME,
-                                  EventType.GAME_OVER)
+            @self.events.on_event(
+                EventType.WELCOME,
+                EventType.GAME_STATE_UPDATE,
+                # EventType.STARTING_GAME,
+                EventType.GAME_OVER,
+            )
             async def _on_update(event: Event) -> None:
                 logger.debug(f"received for Player [{me._user_id}]:\t{event.event_type} - {event.data}")
                 if isinstance(event.data, GameGameDTO):
@@ -241,7 +245,7 @@ class PokerApp(App):
         # if state is not None and self.game_state is None:
         #     await self.apply_state(state)
 
-    async def apply_game_over(self, data: List[GamePlayerDTO]) -> None:
+    async def apply_game_over(self, data: list[GamePlayerDTO]) -> None:
         if data is None:
             return
         self.query_one(Players).players = data
@@ -252,11 +256,12 @@ class PokerApp(App):
                 self.query_one(Table).winner = player.display_name
                 break
 
-
     async def apply_state(self, state: GameGameDTO) -> None:
         self.game_state = state
         if state.table is not None:
-            self.query_one(Table).table = state.table
+            t = self.query_one(Table)
+            t.table = state.table
+            t.game_id = state.id
             self.query_one(Players).players = state.table.players
 
     async def on_unmount(self) -> None:
@@ -267,33 +272,76 @@ class PokerApp(App):
 
     async def action_fold(self) -> None:
         players = self.query_one(Players)
-        if hasattr(players.me, "fold"):
-            await players.me.fold()
-        self.notify("folded!")
+        try:
+            if not await players.me.fold():
+                self.notify("fold action has timed out")
+            else:
+                self.notify("folded!")
+        except api.ApiException as e:
+            poker_error = api.JustResponseMessageJustErrorDTO.from_json(e.body)
+            self.notify(f"encountered error [{poker_error.data.error_code}] {poker_error.data.error}")
 
     async def action_call(self) -> None:
         players = self.query_one(Players)
-        if hasattr(players.me, "call"):
-            await players.me.call()
-        self.notify("call!")
+        try:
+            if not await players.me.call():
+                self.notify("call action has timed out")
+            else:
+                self.notify("call!")
+        except api.ApiException as e:
+            poker_error = api.JustResponseMessageJustErrorDTO.from_json(e.body)
+            self.notify(f"encountered error [{poker_error.data.error_code}] {poker_error.data.error}")
+
+    async def action_raise_bet(self) -> None:
+        async def check_result(result: str | None) -> None:
+            if result is not None:
+                players = self.query_one(Players)
+                try:
+                    if not await players.me.raise_bet(int(result)):
+                        self.notify("raise action has timed out")
+                    else:
+                        self.notify("raied!")
+                except api.ApiException as e:
+                    poker_error = api.JustResponseMessageJustErrorDTO.from_json(e.body)
+                    self.notify(f"encountered error [{poker_error.data.error_code}] {poker_error.data.error}")
+
+            else:
+                self.query_one("#info", Static).update("Cancelled")
+
+        self.push_screen(InputPopup(), check_result)
 
     async def action_ante(self) -> None:
         players = self.query_one(Players)
-        if hasattr(players.me, "ante"):
-            await players.me.ante()
-        self.notify("ante!")
+        try:
+            if not await players.me.ante():
+                self.notify("ante action has timed out")
+            else:
+                self.notify("ante!")
+        except api.ApiException as e:
+            poker_error = api.JustResponseMessageJustErrorDTO.from_json(e.body)
+            self.notify(f"encountered error [{poker_error.data.error_code}] {poker_error.data.error}")
 
     async def action_check(self) -> None:
         players = self.query_one(Players)
-        if hasattr(players.me, "check"):
-            await players.me.check()
-        self.notify("check!")
+        try:
+            if not await players.me.check():
+                self.notify("check action has timed out")
+            else:
+                self.notify("check!")
+        except api.ApiException as e:
+            poker_error = api.JustResponseMessageJustErrorDTO.from_json(e.body)
+            self.notify(f"encountered error [{poker_error.data.error_code}] {poker_error.data.error}")
 
     async def action_all_in(self) -> None:
         players = self.query_one(Players)
-        if hasattr(players.me, "all_in"):
-            await players.me.all_in()
-        self.notify("all in!")
+        try:
+            if not await players.me.all_in():
+                self.notify("all-in action has timed out")
+            else:
+                self.notify("all-in!")
+        except api.ApiException as e:
+            poker_error = api.JustResponseMessageJustErrorDTO.from_json(e.body)
+            self.notify(f"encountered error [{poker_error.data.error_code}] {poker_error.data.error}")
 
 
 if __name__ == "__main__":

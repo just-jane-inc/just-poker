@@ -24,6 +24,7 @@ ignore = ["src/openapi_client"]
 
 [tool.ruff]
 extend-exclude = ["src/openapi_client"]
+line-length = 120
 
 [tool.ruff.lint]
 extend-select = ["I"]

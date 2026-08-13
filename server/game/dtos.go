@@ -7,6 +7,11 @@ import (
 	"github.com/just-jane-inc/just-poker/server/just"
 )
 
+type ActiveGameDTO struct {
+	ID      string   `json:"id"`
+	Players []string `json:"player_ids"`
+}
+
 // NewHandDTO a dto describing data required to start a new hand
 type NewHandDTO struct {
 	// the deck, optionally provided to determine trhe order of cards

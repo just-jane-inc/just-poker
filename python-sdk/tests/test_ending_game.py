@@ -35,9 +35,7 @@ async def start_hand(game_id: str, user):
     )
 
     game_api = GameApi(help.create_connection(base_url, user.token))
-    assert await game_api.game_game_id_hand_post(
-        game_id, GameGameIdHandPostRequest(api.GameNewHandDTO(deck=deck))
-    )
+    assert await game_api.game_game_id_hand_post(game_id, GameGameIdHandPostRequest(api.GameNewHandDTO(deck=deck)))
 
 
 @pytest.mark.asyncio
@@ -58,7 +56,7 @@ async def test_receive_game_over():
 
     received: list[Event] = []
 
-    @jane_bot.on_event(EventType.GAME_OVER)
+    @jane_bot.events.on_event(EventType.GAME_OVER)
     async def on_game_over(e: Event):
         received.append(e)
 
@@ -119,8 +117,8 @@ async def test_receive_game_over_via_subscribe():
     async def on_player_action(e: Event):
         pass
 
-    subscriber = jane_bot.subscribe(EventType.GAME_OVER, on_game_over)
-    subscriber2 = jane_bot.subscribe(EventType.PLAYER_ACTION, on_player_action)
+    subscriber = jane_bot.events.subscribe(EventType.GAME_OVER, on_game_over)
+    subscriber2 = jane_bot.events.subscribe(EventType.PLAYER_ACTION, on_player_action)
     await jane_bot.start_events()
 
     # If you subscribe, you are responsible for starting listening
@@ -185,7 +183,7 @@ async def test_receive_game_over_via_subscribe_and_unhook():
         received.append(e)
 
     # Do not need to unsubscribe if using with syntax
-    with jane_bot.subscribe(EventType.GAME_OVER, on_game_over):
+    with jane_bot.events.subscribe(EventType.GAME_OVER, on_game_over):
         # If you subscribe, you are responsible for starting listening
         await jane_bot.start_events()
 
@@ -237,7 +235,7 @@ async def test_receive_game_over_better_closure():
         game_over = asyncio.Event()
         received: list[Event] = []
 
-        @jane_bot.on_event(EventType.GAME_OVER)
+        @jane_bot.events.on_event(EventType.GAME_OVER)
         async def on_game_over(e: Event):
             received.append(e)
             game_over.set()
@@ -260,5 +258,5 @@ async def test_receive_game_over_better_closure():
     assert e.event_type == EventType.GAME_OVER
     assert isinstance(e.data, list) and len(e.data) > 0
 
-    assert jane_bot._hub is not None
-    assert jane_bot._hub.subscriber_count(EventType.GAME_OVER) == 0
+    assert jane_bot.events is not None
+    assert jane_bot.events.subscriber_count(EventType.GAME_OVER) == 0

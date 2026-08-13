@@ -232,6 +232,41 @@ func OnCreateGame(w http.ResponseWriter, r *http.Request) {
 	just.Logger.Debugf("game lobby [%s] created for [%s]", g.id, userID)
 }
 
+// OnSetTable godoc
+// @Summary      Sets a table
+// @Description  creates a game for testing
+// @Tags         Game
+// @Accept       json
+// @Produce      json
+// @Param request body TableDTO true "the game state object to load as a test game"
+// @Success      200 {object} just.ResponseMessage[string] "game created - game id as string"
+// @Failure      400 {object} just.ResponseMessage[just.ErrorDTO]
+// @Security BearerAuth
+// @Router       /game/{id}/table [post]
+func OnSetTable(w http.ResponseWriter, r *http.Request) {
+	_, _, err := just.GetAuthorizedUser(r)
+	if err != nil {
+		just.Logger.Errorf("encountered error: %v", err)
+		just.MissingToken().WriteJSONResponse(w)
+		return
+	}
+
+	gameID := r.PathValue("game_id")
+
+	var table TableDTO
+	if err := json.NewDecoder(r.Body).Decode(&table); err != nil {
+		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
+		return
+	}
+
+	g, ok := CurrentGames.GetGame(gameID)
+	if !ok {
+		just.NotFound("game not found", just.GameNotFound).WriteJSONResponse(w)
+	}
+
+	g.table = table.AsTable()
+}
+
 // OnExchangeChips godoc
 // @Summary      Exchange Chips
 // @Description  exchange chips in the players stack with the tables rack
@@ -387,15 +422,14 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 
 	if g.IsGameOver() {
 		g.table.OnGameOver()
+	} else {
+		if g.table.currentRound.currentRoundType == RoundTypeCompleted && g.config.AutoStartHands {
+			go g.table.nextHand(g.config.SmallBlind, g.config.BigBlind)
+		}
 	}
 
 	go handleUpdates(g, g.AsDTO(), "game_state_update")
 	just.OK("action_accepted", struct{}{}).WriteJSONResponse(w)
-}
-
-type ActiveGameDTO struct {
-	ID      string   `json:"id"`
-	Players []string `json:"player_ids"`
 }
 
 // OnGetCurrentActiveGames godoc

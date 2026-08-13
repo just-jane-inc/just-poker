@@ -1,7 +1,5 @@
 import asyncio
 import logging
-from collections.abc import Callable
-from dataclasses import dataclass
 
 import poker_bot.bot.poker_exceptions as ex
 import poker_bot.bot.poker_helpers as help
@@ -18,61 +16,27 @@ from openapi_client import (
 from openapi_client.models.game_player_dto import GamePlayerDTO
 from openapi_client.models.game_player_intent import GamePlayerIntent
 from poker_bot.bot.event_hub import (
-    Event,
-    EventHandler,
     EventHub,
     EventSubscriber,
     EventType,
-    EventTypeArg,
     websocket_event_hub,
 )
 from poker_bot.bot.websocket_events import (
     WebSocketEvent,
-    WebSocketListener,
-    WebSocketStream,
 )
 
 logger = logging.getLogger("bot")
 
 
-@dataclass
-class Chips:
-    denomination: int
-    count: int
-
-
-def sum_chips(chip_stack: list[Chips]) -> int:
-    sum = 0
-    for chips in chip_stack:
-        sum += chips.denomination * chips.count
-
-    return sum
-
-
-def convert_stack(stack) -> list[Chips]:
-    chips: list[Chips] = []
-    for d, c in stack.items():
-        chips.append(Chips(int(d), c))
-
-    return chips
-
-
-def convert_chips(chips: list[Chips]) -> dict[str, int]:
-    stack: dict[str, int] = {}
-    for chip in chips:
-        stack[str(chip.denomination)] = chip.count
-
-    return stack
-
-
 class PokerBot:
-    def __init__(self, base_url: str, token: str, user_id: str, game_id: str):
+    def __init__(self, base_url: str, token: str, user_id: str, game_id: str, timeout: float = -1.0):
         """A poker bot
 
         Args:
             base_url: the url for the poker server to connect to
             token: the user authorization token to use for this bot
             game_id: the id of the game to interact with
+            timeout: the number of seconds that the bot should wait in the wait_for_my_turn function
 
         Raises:
             CustomException: if an argument is not provided
@@ -98,135 +62,92 @@ class PokerBot:
         self._joined = False
         self._user_id = user_id
         self._player: GamePlayerDTO | None = None
-        self._current_stack: list[Chips] = []
+        self._current_stack: list[help.Chips] = []
         self._current_state: GameGameDTO | None = None
         self._listener: ws.WebSocketListener | None = None
         self._hub: EventHub | None = None
         self._state_subscription: EventSubscriber | None = None
+        self._timeout = timeout
 
     async def join_game(self):
+        """joins the configured game for this bot - if the bot is already joined to the game will noop"""
         if self._joined:
             return
 
         _ = await self._game_api.game_game_id_player_post(self._game_id)
+        self._joined = True
 
     async def start_game(self):
+        """starts the game configured for this bot"""
         await self._game_api.game_game_id_started_post(self._game_id)
 
     async def get_game_state(self) -> GameGameDTO | None:
+        """gets the current game state
+
+        when getting the game state this will also update the internally tracked game state.
+        """
         resp = await self._game_api.game_game_id_state_get(self._game_id)
 
         if resp.data is None:
             return None
 
-        self._ingest_state(resp.data)
+        self._ingest_game_dto(resp.data)
         return resp.data
 
     @property
     def events(self) -> EventHub:
-        if self._hub is None:
-            self._hub = websocket_event_hub(self._base_url, self._token, self._game_id)
-            if self._hub is None:
-                raise ex.CustomException("could not create eventhub")
+        """gets reference to EventHub configured for the bot
 
-            # Listen to gamestate updates immediately to bake in helpers
-            # Requires something to call x.events somehow for setup, many paths automatically do it but not all
-            self._state_subscription = self._hub.subscribe(
-                (
-                    EventType.WELCOME,
-                    EventType.GAME_STATE_UPDATE,
-                    EventType.STARTING_GAME,
-                ),
-                self._ingest_update,
-            )
+        this will create a hub if one does not already exist.
+        """
+        if self._hub:
+            return self._hub
+
+        # TODO: why do we allow this to be None? it is bad to just make one in constructor?
+        self._hub = websocket_event_hub(self._base_url, self._token, self._game_id)
+
+        if self._hub is None:
+            raise ex.CustomException("could not create eventhub")
+
+        # Listen to gamestate updates immediately to bake in helpers
+        # Requires something to call x.events somehow for setup, many paths automatically do it but not all
+        self._state_subscription = self._hub.subscribe(
+            (
+                EventType.WELCOME,
+                EventType.GAME_STATE_UPDATE,
+                EventType.STARTING_GAME,
+            ),
+            self._ingest_websocket_event,
+        )
 
         return self._hub
-
-    def subscribe(
-        self, event_type: EventTypeArg, callback: EventHandler
-    ) -> EventSubscriber:
-        return self.events.subscribe(event_type, callback)
-
-    def on_event(
-        self, *event_types: "EventType | str"
-    ) -> Callable[[EventHandler], EventHandler]:
-        return self.events.on_event(*event_types)
-
-    def stream_events(self, event_type: EventTypeArg = "*"):
-        return self.events.stream(event_type)
 
     async def start_events(self) -> EventHub:
         """Only necessary to call if manually setting up all listeners"""
         return await self.events.start()
 
     async def stop_events(self) -> None:
-        if self._hub is not None:
-            await self._hub.stop()
+        """stops the EventHub
 
-    async def wait_for_event(
-        self, event_type: EventTypeArg, timeout: float | None = None
-    ) -> Event:
-        return await self.events.wait_for(event_type, timeout)
+        Raises:
+            ex.CustomException: if their is no hub initialized
+        """
+        if self._hub is None:
+            raise ex.CustomException("you have made an error")
 
-    async def __aenter__(self) -> "PokerBot":
-        await self.start_events()
-        return self
+        await self._hub.stop()
 
-    async def __aexit__(self, exc_type, exc, tb) -> None:
-        if self._state_subscription and hasattr(
-            self._state_subscription, "unsubscribe"
-        ):
-            self._state_subscription.unsubscribe()
-        await self.stop_events()
+    # TODO: it might be nice to link to swagger stuff for these
+    async def exchange_chips(self, give: list[help.Chips], receive: list[help.Chips]):
+        """exchanges chips held by the bot with the games exchange
 
-    def _ingest_state(self, state: GameGameDTO):
-        # TODO: get the LSP to stop being insane
-        if state is not None:
-            self._current_state = state
-        if state is None or state.table is None or state.table.players is None:
-            logger.warning("state is none in _ingest_state")
-            return
+        Args:
+            give: the chips the bot is giving to the server exchange
+            receive: the chips the bot wants to receive as a result of the exchange
 
-        for player in state.table.players:
-            if player.user_id == self._user_id:
-                self._player = player
-                self._current_stack = sorted(
-                    convert_stack(self._player.stack),
-                    key=lambda i: i.denomination,
-                    reverse=True,
-                )
-                break
-
-        self._current_state = state
-
-    def _ingest_update(self, event: WebSocketEvent):
-        if event.data is not None and isinstance(event.data, GameGameDTO):
-            self._ingest_state(event.data)
-
-    def websocket_stream(self, **kwargs) -> WebSocketStream:
-        """Raw Stream"""
-        return WebSocketStream(
-            self._base_url,
-            self._token,
-            self._game_id,
-            on_state=self._ingest_update,
-            **kwargs,
-        )
-
-    def websocket_listener(self, **kwargs) -> WebSocketListener | None:
-        """Raw Listener"""
-        if self._listener is not None:
-            return self._listener
-        self._listener = WebSocketListener(
-            self._base_url,
-            self._token,
-            self._game_id,
-            on_game_state=self._ingest_state,
-            **kwargs,
-        )
-        return self._listener
-
-    async def exchange_chips(self, give: list[Chips], receive: list[Chips]):
+        Raises:
+            ex.CustomException: raises error if the exchange is determined to be invalid by the server
+        """
         give_stack = {str(s.denomination): s.count for s in give}
         receive_stack = {str(s.denomination): s.count for s in receive}
         dto = GameChipExchangeDTO(give=give_stack, receive=receive_stack)
@@ -235,40 +156,7 @@ class PokerBot:
         if resp.type == "error":
             raise ex.CustomException("error in chip exchange: %s", resp.data.error)
 
-    async def break_chip(self, value: int, denominations: list[int]) -> list[Chips]:
-        """breaks a single chip with denomination of "value" into a collection of smaller chips for an exchange"""
-        result: list[Chips] = []
-
-        # the running value of chips left to breakdown
-        remaining = value
-
-        # we want to break down chips from the largest denomination down
-        # reversed returns a sorted list in decending order
-        for denom in reversed(denominations):
-            if denom >= value:
-                continue
-
-            count = remaining // denom
-            remaining = remaining % denom
-
-            if count > 0:
-                result.append(Chips(denom, count))
-
-            if remaining == 0:
-                break
-
-        if remaining != 0:
-            logger.error(
-                f"{value} can not be subdivided with provided denominations {denominations}"
-            )
-
-            raise ex.CustomException(
-                "invalid chip exchange request with current denominations"
-            )
-
-        return result
-
-    def merge_stack(self, chips: Chips):
+    def merge_stack(self, chips: help.Chips):
         """joins provided chip with the bots current stack"""
         for s in self._current_stack:
             if s.denomination == chips.denomination:
@@ -277,15 +165,13 @@ class PokerBot:
 
         self._current_stack.append(chips)
 
-    async def try_cover_bet(self, amount_needed: int, bet: list[Chips]):
+    async def try_cover_bet(self, amount_needed: int, bet: list[help.Chips]):
         """attempts to construct a set of chips that satisfies the needed amount from available chip stack
 
         - will preform exchanges of chips as it tries to compute an amount needed
         - will return the entire stack if the amount needed exceeds available chips (all in)
         """
-        logger.debug(
-            f"try cover bet for [{amount_needed}] current bet: [{bet}] stack: {self._current_stack}"
-        )
+        logger.debug(f"try cover bet for [{amount_needed}] current bet: [{bet}] stack: {self._current_stack}")
 
         if self._current_state is None:
             raise ex.CustomException("try_cover_bet invoked before a state received")
@@ -311,7 +197,7 @@ class PokerBot:
 
             logger.debug(f"taking {take}x{s.denomination} from stack for bet")
             s.count -= take
-            bet.append(Chips(s.denomination, take))
+            bet.append(help.Chips(s.denomination, take))
             amount_needed -= take * s.denomination
 
             if amount_needed == 0:
@@ -332,8 +218,8 @@ class PokerBot:
                 break
 
             logger.debug(f"exchanging 1x{s.denomination} for smaller chips")
-            broken = await self.break_chip(s.denomination, denominations)
-            await self.exchange_chips(give=[Chips(s.denomination, 1)], receive=broken)
+            broken = self._break_chip(s.denomination, denominations)
+            await self.exchange_chips(give=[help.Chips(s.denomination, 1)], receive=broken)
             s.count -= 1
 
             for b in broken:
@@ -343,55 +229,121 @@ class PokerBot:
 
         raise ValueError("could not construct a valid bet for provided amount")
 
-    async def check(self):
+    async def check(self) -> bool:
+        """sends the check action after waiting for the bots turn
+
+        Returns:
+            a flag indicating True if the action was actually send, a False indicating
+            that the bot reached its configured timeout prior to preforming an action
+        """
         await self.wait_for_my_turn()
-        await self.send_action(GamePlayerIntent.PlayerIntentCheck, {})
+        if not self.is_my_turn():
+            return False
+
+        return await self.send_action(GamePlayerIntent.PlayerIntentCheck, {})
 
     async def all_in(self):
+        """sends the all in action after waiting for the bots turn
+
+        Returns:
+            a flag indicating True if the action was actually send, a False indicating
+            that the bot reached its configured timeout prior to preforming an action
+        """
         await self.wait_for_my_turn()
+        if not self.is_my_turn():
+            return False
+
         await self.send_action(GamePlayerIntent.PlayerIntentAllIn, {})
 
     async def raise_bet(self, raise_to: int):
+        """sends action to raise bet after waiting for the bots turn
+
+        Returns:
+            a flag indicating True if the action was actually send, a False indicating
+            that the bot reached its configured timeout prior to preforming an action
+
+        Raises:
+            ApiException: if the raise action was not valid given the state of the game
+        """
         await self.wait_for_my_turn()
-        current_bet = convert_stack(self._player.current_bet)
+        if not self.is_my_turn():
+            return False
+
+        current_bet = help.convert_stack(self._player.current_bet)
         current_bet = sum(s.denomination * s.count for s in current_bet)
         raise_to = raise_to - current_bet
 
-        bet: list[Chips] = []
+        bet: list[help.Chips] = []
         await self.try_cover_bet(raise_to, bet)
-        stack = convert_chips(bet)
+        stack = help.convert_chips(bet)
 
         await self.send_action(GamePlayerIntent.PlayerIntentRaise, stack)
 
     async def ante(self):
+        """sends action to raise bet after waiting for the bots turn
+
+        Returns:
+            a flag indicating True if the action was actually send, a False indicating
+            that the bot reached its configured timeout prior to preforming an action
+
+        Raises:
+            ApiException: if the raise action was not valid given the state of the game
+        """
         await self.wait_for_my_turn()
+        if not self.is_my_turn():
+            return False
+
         amount = self._current_state.table.current_round.bet
         if not amount:
             raise ex.CustomException("erm")
 
-        bet: list[Chips] = []
+        bet: list[help.Chips] = []
         await self.try_cover_bet(amount, bet)
-        stack = convert_chips(bet)
+        stack = help.convert_chips(bet)
 
         await self.send_action(GamePlayerIntent.PlayerIntentAnte, stack)
 
     async def call(self):
+        """sends action to call after waiting for the bots turn
+
+        Returns:
+            a flag indicating True if the action was actually send, a False indicating
+            that the bot reached its configured timeout prior to preforming an action
+
+        Raises:
+            ApiException: if the call action was not valid given the state of the game
+        """
         await self.wait_for_my_turn()
+        if not self.is_my_turn():
+            return False
+
         amount = self._current_state.table.current_round.bet
         if not amount:
             raise ex.CustomException("erm")
 
-        stack = convert_stack(self._player.current_bet)
+        stack = help.convert_stack(self._player.current_bet)
         current_bet = sum(s.denomination * s.count for s in stack)
         amount -= current_bet
-        bet: list[Chips] = []
+        bet: list[help.Chips] = []
         await self.try_cover_bet(amount, bet)
-        stack = convert_chips(bet)
+        stack = help.convert_chips(bet)
 
         await self.send_action(GamePlayerIntent.PlayerIntentCall, stack)
 
     async def fold(self):
+        """sends action to call after waiting for the bots turn
+
+        Returns:
+            a flag indicating True if the action was actually send, a False indicating
+            that the bot reached its configured timeout prior to preforming an action
+
+        Raises:
+            ApiException: if the call action was not valid given the state of the game
+        """
         await self.wait_for_my_turn()
+        if not self.is_my_turn():
+            return False
+
         await self.send_action(GamePlayerIntent.PlayerIntentFold)
 
     async def send_action(self, intent: str, bet: dict[str, int] | None = None):
@@ -405,7 +357,6 @@ class PokerBot:
             recovery information. please see documentation on error recovery, that exists and
             is impressively verbose. surely...
         """
-
         if bet is None:
             bet = {}
 
@@ -414,19 +365,25 @@ class PokerBot:
         await self._game_api.game_game_id_action_post(self._game_id, req)
 
     async def wait_for_my_turn(self):
-        manual_running = self._listener is not None and self._listener.running
-        if not manual_running and not self.events.running:
+        """blocks until a game state is injected that signals it is this players turn
+
+        Raises:
+            ex.CostumException: if the bot is not joined to a game this will throw.
+        """
+        if not self._joined:
+            raise ex.CustomException("you are not in the game - it can never be your turn")
+
+        if not self.events.running:
             await self.start_events()
 
-        while not self.is_my_turn():
-            await asyncio.sleep(0.5)
-
-    def _current_position(self) -> int | None:
-        if self._current_state is None or self._current_state.table is None:
-            return None
-        if self._current_state.table.current_round is None:
-            return None
-        return self._current_state.table.current_round.current_player_position
+        if self._timeout >= 0:
+            timeout = self._timeout
+            while timeout > 0 and not self.is_my_turn():
+                await asyncio.sleep(0.5)
+                timeout -= 0.5
+        else:
+            while not self.is_my_turn():
+                await asyncio.sleep(0.5)
 
     def is_my_turn(self) -> bool:
         if self._player is None:
@@ -437,3 +394,78 @@ class PokerBot:
             return False
 
         return current_player_position == self._player.position
+
+    def _break_chip(self, value: int, denominations: list[int]) -> list[help.Chips]:
+        result: list[help.Chips] = []
+
+        # the running value of chips left to breakdown
+        remaining = value
+
+        # we want to break down chips from the largest denomination down
+        # reversed returns a sorted list in decending order
+        for denom in reversed(denominations):
+            if denom >= value:
+                continue
+
+            count = remaining // denom
+            remaining = remaining % denom
+
+            if count > 0:
+                result.append(help.Chips(denom, count))
+
+            if remaining == 0:
+                break
+
+        if remaining != 0:
+            logger.error(f"{value} can not be subdivided with provided denominations {denominations}")
+
+            raise ex.CustomException("invalid chip exchange request with current denominations")
+
+        return result
+
+    def _ingest_game_dto(self, state: GameGameDTO):
+        """updates the internal model based on a new state
+
+        alters the _current_state field as well as the _player and _current_stack
+        """
+        if state is None or state.table is None or state.table.players is None:
+            logger.warning("state is none in _ingest_game_dto")
+            return
+
+        self._current_state = state
+
+        for player in state.table.players:
+            if player.user_id == self._user_id:
+                self._joined = True
+                self._player = player
+                self._current_stack = sorted(
+                    help.convert_stack(self._player.stack),
+                    key=lambda i: i.denomination,
+                    reverse=True,
+                )
+                break
+
+        self._current_state = state
+
+    def _current_position(self) -> int | None:
+        if self._current_state is None or self._current_state.table is None:
+            return None
+        if self._current_state.table.current_round is None:
+            return None
+        return self._current_state.table.current_round.current_player_position
+
+    def _ingest_websocket_event(self, event: WebSocketEvent):
+        if event.data is not None and isinstance(event.data, GameGameDTO):
+            self._ingest_game_dto(event.data)
+
+    async def __aenter__(self) -> "PokerBot":
+        # we call this to ensure that the event hub as been started prior
+        # to exposing the bot within an async with block. this follows a
+        # pattern for starting/stopping an async context.
+        await self.start_events()
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb) -> None:
+        if self._state_subscription:
+            self._state_subscription.unsubscribe()
+        await self.stop_events()

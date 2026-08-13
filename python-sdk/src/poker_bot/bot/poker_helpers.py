@@ -1,4 +1,5 @@
 import logging
+from dataclasses import dataclass
 from enum import Enum
 
 from openapi_client import (
@@ -110,6 +111,36 @@ class CardRank(Enum):
     QUEEN = ord("Q")
     KING = ord("K")
     UNKNOWN = ord("x")
+
+
+@dataclass
+class Chips:
+    denomination: int
+    count: int
+
+
+def sum_chips(chip_stack: list[Chips]) -> int:
+    sum = 0
+    for chips in chip_stack:
+        sum += chips.denomination * chips.count
+
+    return sum
+
+
+def convert_stack(stack) -> list[Chips]:
+    chips: list[Chips] = []
+    for d, c in stack.items():
+        chips.append(Chips(int(d), c))
+
+    return chips
+
+
+def convert_chips(chips: list[Chips]) -> dict[str, int]:
+    stack: dict[str, int] = {}
+    for chip in chips:
+        stack[str(chip.denomination)] = chip.count
+
+    return stack
 
 
 def get_unicode_mapping():

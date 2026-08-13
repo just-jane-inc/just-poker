@@ -7,7 +7,7 @@ from collections.abc import (
     Callable,
     Iterable,
 )
-from typing import Any, Optional, Protocol, Union, runtime_checkable
+from typing import Any, Protocol, Union, runtime_checkable
 
 import poker_bot.bot.poker_exceptions as ex
 from poker_bot.bot.websocket_events import (
@@ -23,13 +23,14 @@ logger = logging.getLogger("event_hub")
 Event = WebSocketEvent
 EventType = WebSocketEventType
 
-EventHandler = Callable[[Event], Union[Awaitable[None], None]]
+EventHandler = Callable[[Event], Awaitable[None] | None]
 ALL_EVENTS = "*"
 
 
 @runtime_checkable
 class EventTransport(Protocol):
-    """ Abstract setup """
+    """Abstract setup"""
+
     async def connect(self) -> Any: ...
     async def close(self) -> None: ...
     def events(self) -> AsyncGenerator[Event, None]: ...
@@ -38,10 +39,10 @@ class EventTransport(Protocol):
 class EventSubscriber:
     # __slots__ in python is basically the "allowed" attributes, rather than blanket whatever is its __dict__
     # aka, this prevents arbitrarily adding new attribute stuff to it, which is cool cause now it's limited
-    __slots__ = ("_hub", "_keys", "_callback", "_active", "__weakref__")
+    __slots__ = ("__weakref__", "_active", "_callback", "_hub", "_keys")
 
     def __init__(self, hub: "EventHub", keys: tuple[str, ...], callback: EventHandler):
-        self._hub: Optional[EventHub] = hub
+        self._hub: EventHub | None = hub
         self._keys = keys
         self._callback = callback
         self._active = True
@@ -108,7 +109,7 @@ def _normalize(event_type: "EventTypeArg") -> tuple[str, ...]:
     raise ex.CustomException(f"unsupported event type: {event_type!r}")
 
 
-EventTypeArg = Union[str, WebSocketEventType, Iterable[Union[str, WebSocketEventType]]]
+EventTypeArg = Union[str, WebSocketEventType, Iterable[str | WebSocketEventType]]
 
 
 class EventHub:
@@ -132,16 +133,14 @@ class EventHub:
     def transport(self) -> EventTransport:
         return self._transport
 
-    def subscribe(self, event_type: EventTypeArg, callback: EventHandler
-    ) -> EventSubscriber:
+    def subscribe(self, event_type: EventTypeArg, callback: EventHandler) -> EventSubscriber:
         keys = _normalize(event_type)
         subscriber = EventSubscriber(self, keys, callback)
         for key in keys:
             self._subscribers.setdefault(key, []).append(subscriber)
         return subscriber
 
-    def on_event(self, *event_types: Union[str, WebSocketEventType]
-    ) -> Callable[[EventHandler], EventHandler]:
+    def on_event(self, *event_types: str | WebSocketEventType) -> Callable[[EventHandler], EventHandler]:
         if not event_types:
             raise ex.CustomException("on_event needs at least one event type, or '*' for all")
 
@@ -152,9 +151,7 @@ class EventHub:
                 subscriptions = []
                 try:
                     callback.event_subscriptions = subscriptions
-                    callback.unsubscribe = lambda: any(
-                        [s.unsubscribe() for s in subscriptions]
-                    )
+                    callback.unsubscribe = lambda: any([s.unsubscribe() for s in subscriptions])
                 except AttributeError:
                     logger.debug(f"could not attach subscription to {callback!r}")
 
@@ -180,7 +177,8 @@ class EventHub:
             return sum(len(v) for v in self._subscribers.values())
         return sum(len(self._subscribers.get(k, ())) for k in _normalize(event_type))
 
-    async def wait_for(self,
+    async def wait_for(
+        self,
         event_type: EventTypeArg,
         timeout: float | None = None,
         predicate: Callable[[Event], bool] | None = None,
@@ -204,9 +202,8 @@ class EventHub:
         await asyncio.wait_for(self._closed.wait(), timeout)
         return self._close_info
 
-    async def stream(self, event_type: EventTypeArg = ALL_EVENTS, *, maxsize: int = 0
-    ) -> AsyncGenerator[Event, None]:
-        """ Stream events directly """
+    async def stream(self, event_type: EventTypeArg = ALL_EVENTS, *, maxsize: int = 0) -> AsyncGenerator[Event, None]:
+        """Stream events directly"""
         queue: asyncio.Queue[Event] = asyncio.Queue(maxsize=maxsize)
 
         def _enqueue(event: Event) -> None:
@@ -222,9 +219,7 @@ class EventHub:
             try:
                 while True:
                     getter = asyncio.ensure_future(queue.get())
-                    await asyncio.wait(
-                        (getter, closed), return_when=asyncio.FIRST_COMPLETED
-                    )
+                    await asyncio.wait((getter, closed), return_when=asyncio.FIRST_COMPLETED)
 
                     if getter.done():
                         yield getter.result()
@@ -240,7 +235,7 @@ class EventHub:
                     getter.cancel()
 
     def __aiter__(self) -> AsyncIterator[Event]:
-        """ Allows 'async for x in hub' syntax on an EventHub """
+        """Allows 'async for x in hub' syntax on an EventHub"""
         return self.stream()
 
     async def start(self) -> "EventHub":
@@ -251,7 +246,6 @@ class EventHub:
         await self._transport.connect()
         self._task = asyncio.create_task(self._run(), name=self._name)
         return self
-
 
     async def stop(self) -> None:
         await self._transport.close()

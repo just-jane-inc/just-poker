@@ -41,7 +41,7 @@ async def listen_as(user: str, game_id: str):
     bot = PokerBot(base_url, test_user.token, test_user.user_id, game_id)
 
     try:
-        async for e in bot.stream_events():
+        async for e in bot.events.stream():
             print(f"received event: [{e.id}] [{e.time_sent}] {e.event_type}")
             print(json.dumps(e._data, indent=2))
     finally:
