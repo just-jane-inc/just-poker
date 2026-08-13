@@ -2,18 +2,20 @@ FROM golang:1.25-alpine AS builder
 ARG SWAG_VERSION=latest
 ENV GOPRIVATE=github.com/just-jane-inc/*
 
+RUN apk add --no-cache git
+
 WORKDIR /build
 
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go install github.com/swaggo/swag/v2/cmd/swag@${SWAG_VERSION}
 
-COPY go.mod go.sum ./
+# COPY go.mod go.sum ./
 
-RUN --mount=type=secret,id=netrc,target=/root/.netrc,mode=0400 \
-    --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
-    go mod download
+# RUN --mount=type=secret,id=netrc,target=/root/.netrc,mode=0400 \
+#     --mount=type=cache,target=/go/pkg/mod \
+#     --mount=type=cache,target=/root/.cache/go-build \
+#     go mod download
 
 COPY . .
 
