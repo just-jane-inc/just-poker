@@ -25,9 +25,12 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     CGO_ENABLED=0 GOOS=linux \
     go build -trimpath -ldflags="-s -w" -o /out/just-poker .
 
+RUN mkdir -p /opt/var/log && chown 65532:65532 /opt/var/log
+
 FROM gcr.io/distroless/static-debian12:nonroot
 
 COPY --from=builder /out/just-poker /just-poker
+COPY --from=builder /opt/var/log --chown=nonroot
 
 # documentation port only
 EXPOSE 8080
