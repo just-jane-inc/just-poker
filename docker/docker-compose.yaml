@@ -2,7 +2,7 @@ name: just-poker
 
 services:
   hand_evaluator:
-    image: ghcr.io/just-jane-inc/just-hand-evaluator:pr-8
+    image: ghcr.io/just-jane-inc/just-hand-evaluator:latest
     restart: unless-stopped
     ports:
       - "${HAND_EVAL_PORT:-7653}:${HAND_EVAL_PORT:-7653}"
@@ -17,7 +17,7 @@ services:
       start_period: 5s
       retries: 10
   server:
-    image: ghcr.io/just-jane-inc/just-poker-server:pr-8
+    image: ghcr.io/just-jane-inc/just-poker-server:latest
     restart: unless-stopped
     ports:
       - "${JUST_POKER_PORT:-7821}:${JUST_POKER_PORT:-7821}"
