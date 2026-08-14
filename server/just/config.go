@@ -18,6 +18,8 @@ type Config struct {
 	DBConnString string `env:"PG_URL,required"`
 	PokerEvalURL string `env:"HAND_EVAL_ROUTE,required"`
 
+	SwaggerServerURL string `env:"SWAGGER_SERVER_URL" envDefault:"https://game.bahms.org/api/poker"`
+
 	ElasticHost      string `env:"ELASTIC_HOST"`
 	ElasticAPIKey    string `env:"ELASTIC_API_KEY"`
 	ElasticIndexRoot string `env:"ELASTIC_INDEX_ROOT"`
