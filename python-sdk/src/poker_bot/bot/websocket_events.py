@@ -163,7 +163,7 @@ def parse_event(message: str | bytes) -> WebSocketEvent:
 
         event_type = WebSocketEventType.from_str(_event_type)
 
-        logger.info(f"received event [{_event_type}]: {recv_data}")
+        logger.info(f"received event [{_event_type}]: {json.dumps(recv_data)}")
 
         time_sent = payload.get("time_sent", "")
         try:

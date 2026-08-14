@@ -1,0 +1,66 @@
+name: just-poker
+
+services:
+  hand_evaluator:
+    image: ghcr.io/just-jane-inc/just-hand-evaluator:latest
+    restart: unless-stopped
+    ports:
+      - "${HAND_EVAL_PORT:-7653}:${HAND_EVAL_PORT:-7653}"
+    environment:
+      PORT: "${HAND_EVAL_PORT:-7653}"
+      CLI: "/just_eval"
+
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- --post-data='[{\"rank\":65,\"suit\":115},{\"rank\":65,\"suit\":104},{\"rank\":84,\"suit\":104},{\"rank\":84,\"suit\":100},{\"rank\":84,\"suit\":99}]' http://localhost:${HAND_EVAL_PORT:-7653}/evaluate"]
+      interval: 60s
+      timeout: 5s
+      start_period: 5s
+      retries: 10
+  server:
+    image: ghcr.io/just-jane-inc/just-poker-server:latest
+    restart: unless-stopped
+    ports:
+      - "${JUST_POKER_PORT:-7821}:${JUST_POKER_PORT:-7821}"
+    environment:
+      JUST_POKER_PORT: "${JUST_POKER_PORT:-7821}"
+      PG_URL: "${PG_URL:-postgres://${POSTGRES_USER:-poker}:${POSTGRES_PASSWORD:-poker}@db:5432/poker?sslmode=disable}"
+      HAND_EVAL_ROUTE: "${HAND_EVAL_ROUTE:-http://hand_evaluator:${HAND_EVAL_PORT:-7653}/evaluate}"
+      SWAGGER_SERVER_URL: "${SWAGGER_SERVER_URL:-http://localhost:${JUST_POKER_PORT:-7821}}"
+      JUST_POKER_PEPPER: "${JUST_POKER_PEPPER:?JUST_POKER_PEPPER must be set}"
+      ELASTIC_HOST: "${ELASTIC_HOST:-}"
+      ELASTIC_API_KEY: "${ELASTIC_API_KEY:-}"
+      ELASTIC_INDEX_ROOT: "${ELASTIC_INDEX_ROOT:-}"
+      ELASTIC_LOG_INDEX: "${ELASTIC_LOG_INDEX:-}"
+      ELASATIC_LOG_LEVEL: "${ELASATIC_LOG_LEVEL:-INFO}" # Yes Jane, you typo'd this
+      CONSOLE_LOG_LEVEL: "${CONSOLE_LOG_LEVEL:-INFO}"
+      FILE_LOG_LEVEL: "${FILE_LOG_LEVEL:-DEBUG}"
+      FILE_LOG_PATH: "${FILE_LOG_PATH:-/opt/var/log/just-poker.log}"
+    volumes:
+      - logdata:/opt/var/log
+    depends_on:
+      # hand_evaluator:
+      #   condition: service_healthy
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER:-poker}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-poker}"
+      POSTGRES_DB: "${POSTGRES_DB:-poker}"
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-poker} -d ${POSTGRES_DB:-poker}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
+  logdata:
