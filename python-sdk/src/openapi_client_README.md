@@ -88,6 +88,7 @@ Class | Method | HTTP request | Description
 *GameApi* | [**game_game_id_state_listen_get**](openapi_client/docs/GameApi.md#game_game_id_state_listen_get) | **GET** /game/{game_id}/state/listen | Get Listener
 *GameApi* | [**game_game_id_state_listen_post**](openapi_client/docs/GameApi.md#game_game_id_state_listen_post) | **POST** /game/{game_id}/state/listen | Register Listener
 *GameApi* | [**game_game_id_state_ws_get**](openapi_client/docs/GameApi.md#game_game_id_state_ws_get) | **GET** /game/{game_id}/state/ws | Connect Updates
+*GameApi* | [**game_game_id_table_post**](openapi_client/docs/GameApi.md#game_game_id_table_post) | **POST** /game/{game_id}/table | Sets a table
 *GameApi* | [**game_get**](openapi_client/docs/GameApi.md#game_get) | **GET** /game | Gets Active Games
 *GameApi* | [**game_post**](openapi_client/docs/GameApi.md#game_post) | **POST** /game | Create Game
 *GameApi* | [**hand_evaluator_evaluate_post**](openapi_client/docs/GameApi.md#hand_evaluator_evaluate_post) | **POST** /hand-evaluator/evaluate | Evaluate a Hand
@@ -107,6 +108,7 @@ Class | Method | HTTP request | Description
  - [GameGameIdActionPostRequest](openapi_client/docs/GameGameIdActionPostRequest.md)
  - [GameGameIdChipExchangePostRequest](openapi_client/docs/GameGameIdChipExchangePostRequest.md)
  - [GameGameIdHandPostRequest](openapi_client/docs/GameGameIdHandPostRequest.md)
+ - [GameGameIdTablePostRequest](openapi_client/docs/GameGameIdTablePostRequest.md)
  - [GameHandDTO](openapi_client/docs/GameHandDTO.md)
  - [GameNewGameConfigDTO](openapi_client/docs/GameNewGameConfigDTO.md)
  - [GameNewHandDTO](openapi_client/docs/GameNewHandDTO.md)
@@ -120,6 +122,7 @@ Class | Method | HTTP request | Description
  - [HandEvaluatorEvaluatePostRequest](openapi_client/docs/HandEvaluatorEvaluatePostRequest.md)
  - [JustErrorCode](openapi_client/docs/JustErrorCode.md)
  - [JustErrorDTO](openapi_client/docs/JustErrorDTO.md)
+ - [JustHandEvaluationDTO](openapi_client/docs/JustHandEvaluationDTO.md)
  - [JustResponseMessageAny](openapi_client/docs/JustResponseMessageAny.md)
  - [JustResponseMessageGameGameDTO](openapi_client/docs/JustResponseMessageGameGameDTO.md)
  - [JustResponseMessageJustErrorDTO](openapi_client/docs/JustResponseMessageJustErrorDTO.md)

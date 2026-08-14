@@ -14,6 +14,7 @@ Method | HTTP request | Description
 [**game_game_id_state_listen_get**](GameApi.md#game_game_id_state_listen_get) | **GET** /game/{game_id}/state/listen | Get Listener
 [**game_game_id_state_listen_post**](GameApi.md#game_game_id_state_listen_post) | **POST** /game/{game_id}/state/listen | Register Listener
 [**game_game_id_state_ws_get**](GameApi.md#game_game_id_state_ws_get) | **GET** /game/{game_id}/state/ws | Connect Updates
+[**game_game_id_table_post**](GameApi.md#game_game_id_table_post) | **POST** /game/{game_id}/table | Sets a table
 [**game_get**](GameApi.md#game_get) | **GET** /game | Gets Active Games
 [**game_post**](GameApi.md#game_post) | **POST** /game | Create Game
 [**hand_evaluator_evaluate_post**](GameApi.md#hand_evaluator_evaluate_post) | **POST** /hand-evaluator/evaluate | Evaluate a Hand
@@ -786,6 +787,88 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **game_game_id_table_post**
+> JustResponseMessageString game_game_id_table_post(game_id, game_game_id_table_post_request)
+
+Sets a table
+
+creates a game for testing
+
+### Example
+
+* Bearer Authentication (BearerAuth):
+
+```python
+import openapi_client
+from openapi_client.models.game_game_id_table_post_request import GameGameIdTablePostRequest
+from openapi_client.models.just_response_message_string import JustResponseMessageString
+from openapi_client.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to https://game.bahms.org/api/poker
+# See configuration.py for a list of all supported configuration parameters.
+configuration = openapi_client.Configuration(
+    host = "https://game.bahms.org/api/poker"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+# Configure Bearer authorization: BearerAuth
+configuration = openapi_client.Configuration(
+    access_token = os.environ["BEARER_TOKEN"]
+)
+
+# Enter a context with an instance of the API client
+async with openapi_client.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = openapi_client.GameApi(api_client)
+    game_id = 'game_id_example' # str | the id of the game to set the table for
+    game_game_id_table_post_request = openapi_client.GameGameIdTablePostRequest() # GameGameIdTablePostRequest | the game state object to load as a test game
+
+    try:
+        # Sets a table
+        api_response = await api_instance.game_game_id_table_post(game_id, game_game_id_table_post_request)
+        print("The response of GameApi->game_game_id_table_post:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling GameApi->game_game_id_table_post: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **game_id** | **str**| the id of the game to set the table for | 
+ **game_game_id_table_post_request** | [**GameGameIdTablePostRequest**](GameGameIdTablePostRequest.md)| the game state object to load as a test game | 
+
+### Return type
+
+[**JustResponseMessageString**](JustResponseMessageString.md)
+
+### Authorization
+
+[BearerAuth](../README.md#BearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | game created - game id as string |  -  |
+**400** | Bad Request |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **game_get**
 > List[GameActiveGameDTO] game_get()
 
@@ -931,7 +1014,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **hand_evaluator_evaluate_post**
-> object hand_evaluator_evaluate_post(hand_evaluator_evaluate_post_request)
+> JustHandEvaluationDTO hand_evaluator_evaluate_post(hand_evaluator_evaluate_post_request)
 
 Evaluate a Hand
 
@@ -943,6 +1026,7 @@ Evaluator? I hardly...
 ```python
 import openapi_client
 from openapi_client.models.hand_evaluator_evaluate_post_request import HandEvaluatorEvaluatePostRequest
+from openapi_client.models.just_hand_evaluation_dto import JustHandEvaluationDTO
 from openapi_client.rest import ApiException
 from pprint import pprint
 
@@ -979,7 +1063,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-**object**
+[**JustHandEvaluationDTO**](JustHandEvaluationDTO.md)
 
 ### Authorization
 

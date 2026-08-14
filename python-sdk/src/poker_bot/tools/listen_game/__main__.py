@@ -1,7 +1,9 @@
 import argparse
 import json
 import os
+from datetime import datetime
 
+import aiofiles
 from dotenv import load_dotenv
 
 from poker_bot.bot.bot import *
@@ -20,11 +22,19 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "id",
     "--game-id",
+    "--id",
     type=str,
     required=True,
     help="the id of the game to going",
+)
+
+parser.add_argument(
+    "--file",
+    type=str,
+    required=False,
+    default="",
+    help="the path to a file to write events to",
 )
 
 if os.name == "nt":
@@ -37,16 +47,25 @@ if os.name == "nt":
         pass
 
 
-async def listen_as(user: str, game_id: str):
+async def listen_as(user: str, game_id: str, file_path: str = ""):
     test_user = get_test_user(user)
     bot = PokerBot(base_url, test_user.token, test_user.user_id, game_id)
+    print(test_user.token)
 
-    try:
-        async for e in bot.events.stream():
-            print(f"received event: [{e.id}] [{e.time_sent}] {e.event_type}")
-            print(json.dumps(e._data, indent=2))
-    finally:
-        await bot.stop_events()
+    now = datetime.now().strftime("%Y%m%d-%H%M%S")
+    if file_path == "":
+        file_path = f"listener_event_log-{user}-{game_id}-{now}.data"
+
+    async with aiofiles.open(file_path, "a+") as f:
+        await f.write(f"--- starting listener game:{game_id} user:{user} time:{now} ---\n\n")
+
+        try:
+            async for e in bot.events.stream():
+                print(f"received event: [{e.id}] [{e.time_sent}] {e.event_type}")
+                print(json.dumps(e._data, indent=2))
+                await f.write(json.dumps(e.raw) + "\n")
+        finally:
+            await bot.stop_events()
 
 
 def main():

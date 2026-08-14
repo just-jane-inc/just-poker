@@ -19,6 +19,7 @@ openapi_client/docs/GameGameDTO.md
 openapi_client/docs/GameGameIdActionPostRequest.md
 openapi_client/docs/GameGameIdChipExchangePostRequest.md
 openapi_client/docs/GameGameIdHandPostRequest.md
+openapi_client/docs/GameGameIdTablePostRequest.md
 openapi_client/docs/GameHandDTO.md
 openapi_client/docs/GameNewGameConfigDTO.md
 openapi_client/docs/GameNewHandDTO.md
@@ -32,6 +33,7 @@ openapi_client/docs/GameTableDTO.md
 openapi_client/docs/HandEvaluatorEvaluatePostRequest.md
 openapi_client/docs/JustErrorCode.md
 openapi_client/docs/JustErrorDTO.md
+openapi_client/docs/JustHandEvaluationDTO.md
 openapi_client/docs/JustResponseMessageAny.md
 openapi_client/docs/JustResponseMessageGameGameDTO.md
 openapi_client/docs/JustResponseMessageJustErrorDTO.md
@@ -51,6 +53,7 @@ openapi_client/models/game_game_dto.py
 openapi_client/models/game_game_id_action_post_request.py
 openapi_client/models/game_game_id_chip_exchange_post_request.py
 openapi_client/models/game_game_id_hand_post_request.py
+openapi_client/models/game_game_id_table_post_request.py
 openapi_client/models/game_hand_dto.py
 openapi_client/models/game_new_game_config_dto.py
 openapi_client/models/game_new_hand_dto.py
@@ -64,6 +67,7 @@ openapi_client/models/game_table_dto.py
 openapi_client/models/hand_evaluator_evaluate_post_request.py
 openapi_client/models/just_error_code.py
 openapi_client/models/just_error_dto.py
+openapi_client/models/just_hand_evaluation_dto.py
 openapi_client/models/just_response_message_any.py
 openapi_client/models/just_response_message_game_game_dto.py
 openapi_client/models/just_response_message_just_error_dto.py
@@ -84,6 +88,7 @@ openapi_client/test/test_game_game_dto.py
 openapi_client/test/test_game_game_id_action_post_request.py
 openapi_client/test/test_game_game_id_chip_exchange_post_request.py
 openapi_client/test/test_game_game_id_hand_post_request.py
+openapi_client/test/test_game_game_id_table_post_request.py
 openapi_client/test/test_game_hand_dto.py
 openapi_client/test/test_game_new_game_config_dto.py
 openapi_client/test/test_game_new_hand_dto.py
@@ -97,6 +102,7 @@ openapi_client/test/test_game_table_dto.py
 openapi_client/test/test_hand_evaluator_evaluate_post_request.py
 openapi_client/test/test_just_error_code.py
 openapi_client/test/test_just_error_dto.py
+openapi_client/test/test_just_hand_evaluation_dto.py
 openapi_client/test/test_just_response_message_any.py
 openapi_client/test/test_just_response_message_game_game_dto.py
 openapi_client/test/test_just_response_message_just_error_dto.py

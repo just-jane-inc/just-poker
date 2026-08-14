@@ -20,8 +20,8 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "id",
     "--game-id",
+    "--id",
     type=str,
     required=True,
     help="the id of the game to going",

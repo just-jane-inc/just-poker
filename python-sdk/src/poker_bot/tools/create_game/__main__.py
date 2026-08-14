@@ -6,7 +6,7 @@ import os
 from dotenv import load_dotenv
 
 import openapi_client as api
-from poker_bot.bot.poker_helpers import create_game
+import poker_bot.bot.poker_helpers as help
 
 load_dotenv("config/.env")
 base_url = os.getenv("BASE_URL")
@@ -47,16 +47,14 @@ def load_config(file: str):
         return api.GameNewGameConfigDTO.from_dict(config)
 
 
-async def new_game(player_count: int, big_blind: int, small_blind: int, token: str):
-    resp = await create_game(base_url, token, big_blind, small_blind, player_count=player_count)
+async def new_game(config: api.GameNewGameConfigDTO, token: str):
+    resp = await help.create_game_from_config(base_url=base_url, config=config, token=token)
     print(resp)
 
 
 def main():
-    print("starting thing")
     with open("config/api-token", "r") as f:
         token = str(f.read()).strip("\n")
-        print(token)
 
     args = parser.parse_args()
 

@@ -69,6 +69,16 @@ class PokerBot:
         self._state_subscription: EventSubscriber | None = None
         self._timeout = timeout
 
+    def chip_total(self) -> int:
+        total = 0
+        for denom, count in self._player.stack.items():
+            total += int(denom) * count
+
+        return total
+
+    def get_game_api(self) -> GameApi:
+        return GameApi(self._api_client)
+
     async def join_game(self):
         """joins the configured game for this bot - if the bot is already joined to the game will noop"""
         if self._joined:
@@ -176,11 +186,9 @@ class PokerBot:
         if self._current_state is None:
             raise ex.CustomException("try_cover_bet invoked before a state received")
 
-        # TODO: get rid of this hardcoding of denominations, the rack
-        # should be determined by the game and available via a query
         denominations = self._current_state.game_config.chip_denominations
         if sum(s.denomination * s.count for s in self._current_stack) <= amount_needed:
-            bet = self._current_stack
+            bet.extend(self._current_stack)
             return  # all in
 
         denominations = sorted(denominations)

@@ -13,8 +13,8 @@ token = os.getenv("TOKEN")
 parser = argparse.ArgumentParser("poker bot tool CLI")
 
 parser.add_argument(
-    "id",
     "--game-id",
+    "--id",
     type=str,
     required=True,
     help="the id of the game to start",

@@ -41,6 +41,7 @@ __all__ = [
     "GameGameIdActionPostRequest",
     "GameGameIdChipExchangePostRequest",
     "GameGameIdHandPostRequest",
+    "GameGameIdTablePostRequest",
     "GameHandDTO",
     "GameNewGameConfigDTO",
     "GameNewHandDTO",
@@ -54,6 +55,7 @@ __all__ = [
     "HandEvaluatorEvaluatePostRequest",
     "JustErrorCode",
     "JustErrorDTO",
+    "JustHandEvaluationDTO",
     "JustResponseMessageAny",
     "JustResponseMessageGameGameDTO",
     "JustResponseMessageJustErrorDTO",
@@ -89,6 +91,7 @@ from openapi_client.models.game_game_dto import GameGameDTO as GameGameDTO
 from openapi_client.models.game_game_id_action_post_request import GameGameIdActionPostRequest as GameGameIdActionPostRequest
 from openapi_client.models.game_game_id_chip_exchange_post_request import GameGameIdChipExchangePostRequest as GameGameIdChipExchangePostRequest
 from openapi_client.models.game_game_id_hand_post_request import GameGameIdHandPostRequest as GameGameIdHandPostRequest
+from openapi_client.models.game_game_id_table_post_request import GameGameIdTablePostRequest as GameGameIdTablePostRequest
 from openapi_client.models.game_hand_dto import GameHandDTO as GameHandDTO
 from openapi_client.models.game_new_game_config_dto import GameNewGameConfigDTO as GameNewGameConfigDTO
 from openapi_client.models.game_new_hand_dto import GameNewHandDTO as GameNewHandDTO
@@ -102,6 +105,7 @@ from openapi_client.models.game_table_dto import GameTableDTO as GameTableDTO
 from openapi_client.models.hand_evaluator_evaluate_post_request import HandEvaluatorEvaluatePostRequest as HandEvaluatorEvaluatePostRequest
 from openapi_client.models.just_error_code import JustErrorCode as JustErrorCode
 from openapi_client.models.just_error_dto import JustErrorDTO as JustErrorDTO
+from openapi_client.models.just_hand_evaluation_dto import JustHandEvaluationDTO as JustHandEvaluationDTO
 from openapi_client.models.just_response_message_any import JustResponseMessageAny as JustResponseMessageAny
 from openapi_client.models.just_response_message_game_game_dto import JustResponseMessageGameGameDTO as JustResponseMessageGameGameDTO
 from openapi_client.models.just_response_message_just_error_dto import JustResponseMessageJustErrorDTO as JustResponseMessageJustErrorDTO
