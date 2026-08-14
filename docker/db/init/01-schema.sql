@@ -1,3 +1,5 @@
+create type poker_user_type_ as enum ('bot', 'human', 'admin', 'dealer', 'game_master');
+
 create table if not exists poker_users
 (
     id          bigint generated always as identity
@@ -5,7 +7,8 @@ create table if not exists poker_users
     username    text                                   not null,
     created_at  timestamp with time zone default now() not null,
     disabled_at timestamp with time zone,
-    twitch_user text                                   not null
+    twitch_user text                                   not null,
+    user_type   poker_user_type_         default 'bot'::poker_user_type_ not null
 );
 
 create table if not exists just_poker_game
@@ -33,3 +36,5 @@ create table if not exists poker_api_keys
     revoked_at   timestamp with time zone,
     last_used_at timestamp with time zone
 );
+
+
