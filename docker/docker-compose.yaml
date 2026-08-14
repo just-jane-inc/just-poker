@@ -2,7 +2,7 @@ name: just-poker
 
 services:
   hand_evaluator:
-    image: ghcr.io/just-jane-inc/just-hand-evaluator:latest
+    image: ghcr.io/just-jane-inc/just-hand-evaluator:pr-8
     restart: unless-stopped
     ports:
       - "${HAND_EVAL_PORT:-7653}:${HAND_EVAL_PORT:-7653}"
@@ -11,13 +11,13 @@ services:
       CLI: "/just_eval"
 
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O- --post-data='[{\"rank\":65,\"suit\":115},...]' http://localhost:${HAND_EVAL_PORT:-7653}/evaluate"]
+      test: ["CMD-SHELL", "wget -q -O- --post-data='[{\"rank\":65,\"suit\":115},{\"rank\":65,\"suit\":104},{\"rank\":84,\"suit\":104},{\"rank\":84,\"suit\":100},{\"rank\":84,\"suit\":99}]' http://localhost:${HAND_EVAL_PORT:-7653}/evaluate"]
       interval: 60s
-      timeout: 10s
-      start_period: 10s
+      timeout: 5s
+      start_period: 5s
       retries: 10
   server:
-    image: ghcr.io/just-jane-inc/just-poker-server:latest
+    image: ghcr.io/just-jane-inc/just-poker-server:pr-8
     restart: unless-stopped
     ports:
       - "${JUST_POKER_PORT:-7821}:${JUST_POKER_PORT:-7821}"
@@ -25,6 +25,7 @@ services:
       JUST_POKER_PORT: "${JUST_POKER_PORT:-7821}"
       PG_URL: "${PG_URL:-postgres://${POSTGRES_USER:-poker}:${POSTGRES_PASSWORD:-poker}@db:5432/poker?sslmode=disable}"
       HAND_EVAL_ROUTE: "${HAND_EVAL_ROUTE:-http://hand_evaluator:${HAND_EVAL_PORT:-7653}/evaluate}"
+      SWAGGER_SERVER_URL: "${SWAGGER_SERVER_URL:-http://localhost:${JUST_POKER_PORT:-7821}}"
       JUST_POKER_PEPPER: "${JUST_POKER_PEPPER:?JUST_POKER_PEPPER must be set}"
       ELASTIC_HOST: "${ELASTIC_HOST:-}"
       ELASTIC_API_KEY: "${ELASTIC_API_KEY:-}"
@@ -37,8 +38,8 @@ services:
     volumes:
       - logdata:/opt/var/log
     depends_on:
-      hand_evaluator:
-        condition: service_healthy
+      # hand_evaluator:
+      #   condition: service_healthy
       db:
         condition: service_healthy
 
