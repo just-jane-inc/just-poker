@@ -17,9 +17,23 @@ import (
 // @Accept       json
 // @Produce      json
 // @Param hand body []CardDTO true "hand to evaluate, either 5 or 7 cards"
-// @Success      200
-// @Router       /hand-evaluator/evaluate [post]
-func OnEvalHand() {}
+// @Success      200 {object} just.HandEvaluationDTO
+// @Router       /hand-evaluator/evaluate/ [post]
+func OnEvalHand(w http.ResponseWriter, r *http.Request) {
+	resp, err := http.Post(just.Env.PokerEvalURL, "application/json", r.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	var dto just.HandEvaluationDTO
+	if err := json.NewDecoder(resp.Body).Decode(&dto); err != nil {
+		just.Logger.Error("OH NO")
+		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
+		return
+	}
+
+	just.WriteJSONResponse(w, 200, dto)
+}
 
 // OnDeleteGame godoc
 // @Summary      Delete a Game
@@ -238,11 +252,12 @@ func OnCreateGame(w http.ResponseWriter, r *http.Request) {
 // @Tags         Game
 // @Accept       json
 // @Produce      json
+// @Param game_id path string true "the id of the game to set the table for"
 // @Param request body TableDTO true "the game state object to load as a test game"
 // @Success      200 {object} just.ResponseMessage[string] "game created - game id as string"
 // @Failure      400 {object} just.ResponseMessage[just.ErrorDTO]
 // @Security BearerAuth
-// @Router       /game/{id}/table [post]
+// @Router       /game/{game_id}/table [post]
 func OnSetTable(w http.ResponseWriter, r *http.Request) {
 	_, _, err := just.GetAuthorizedUser(r)
 	if err != nil {

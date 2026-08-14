@@ -173,9 +173,9 @@ func main() {
 
 	// =====Admin Panel End=====
 
-	apiMux.Handle(
+	apiMux.HandleFunc(
 		"POST /hand-evaluator/evaluate",
-		http.RedirectHandler("https://game.bahms.org/poker/hand-evaluator/evaluate", http.StatusMovedPermanently),
+		game.OnEvalHand,
 	)
 
 	rootMux := http.NewServeMux()

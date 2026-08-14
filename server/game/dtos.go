@@ -12,6 +12,11 @@ type ActiveGameDTO struct {
 	Players []string `json:"player_ids"`
 }
 
+type HandEvaluationDTO struct {
+	Error      string `json:"error"`
+	Evaluation int    `json:"evaluation"`
+}
+
 // NewHandDTO a dto describing data required to start a new hand
 type NewHandDTO struct {
 	// the deck, optionally provided to determine trhe order of cards
@@ -54,7 +59,7 @@ type RoundDTO struct {
 	CurrentAggressor int `json:"current_aggressor"`
 
 	// the type of round
-	CurrentRoundType RoundType `json:"current_round_type"`
+	CurrentRoundType RoundType `json:"current_round_type,omitempty"`
 }
 
 // PlayerDTO a dto representing a single player

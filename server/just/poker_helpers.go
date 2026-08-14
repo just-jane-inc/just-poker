@@ -12,7 +12,7 @@ type Card struct {
 	Suit rune `json:"suit"`
 }
 
-type response struct {
+type HandEvaluationDTO struct {
 	Error      string `json:"error"`
 	Evaluation int    `json:"evaluation"`
 }
@@ -29,7 +29,7 @@ func GetHandScore(cards []Card) (int, error) {
 	}
 	defer resp.Body.Close()
 
-	var r response
+	var r HandEvaluationDTO
 	if err = json.NewDecoder(resp.Body).Decode(&r); err != nil {
 		return 0, err
 	}

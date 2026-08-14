@@ -301,6 +301,13 @@ components:
         error_code:
           $ref: '#/components/schemas/just.ErrorCode'
       type: object
+    just.HandEvaluationDTO:
+      properties:
+        error:
+          type: string
+        evaluation:
+          type: integer
+      type: object
     just.ResponseMessage-any:
       properties:
         data: {}
@@ -815,6 +822,45 @@ paths:
       summary: Connect Updates
       tags:
       - Game
+  /game/{game_id}/table:
+    post:
+      description: creates a game for testing
+      parameters:
+      - description: the id of the game to set the table for
+        in: path
+        name: game_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/game.TableDTO'
+                description: the game state object to load as a test game
+                summary: request
+        description: the game state object to load as a test game
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/just.ResponseMessage-string'
+          description: game created - game id as string
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/just.ResponseMessage-just_ErrorDTO'
+          description: Bad Request
+      security:
+      - BearerAuth: []
+      summary: Sets a table
+      tags:
+      - Game
   /hand-evaluator/evaluate:
     post:
       description: Evaluator? I hardly...
@@ -835,7 +881,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: '#/components/schemas/just.HandEvaluationDTO'
           description: OK
       summary: Evaluate a Hand
       tags:
