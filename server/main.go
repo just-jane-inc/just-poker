@@ -2,9 +2,11 @@ package main
 
 import (
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/just-jane-inc/just-poker/server/game"
 	"github.com/just-jane-inc/just-poker/server/just"
@@ -43,6 +45,39 @@ const scalarHTML = `<!doctype html>
 	</body>
 </html>`
 
+var (
+	buildSpecOnce sync.Once
+	servedSpec    []byte
+)
+
+func servedOpenAPISpec() []byte {
+	buildSpecOnce.Do(func() {
+		servedSpec = openAPISpec
+
+		var spec map[string]any
+		if err := json.Unmarshal(openAPISpec, &spec); err != nil {
+			just.Logger.Warn("unable to parse openapi spec, serving unmodified")
+			return
+		}
+
+		spec["servers"] = []any{
+			map[string]any{
+				"url": just.Env.SwaggerServerURL,
+			},
+		}
+
+		out, err := json.Marshal(spec)
+		if err != nil {
+			just.Logger.Warn("unable to rewrite openapi servers, serving spec unmodified")
+			return
+		}
+
+		servedSpec = out
+	})
+
+	return servedSpec
+}
+
 func documentationHandler(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -62,7 +97,7 @@ func documentationHandler(
 			"application/json; charset=utf-8",
 		)
 
-		_, _ = w.Write(openAPISpec)
+		_, _ = w.Write(servedOpenAPISpec())
 
 	default:
 		http.NotFound(w, r)
