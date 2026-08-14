@@ -106,7 +106,7 @@ func GetAuthorizedUser(r *http.Request) (string, string, error) {
 	var mac []byte
 	err = conn.QueryRow(ctx, stmt, keyID).Scan(&userID, &username, &mac)
 	if err != nil {
-		Logger.Debugf("key error - does not exist")
+		Logger.Infof("error getting user %v", err)
 		return "", "", err
 	}
 

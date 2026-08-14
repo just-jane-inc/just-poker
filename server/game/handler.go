@@ -22,7 +22,8 @@ import (
 func OnEvalHand(w http.ResponseWriter, r *http.Request) {
 	resp, err := http.Post(just.Env.PokerEvalURL, "application/json", r.Body)
 	if err != nil {
-		panic(err)
+		just.Logger.Errorf("encountered error getting hand evaluation: %v", err)
+		just.InternalError("failed to execute request").WriteJSONResponse(w)
 	}
 
 	var dto just.HandEvaluationDTO
@@ -373,6 +374,7 @@ func OnStartGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	handleUpdates(g, g.AsDTO(), "game_state_update")
 	go g.ProccessPlayerActions(make(chan any))
 
 	just.OK("game_started", struct{}{}).WriteJSONResponse(w)

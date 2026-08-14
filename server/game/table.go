@@ -64,6 +64,8 @@ func (dto TableDTO) AsTable() *table {
 		}
 	}
 
+	// hundreds of tests, yet this bug was not found... We need more tests
+	// - Red_Epicness
 	for k, c := range dto.Street {
 		t.street[k] = &card{c.Rank, c.Suit}
 	}
@@ -335,9 +337,15 @@ func (t *table) GetHandEvaluations() map[int]int {
 	}
 
 	handEvaluations := make(map[int]int)
+
+	if len(remainingPlayers) == 1 {
+		handEvaluations[remainingPlayers[0].position] = 0
+	}
+
 	for _, p := range remainingPlayers {
 		model := t.GetHand(p.position).Cards
 		cards := make([]just.Card, len(model))
+
 		for i, c := range model {
 			cards[i] = just.Card{Rank: c.rank, Suit: c.suit}
 		}

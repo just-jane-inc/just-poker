@@ -293,6 +293,8 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 	// in big touble
 	g.table.sendMessageToConnections("player_action", action)
 
+	// if everyone but one has folded we are like done now, we dont even need to keep showing cards just like end it
+
 	// after we get to this state we know that the player action
 	// has been accepted and we need to compute what to do next
 	nextPlayer := g.table.NextPlayer(g.table.currentRound.currentPlayerPosition)
@@ -303,12 +305,28 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 		}
 	}
 
+	remainingPlayers := 0
+	for _, p := range g.table.players {
+		if p.state == PlayerStateFolded {
+			continue
+		}
+
+		if p.state == PlayerStateOut {
+			continue
+		}
+
+		remainingPlayers += 1
+	}
+
 	just.Logger.Debugf("next inactive player received: [%d] -> [%d]", p.position, nextPlayer.position)
 
 	// detects when the round should end - when the next player to act
 	// would be the current aggressor. The current aggressor is the last
 	// one to raise, or start the round.
-	if g.table.currentRound.currentAggressor == nextPlayer.position {
+	if remainingPlayers == 1 {
+		g.table.currentRound.currentRoundType = RoundTypeRiver
+		g.table.nextRound()
+	} else if g.table.currentRound.currentAggressor == nextPlayer.position {
 		// before shifting to the next round we need to figure out whose turn it is
 		// in general we need to ensure that:
 		// - the player is not all-in or folded
