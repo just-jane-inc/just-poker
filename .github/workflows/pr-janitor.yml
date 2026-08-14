@@ -1,0 +1,36 @@
+name: PR Image Janitor
+
+on:
+  pull_request:
+    types: [ closed ]
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      packages: write
+    steps:
+      - name: Delete PR image
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          TAG: pr-${{ github.event.number }}
+        run: |
+          for package in just-hand-evaluator just-poker-server; do
+            ids=$(gh api --paginate "/orgs/$OWNER/packages/container/$package/versions" \
+              --jq '.[] | select((.metadata.container.tags | index(env.TAG)) and (.metadata.container.tags | length) == 1) | .id') || {
+                echo "cannot list versions for $package, skipping..."
+                continue
+              }
+
+            if [ -z "$ids" ]; then
+              echo "no version tagged $TAG for $package"
+              continue
+            fi
+
+            for id in $ids; do
+              echo "deleting $package version $id tagged $TAG"
+              gh api --method DELETE "/orgs/$OWNER/packages/container/$package/versions/$id"
+            done
+          done
