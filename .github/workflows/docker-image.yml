@@ -39,7 +39,7 @@ on:
 env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
-  # Publish for everything except pull requests raised from a fork
+  # Publish everything except PRs from a fork
   PUSH_IMAGE: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
 
 
@@ -48,7 +48,7 @@ jobs:
     # Checks for changes for both evaluator and server prior to running either
     # In addition to the trigger filters, this allows some flexible actions logging for diagnosis later
     # For pull requests, pushes to an open PR compare against the previous head,
-    # while opening or reopening a PR compares against the target branch
+    # but when opening or reopening a PR it compares against the target branch
     runs-on: ubuntu-latest
     if: (github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')) || github.event_name == 'pull_request'
     permissions:
@@ -63,30 +63,46 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Resolve diff base
-        id: base
-        env:
-          EVENT_ACTION: ${{ github.event.action }}
-          PREVIOUS_HEAD: ${{ github.event.before }}
-        run: |
-          if [ "$EVENT_ACTION" = "synchronize" ] && git cat-file -e "${PREVIOUS_HEAD}^{commit}" 2>/dev/null; then
-            echo "sha=$PREVIOUS_HEAD" >> "$GITHUB_OUTPUT"
-          else
-            echo "sha=" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Detect changed paths
         id: filter
-        uses: dorny/paths-filter@v4
-        with:
-          base: ${{ steps.base.outputs.sha }}
-          filters: |
-            evaluator:
-              - 'hand-evaluator/**'
-              - '.github/workflows/docker-image.yml'
-            server:
-              - 'server/**'
-              - '.github/workflows/docker-image.yml'
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_ACTION: ${{ github.event.action }}
+          PREVIOUS_HEAD: ${{ github.event.before }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          base=""
+          if [ "$EVENT_ACTION" = "synchronize" ] && git cat-file -e "${PREVIOUS_HEAD}^{commit}" 2>/dev/null; then
+            base="$PREVIOUS_HEAD"
+          elif [ "$EVENT_NAME" = "pull_request" ]; then
+            base="$PR_BASE_SHA"
+          elif git cat-file -e "${PREVIOUS_HEAD}^{commit}" 2>/dev/null; then
+            base="$PREVIOUS_HEAD"
+          fi
+
+          evaluator=true
+          server=true
+
+          if [ -n "$base" ]; then
+            echo "comparing $base..$HEAD_SHA"
+            changed=$(git diff --name-only "$base" "$HEAD_SHA")
+            echo "$changed"
+
+            evaluator=false
+            server=false
+            if printf '%s\n' "$changed" | grep -q '^hand-evaluator/'; then
+              evaluator=true
+            fi
+            if printf '%s\n' "$changed" | grep -q '^server/'; then
+              server=true
+            fi
+          else
+            echo "no usable base commit, treating both as changed"
+          fi
+
+          echo "evaluator=$evaluator" >> "$GITHUB_OUTPUT"
+          echo "server=$server" >> "$GITHUB_OUTPUT"
 
   build-evaluator:
     runs-on: ubuntu-latest

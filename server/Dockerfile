@@ -40,7 +40,7 @@ RUN mkdir -p /opt/var/log && chown 65532:65532 /opt/var/log
 FROM gcr.io/distroless/static-debian12:nonroot
 
 COPY --from=builder /out/just-poker /just-poker
-COPY --from=builder /opt/var/log /opt/var/log
+COPY --from=builder --chown=65532:65532 /opt/var/log /opt/var/log
 
 # documentation port only
 EXPOSE 8080
