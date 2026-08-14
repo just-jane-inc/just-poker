@@ -362,6 +362,7 @@ class PokerBot:
 
         dto = GamePlayerActionDTO(chips=bet, intent=intent)
         req = GameGameIdActionPostRequest(dto)
+        # TODO return if this is successful, bubble up to return all helpers too
         await self._game_api.game_game_id_action_post(self._game_id, req)
 
     async def wait_for_my_turn(self):
