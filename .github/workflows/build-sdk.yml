@@ -1,0 +1,48 @@
+name: Build SDKs
+on:
+  push:
+    branches: [main]
+    paths: ['cshark-sdk/**']
+  workflow_dispatch:
+
+jobs:
+  build-csharp:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Pack
+        run: dotnet pack csharp-sdk/ -p:PackageVersion=1.0.0-beta.${{ github.run_number }} -c Release -0 ./artifacts
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: just-poker-sdk-nupkg
+          path: ./artifacts/*.nupkg
+      
+      - name: Push to GH Packages
+        run: >
+          dotnet nuget push ./artifacts/*.nupkg
+          --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+          --api-key ${{ secrets.GITHUB_TOKEN }}
+          --skip-duplicate
+
+  link-python:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Write install instructions
+        run: |
+          echo 'pip install "git+https://github.com/${{ github.repository }}.git#subdirectory=python-sdk"' > python-sdk.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-sdk-install
+          path: python-sdk.txt

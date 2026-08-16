@@ -1,0 +1,514 @@
+using System.Net.WebSockets;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using JustPoker.OpenApi.Model;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+
+namespace JustPoker.Sdk;
+
+public sealed record CloseInfo(int? Code, string Reason);
+
+
+public enum PokerEventType {
+    Unknown,
+    [PokerEventMeta(Text="*")]
+    All,
+    [PokerEventMeta(Text="welcome", DataType=typeof(GameGameDTO))]
+    Welcome,
+    [PokerEventMeta(Text="game_state_update", DataType=typeof(GameGameDTO))]
+    GameStateUpdate,
+    [PokerEventMeta(Text="starting_game", DataType=typeof(GameGameDTO))]
+    StartingGame,
+    [PokerEventMeta(Text="player_action", DataType=typeof(GamePlayerActionDTO))]
+    PlayerAction,
+    [PokerEventMeta(Text="payout", DataType=typeof(JsonNode))]
+    Payout,
+    [PokerEventMeta(Text="round_start", DataType=typeof(GameRoundDTO))]
+    RoundStart,
+    [PokerEventMeta(Text="hand_started", DataType=typeof(JsonNode))]
+    HandStarted,
+    [PokerEventMeta(Text="game_over", DataType=typeof(List<GamePlayerDTO>))]
+    GameOver
+}
+
+public static class PokerEventTypeExtensions
+{
+    private static readonly Dictionary<PokerEventType, PokerEventMetaAttribute> Meta = BuildMeta();
+
+    private static readonly Dictionary<string, PokerEventType> ByText = Meta
+        .Where(entry => entry.Key is not (PokerEventType.All or PokerEventType.Unknown))
+        .ToDictionary(entry => entry.Value.Text ?? entry.Key.ToString(), entry => entry.Key,
+            StringComparer.OrdinalIgnoreCase);
+
+    public static string GetText(this PokerEventType value) =>
+        Meta.TryGetValue(value, out var meta) && meta.Text is { Length: > 0 } text ? text : value.ToString();
+
+    public static Type GetDataType(this PokerEventType value) =>
+        Meta.TryGetValue(value, out var meta) ? meta.DataType : typeof(JsonNode);
+
+    public static PokerEventType FromString(string type) =>
+        ByText.GetValueOrDefault(type, PokerEventType.Unknown);
+
+    private static Dictionary<PokerEventType, PokerEventMetaAttribute> BuildMeta()
+    {
+        var meta = new Dictionary<PokerEventType, PokerEventMetaAttribute>();
+
+        foreach (var field in typeof(PokerEventType).GetFields(BindingFlags.Public | BindingFlags.Static))
+        {
+            if (field.GetCustomAttribute<PokerEventMetaAttribute>() is { } attribute)
+            {
+                meta[(PokerEventType)field.GetValue(null)!] = attribute;
+            }
+        }
+
+        return meta;
+    }
+}
+
+[AttributeUsage(AttributeTargets.Field)]
+public sealed class PokerEventMetaAttribute: Attribute
+{
+    public string? Text { get; set; }
+    public Type DataType { get; set; } = typeof(JsonNode);
+}
+
+
+public sealed class PokerEvent(PokerEventType eventType, JsonNode? data,
+    long id = 0, string timeSent = "", JsonNode? raw = null)
+{
+    public PokerEventType EventType { get; } = eventType;
+    public long Id { get; } = id;
+    public string TimeSent { get; } = timeSent;
+    public JsonNode? RawData { get; } = data;
+    public JsonNode? Raw { get; } = raw;
+
+    public object? Data() => Deserialize(EventType.GetDataType());
+
+    public T? DataAs<T>() where T : class
+    {
+        if (RawData is null)
+        {
+            return null;
+        }
+
+        if (typeof(T) == typeof(JsonNode))
+        {
+            return RawData as T;
+        }
+
+        if (EventType.GetDataType() == typeof(T))
+        {
+            return Deserialize(typeof(T)) as T;
+        }
+
+        return null;
+    }
+
+    private object? Deserialize(Type dataType)
+    {
+        if (RawData is null)
+        {
+            return null;
+        }
+
+        if (dataType == typeof(JsonNode))
+        {
+            return RawData;
+        }
+
+        try
+        {
+            return RawData.Deserialize(dataType, PokerJson.Options);
+        }
+        catch (JsonException)
+        {
+            return RawData;
+        }
+    }
+}
+
+public interface IEventTransport : IAsyncDisposable
+{
+    Task ConnectAsync(CancellationToken cancellationToken = default);
+
+    Task CloseAsync();
+
+    IAsyncEnumerable<PokerEvent> EventsAsync(CancellationToken cancellationToken = default);
+}
+
+public sealed class WebSocketStreamOptions
+{
+    public bool Reconnect { get; set; } = true;
+
+    public int MaxRetries { get; set; }
+
+    public TimeSpan RetryBackoff { get; set; } = TimeSpan.FromSeconds(1);
+
+    public TimeSpan MaxRetryBackoff { get; set; } = TimeSpan.FromSeconds(30);
+
+    public Action<CloseInfo>? OnClose { get; set; }
+}
+
+public sealed class WebSocketStream : IEventTransport
+{
+    private const int ReceiveBufferSize = 8 * 1024;
+
+    private readonly string _url;
+    private readonly string _token;
+    private readonly string _gameId;
+    private readonly WebSocketStreamOptions _options;
+    private readonly ILogger _logger;
+
+    private ClientWebSocket? _socket;
+    private bool _closed;
+    private bool _reconnect;
+
+    public WebSocketStream(string baseUrl, string token, string gameId,
+        WebSocketStreamOptions? options = null, ILogger? logger = null)
+    {
+        if (string.IsNullOrEmpty(token))
+        {
+            throw new PokerException("api token not provided");
+        }
+
+        _url = BuildStateWebSocketUrl(baseUrl, gameId);
+        _token = token;
+        _gameId = gameId;
+        _options = options ?? new WebSocketStreamOptions();
+        _logger = logger ?? NullLogger.Instance;
+        _reconnect = _options.Reconnect;
+    }
+
+    public string Url => _url;
+
+    private static string BuildStateWebSocketUrl(string baseUrl, string gameId)
+    {
+        if (string.IsNullOrEmpty(baseUrl))
+        {
+            throw new PokerException("base url not provided");
+        }
+
+        if (string.IsNullOrEmpty(gameId))
+        {
+            throw new PokerException("game id not provided");
+        }
+
+        var builder = new UriBuilder(baseUrl)
+        {
+            Scheme = baseUrl.StartsWith("https", StringComparison.OrdinalIgnoreCase) ? "wss" : "ws",
+        };
+
+        builder.Path = $"{builder.Path.TrimEnd('/')}/game/{gameId}/state/ws";
+        builder.Query = string.Empty;
+        return builder.Uri.ToString();
+    }
+
+    private static PokerEvent ParseEvent(string message)
+    {
+        JsonNode? payload;
+        try
+        {
+            payload = JsonNode.Parse(message);
+        }
+        catch (JsonException e)
+        {
+            throw new PokerException($"received non json message on update feed: {e.Message}");
+        }
+
+        if (payload is not JsonObject envelope)
+        {
+            throw new PokerException("received non object message on update feed");
+        }
+
+        if (!envelope.ContainsKey("data"))
+        {
+            throw new PokerException($"unexpected data received: {message}");
+        }
+
+        var data = envelope["data"];
+        if (data is null or JsonValue)
+        {
+            throw new PokerException($"unexpected data received: {message}");
+        }
+
+        var wireName = envelope["event_type"]?.GetValue<string>() ?? string.Empty;
+        var eventType = PokerEventTypeExtensions.FromString(wireName);
+
+        long id = 0;
+        var rawId = envelope["id"];
+        if (rawId is not null && !TryReadId(rawId, out id))
+        {
+            throw new PokerException($"non integer event id: {rawId.ToJsonString()}");
+        }
+
+        var timeSent = envelope["time_sent"]?.ToString() ?? string.Empty;
+
+        return new PokerEvent(eventType, data.DeepClone(), id, timeSent, envelope);
+    }
+
+    public async Task ConnectAsync(CancellationToken cancellationToken = default)
+    {
+        if (_socket is { State: WebSocketState.Open })
+            return;
+
+        _socket?.Dispose();
+        _closed = false;
+
+        var socket = new ClientWebSocket();
+        socket.Options.SetRequestHeader("Authorization", $"Bearer {_token}");
+
+        try
+        {
+            await socket.ConnectAsync(new Uri(_url), cancellationToken);
+        }
+        catch
+        {
+            socket.Dispose();
+            throw;
+        }
+
+        _socket = socket;
+        _logger.LogDebug("connected to game state feed for game {GameId}", _gameId);
+    }
+
+    public async Task CloseAsync()
+    {
+        var socket = _socket;
+        _socket = null;
+
+        if (socket is null)
+        {
+            _closed = true;
+            return;
+        }
+
+        if (!_closed && socket.State == WebSocketState.Open)
+        {
+            FireClose(new CloseInfo(-1, "manual close requested"));
+        }
+
+        _closed = true;
+
+        try
+        {
+            if (socket.State is WebSocketState.Open or WebSocketState.CloseReceived)
+            {
+                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, timeout.Token);
+            }
+        }
+        catch (Exception e)
+        {
+            _logger.LogDebug("error while closing update feed: {Message}", e.Message);
+        }
+        finally
+        {
+            socket.Dispose();
+        }
+    }
+
+    public async IAsyncEnumerable<PokerEvent> EventsAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var attempts = 0;
+        while (!_closed && !cancellationToken.IsCancellationRequested)
+        {
+            var (connected, connectError) = await TryConnectAsync(cancellationToken);
+            if (connected)
+            {
+                attempts = 0;
+
+                while (true)
+                {
+                    var (message, receiveError) = await TryReceiveAsync(cancellationToken);
+                    if (receiveError is not null)
+                    {
+                        await HandleReceiveErrorAsync(receiveError);
+                        break;
+                    }
+
+                    if (message is null)
+                    {
+                        break;
+                    }
+
+                    PokerEvent pokerEvent;
+                    try
+                    {
+                        pokerEvent = ParseEvent(message);
+                    }
+                    catch (PokerException e)
+                    {
+                        _logger.LogError("dropping bad update message: {Message}", e.Message);
+                        continue;
+                    }
+
+                    yield return pokerEvent;
+
+                    if (pokerEvent.EventType.Equals(PokerEventType.GameOver))
+                    {
+                        _reconnect = false;
+                        await CloseAsync();
+                        yield break;
+                    }
+                }
+            }
+            else if (connectError is not null)
+            {
+                if (_closed)
+                {
+                    yield break;
+                }
+
+                if (!_reconnect)
+                {
+                    throw new PokerException($"game state feed failed: {connectError.Message}", connectError);
+                }
+
+                _logger.LogWarning("game state feed dropped, reconnecting: {Message}", connectError.Message);
+            }
+
+            if (_closed || !_reconnect || cancellationToken.IsCancellationRequested)
+            {
+                yield break;
+            }
+
+            attempts++;
+            if (_options.MaxRetries > 0 && attempts > _options.MaxRetries)
+            {
+                throw new PokerException($"game state feed gave up after {_options.MaxRetries} retries");
+            }
+
+            await Task.Delay(BackoffFor(attempts), cancellationToken);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await CloseAsync();
+    }
+
+    private static bool TryReadId(JsonNode node, out long id)
+    {
+        if (node is JsonValue value)
+        {
+            if (value.TryGetValue(out long parsed))
+            {
+                id = parsed;
+                return true;
+            }
+
+            if (value.TryGetValue(out string? text) && long.TryParse(text, out parsed))
+            {
+                id = parsed;
+                return true;
+            }
+        }
+
+        id = 0;
+        return false;
+    }
+
+    private TimeSpan BackoffFor(int attempts)
+    {
+        var scaled = _options.RetryBackoff.TotalSeconds * Math.Pow(2, attempts - 1);
+        return TimeSpan.FromSeconds(Math.Min(scaled, _options.MaxRetryBackoff.TotalSeconds));
+    }
+
+    private async Task<(bool Connected, Exception? Error)> TryConnectAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await ConnectAsync(cancellationToken);
+            return (true, null);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            return (false, e);
+        }
+    }
+
+    private async Task<(string? Message, Exception? Error)> TryReceiveAsync(CancellationToken cancellationToken)
+    {
+        var socket = _socket;
+        if (socket is null)
+        {
+            return (null, null);
+        }
+
+        var buffer = new byte[ReceiveBufferSize];
+        var payload = new MemoryStream();
+
+        try
+        {
+            while (true)
+            {
+                var result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken);
+
+                if (result.MessageType == WebSocketMessageType.Close)
+                {
+                    FireClose(new CloseInfo((int?)result.CloseStatus, result.CloseStatusDescription ?? string.Empty));
+                    _reconnect = false;
+                    await CloseAsync();
+                    return (null, null);
+                }
+
+                payload.Write(buffer, 0, result.Count);
+
+                if (result.EndOfMessage)
+                {
+                    return (Encoding.UTF8.GetString(payload.ToArray()), null);
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            return (null, e);
+        }
+    }
+
+    private async Task HandleReceiveErrorAsync(Exception error)
+    {
+        if (_closed)
+        {
+            return;
+        }
+
+        if (error is WebSocketException socketError)
+        {
+            FireClose(new CloseInfo(null, socketError.Message));
+            _logger.LogWarning("received abnormal close event: {Message}", socketError.Message);
+            _reconnect = false;
+        }
+
+        await CloseAsync();
+    }
+
+    private void FireClose(CloseInfo info)
+    {
+        if (_options.OnClose is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _options.OnClose(info);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("error in on_close handler: {Message}", e.Message);
+        }
+    }
+}
