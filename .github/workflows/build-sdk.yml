@@ -1,7 +1,7 @@
 name: Build SDKs
 on:
   push:
-    branches: [main]
+    branches: [main, wws/initial-csharp-sdk]
     paths: ['cshark-sdk/**']
   workflow_dispatch:
 

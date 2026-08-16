@@ -130,6 +130,8 @@ public static class PokerHelpers
             {
                 config.AddTokens(new BearerToken(token));
             }
+            
+            // TODO TODO TODO TODO TODO TODO
 
             // some stuff was null and causing the generated code to blow up (mostly the endDate on gamegamedto JANE!!!)
             config.ConfigureJsonOptions(options =>
