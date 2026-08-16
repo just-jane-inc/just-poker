@@ -95,27 +95,30 @@ class Table(Static):
     game_id: str | None = None
 
     def render(self) -> str:
-        view = f"♠♥ ༻❁ ⊱༻{self.game_id!s:^6}༺⊰ ❀༺ ♦♣\n"
-        view += f"║|{'-' * 18}|║\n"
+        # -ˋˏ ༻❁❀༺ ˎˊ-
+        # ˖⁺‧₊˚˚₊‧⁺˖
+        # .𓋼𓍊 𓆏 𓍊𓋼𓍊.☆
+        view = f"♠♥ ☆༻❁♡✿⊱༻{self.game_id!s:^6}༺⊰✿♡❁༺☆ ♦♣\n"
+        view += f"║|{'-' * 22}|║\n"
         if self.winner:
-            view += f"║| ♠♥{self.winner[:12]:^12}♦♣ |║\n"
+            view += f"║| ♠♥{self.winner[:16]:^16}♦♣ |║\n"
         if self.table is None or self.table.street is None:
             return view
 
         to_call = self.table.current_round.bet
 
         if not self.winner:
-            view += f"║| POT: {chip_sum(self.table.pot):>11} |║\n"
-            view += f"║| STREET: {self.table.current_round.current_round_type.upper():>8} |║\n"
-            view += f"║| TO CALL: {to_call:>7} |║\n"
-            view += f"║|{'-' * 18}|║\n"
+            view += f"║| POT: {chip_sum(self.table.pot):>15} |║\n"
+            view += f"║| STREET: {self.table.current_round.current_round_type.upper():>12} |║\n"
+            view += f"║| TO CALL: {to_call:>11} |║\n"
+            view += f"║|{'-' * 22}|║\n"
         cards_view = ""
         for card in self.table.street:
             rank = help.CardRank(card.rank)
             suit = help.CardSuit(card.suit)
             cards_view += self.card_map[suit][rank] + " "
-        view += f"║| {cards_view:^16} |║\n"
-        view += f"║|{'-' * 18}|║\n"
+        view += f"║| {cards_view:^20} |║\n"
+        view += f"║|{'-' * 22}|║\n"
 
         return view
 
@@ -137,7 +140,7 @@ class Players(Static):
 
             name = player.display_name[:8]
             if player.user_id == self.me._user_id:
-                name = f"<{name}>"
+                name = f"<<{name}>>"
 
             card_view = ""
             if player.hole:
@@ -150,7 +153,7 @@ class Players(Static):
                 card_two = self.card_map[suit][rank]
                 card_view += f"{card_one} {card_two}"
 
-            view += f"{name:<10} {player.state:^8} {card_view:^4} {current_bet:>6}◉\n{chip_stack:<6}⛀⛁\n"
+            view += f"{name:<10}\n{player.state:<8} {card_view:^4} {current_bet:>6}◉ {chip_stack:<6}⛀⛁\n"
 
             view += "\n"
 
