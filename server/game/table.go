@@ -64,8 +64,6 @@ func (dto TableDTO) AsTable() *table {
 		}
 	}
 
-	// hundreds of tests, yet this bug was not found... We need more tests
-	// - Red_Epicness
 	for k, c := range dto.Street {
 		t.street[k] = &card{c.Rank, c.Suit}
 	}

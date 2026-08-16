@@ -323,6 +323,9 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 	// detects when the round should end - when the next player to act
 	// would be the current aggressor. The current aggressor is the last
 	// one to raise, or start the round.
+	//
+	// hundreds of tests, yet this bug was not found... We need more tests
+	// - Red_Epicness
 	if remainingPlayers == 1 {
 		g.table.currentRound.currentRoundType = RoundTypeRiver
 		g.table.nextRound()
