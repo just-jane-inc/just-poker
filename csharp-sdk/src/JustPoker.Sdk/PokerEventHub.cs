@@ -7,15 +7,13 @@ namespace JustPoker.Sdk;
 
 public delegate Task PokerEventHandler(PokerEvent pokerEvent);
 
-public sealed class EventSubscription : IDisposable
-{
-    private readonly Channel<PokerEvent> _channel;
+public sealed class EventSubscription : IDisposable {
     private readonly CancellationTokenSource _cancellation = new();
+    private readonly Channel<PokerEvent> _channel;
     private PokerEventHub? _hub;
 
     internal EventSubscription(PokerEventHub hub, IReadOnlyList<PokerEventType> eventTypes,
-        PokerEventHandler? handler, bool inline, ILogger logger, Func<PokerEvent, bool>? predicate = null)
-    {
+        PokerEventHandler? handler, bool inline, ILogger logger, Func<PokerEvent, bool>? predicate = null) {
         _hub = hub;
         EventTypes = eventTypes;
         Handler = handler;
@@ -23,16 +21,12 @@ public sealed class EventSubscription : IDisposable
         Predicate = predicate;
         IsActive = true;
 
-        _channel = Channel.CreateUnbounded<PokerEvent>(new UnboundedChannelOptions
-        {
+        _channel = Channel.CreateUnbounded<PokerEvent>(new UnboundedChannelOptions {
             SingleReader = true,
-            SingleWriter = true,
+            SingleWriter = true
         });
 
-        if (handler is not null && !inline)
-        {
-            Consumer = ConsumeAsync(handler, logger, _cancellation.Token);
-        }
+        if (handler is not null && !inline) Consumer = ConsumeAsync(handler, logger, _cancellation.Token);
     }
 
     public IReadOnlyList<PokerEventType> EventTypes { get; }
@@ -44,8 +38,11 @@ public sealed class EventSubscription : IDisposable
     internal ChannelReader<PokerEvent> Reader => _channel.Reader;
     internal Task? Consumer { get; }
 
-    public bool Unsubscribe()
-    {
+    public void Dispose() {
+        Unsubscribe();
+    }
+
+    public bool Unsubscribe() {
         if (!IsActive)
             return false;
 
@@ -59,86 +56,91 @@ public sealed class EventSubscription : IDisposable
         return true;
     }
 
-    public void Dispose() => Unsubscribe();
+    public override string ToString() {
+        return
+            $"EventSubscription({string.Join('|', EventTypes.Select(t => t.GetText()))}, {(IsActive ? "active" : "unsubscribed")})";
+    }
 
-    public override string ToString() =>
-        $"EventSubscription({string.Join('|', EventTypes.Select(t => t.GetText()))}, {(IsActive ? "active" : "unsubscribed")})";
+    internal bool Accepts(PokerEvent pokerEvent) {
+        return Predicate is null || Predicate(pokerEvent);
+    }
 
-    internal bool Accepts(PokerEvent pokerEvent) => Predicate is null || Predicate(pokerEvent);
+    internal bool Publish(PokerEvent pokerEvent) {
+        return _channel.Writer.TryWrite(pokerEvent);
+    }
 
-    internal bool Publish(PokerEvent pokerEvent) => _channel.Writer.TryWrite(pokerEvent);
-
-    private async Task ConsumeAsync(PokerEventHandler handler, ILogger logger, CancellationToken cancellationToken)
-    {
-        try
-        {
+    private async Task ConsumeAsync(PokerEventHandler handler, ILogger logger, CancellationToken cancellationToken) {
+        try {
             await foreach (var pokerEvent in _channel.Reader.ReadAllAsync(cancellationToken))
-            {
-                try
-                {
+                try {
                     await handler(pokerEvent);
                 }
-                catch (OperationCanceledException)
-                {
+                catch (OperationCanceledException) {
                     throw;
                 }
-                catch (Exception e)
-                {
+                catch (Exception e) {
                     logger.LogError(e, "error in handler {Subscription}", this);
                 }
-            }
         }
-        catch (OperationCanceledException)
-        {
+        catch (OperationCanceledException) {
         }
     }
 }
 
 /// <summary>
-/// Hub for consuming events from the poker server, with full subscription modelling for event types
+///     Hub for consuming events from the poker server, with full subscription modelling for event types
 /// </summary>
 /// <param name="transport"></param>
 /// <param name="name"></param>
 /// <param name="logger"></param>
 public sealed class PokerEventHub(IEventTransport transport, string name = "event-hub", ILogger? logger = null)
-    : IAsyncDisposable
-{
+    : IAsyncDisposable {
     private static readonly TimeSpan DrainTime = TimeSpan.FromSeconds(2);
+    private readonly Lock _gate = new();
+    private readonly ILogger _logger = logger ?? NullLogger.Instance;
 
     private readonly string _name = name; // TODO for logging help
-    private readonly ILogger _logger = logger ?? NullLogger.Instance;
+    private readonly SemaphoreSlim _startGate = new(1);
     private readonly Dictionary<PokerEventType, List<EventSubscription>> _subscriptions = new();
-    private readonly Lock _gate = new();
-    private readonly SemaphoreSlim _startGate = new(1, 1);
 
     private TaskCompletionSource _closed = new(TaskCreationOptions.RunContinuationsAsynchronously);
-    private CancellationTokenSource? _pumpCancellation;
     private Channel<PokerEvent> _ingest = CreateIngestChannel();
-    private Task? _reader;
     private Task? _pump;
-    private CloseInfo? _closeInfo;
+    private CancellationTokenSource? _pumpCancellation;
+    private Task? _reader;
 
     public bool Running => _pump is { IsCompleted: false };
 
-    public CloseInfo? CloseInfo => _closeInfo;
+    public CloseInfo? CloseInfo { get; private set; }
 
     public IEventTransport Transport => transport;
+
+    public async ValueTask DisposeAsync() {
+        await StopAsync();
+
+        List<EventSubscription> remaining;
+        lock (_gate) {
+            remaining = _subscriptions.Values.SelectMany(handlers => handlers).Distinct().ToList();
+        }
+
+        foreach (var subscription in remaining) subscription.Unsubscribe();
+
+        await transport.DisposeAsync();
+    }
 
     public static PokerEventHub PokerWebSocket(
         string baseUrl,
         string token,
         string gameId,
         WebSocketStreamOptions? options = null,
-        ILogger? logger = null)
-    {
+        ILogger? logger = null) {
         options ??= new WebSocketStreamOptions();
 
         var stream = new WebSocketStream(baseUrl, token, gameId, options, logger);
         var hub = new PokerEventHub(stream, $"event-hub[{gameId}]", logger);
 
         var existing = options.OnClose;
-        options.OnClose = info =>
-        {
+        options.OnClose = info => {
             existing?.Invoke(info);
             hub.NoteClose(info);
         };
@@ -147,62 +149,51 @@ public sealed class PokerEventHub(IEventTransport transport, string name = "even
     }
 
     public EventSubscription Subscribe(PokerEventType eventType, PokerEventHandler handler,
-        Func<PokerEvent, bool>? predicate = null) =>
-        Subscribe([eventType], handler, predicate);
+        Func<PokerEvent, bool>? predicate = null) {
+        return Subscribe([eventType], handler, predicate);
+    }
 
     public EventSubscription Subscribe(IEnumerable<PokerEventType> eventTypes, PokerEventHandler handler,
-        Func<PokerEvent, bool>? predicate = null) =>
-        Register(eventTypes, handler, inline: false, predicate);
+        Func<PokerEvent, bool>? predicate = null) {
+        return Register(eventTypes, handler, false, predicate);
+    }
 
     public EventSubscription Subscribe(PokerEventType eventType, Action<PokerEvent> handler,
-        Func<PokerEvent, bool>? predicate = null) =>
-        Subscribe(eventType, pokerEvent =>
-        {
+        Func<PokerEvent, bool>? predicate = null) {
+        return Subscribe(eventType, pokerEvent => {
             handler(pokerEvent);
             return Task.CompletedTask;
         }, predicate);
+    }
 
     internal EventSubscription SubscribeInline(IEnumerable<PokerEventType> eventTypes, PokerEventHandler handler,
-        Func<PokerEvent, bool>? predicate = null) =>
-        Register(eventTypes, handler, inline: true, predicate);
+        Func<PokerEvent, bool>? predicate = null) {
+        return Register(eventTypes, handler, true, predicate);
+    }
 
     internal EventSubscription SubscribeInline(PokerEventType eventType, PokerEventHandler handler,
-        Func<PokerEvent, bool>? predicate = null) =>
-        Register([eventType], handler, inline: true, predicate);
+        Func<PokerEvent, bool>? predicate = null) {
+        return Register([eventType], handler, true, predicate);
+    }
 
-    public int SubscriberCount(PokerEventType? eventType = null)
-    {
-        lock (_gate)
-        {
-            if (eventType is null)
-            {
-                return _subscriptions.Values.Sum(handlers => handlers.Count);
-            }
+    public int SubscriberCount(PokerEventType? eventType = null) {
+        lock (_gate) {
+            if (eventType is null) return _subscriptions.Values.Sum(handlers => handlers.Count);
 
             return _subscriptions.TryGetValue(eventType.Value, out var found) ? found.Count : 0;
         }
     }
 
-    public async Task<PokerEventHub> StartAsync(CancellationToken cancellationToken = default)
-    {
-        if (Running)
-        {
-            return this;
-        }
+    public async Task<PokerEventHub> StartAsync(CancellationToken cancellationToken = default) {
+        if (Running) return this;
 
         await _startGate.WaitAsync(cancellationToken);
 
-        try
-        {
-            if (Running)
-            {
-                return this;
-            }
+        try {
+            if (Running) return this;
 
             if (_closed.Task.IsCompleted)
-            {
                 _closed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            }
 
             await transport.ConnectAsync(cancellationToken);
 
@@ -212,14 +203,12 @@ public sealed class PokerEventHub(IEventTransport transport, string name = "even
             _pump = PumpAsync(_ingest.Reader, _pumpCancellation.Token);
             return this;
         }
-        finally
-        {
+        finally {
             _startGate.Release();
         }
     }
 
-    public async Task StopAsync()
-    {
+    public async Task StopAsync() {
         await transport.CloseAsync();
 
         var reader = _reader;
@@ -232,16 +221,12 @@ public sealed class PokerEventHub(IEventTransport transport, string name = "even
         var running = Task.WhenAll(new[] { reader, pump }.Where(task => task is not null)!);
 
         if (await Task.WhenAny(running, Task.Delay(DrainTime)) != running && cancellation is not null)
-        {
             await cancellation.CancelAsync();
-        }
 
-        try
-        {
+        try {
             await running;
         }
-        catch (OperationCanceledException)
-        {
+        catch (OperationCanceledException) {
         }
 
         cancellation?.Dispose();
@@ -249,12 +234,10 @@ public sealed class PokerEventHub(IEventTransport transport, string name = "even
     }
 
     public async Task<PokerEvent> WaitForAsync(PokerEventType eventType, Func<PokerEvent, bool>? predicate = null,
-        TimeSpan? timeout = null, CancellationToken cancellationToken = default)
-    {
+        TimeSpan? timeout = null, CancellationToken cancellationToken = default) {
         var completion = new TaskCompletionSource<PokerEvent>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        using var subscription = Subscribe(eventType, pokerEvent =>
-        {
+        using var subscription = Subscribe(eventType, pokerEvent => {
             completion.TrySetResult(pokerEvent);
             return Task.CompletedTask;
         }, predicate);
@@ -266,36 +249,30 @@ public sealed class PokerEventHub(IEventTransport transport, string name = "even
             : await completion.Task.WaitAsync(timeout.Value, cancellationToken);
     }
 
-    public async Task<CloseInfo?> WaitClosedAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default)
-    {
+    public async Task<CloseInfo?> WaitClosedAsync(TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default) {
         if (timeout is null)
-        {
             await _closed.Task.WaitAsync(cancellationToken);
-        }
         else
-        {
             await _closed.Task.WaitAsync(timeout.Value, cancellationToken);
-        }
 
-        return _closeInfo;
+        return CloseInfo;
     }
 
     public async IAsyncEnumerable<PokerEvent> StreamAsync(PokerEventType eventType = PokerEventType.All,
         Func<PokerEvent, bool>? predicate = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        using var subscription = Register([eventType], handler: null, inline: false, predicate);
+        [EnumeratorCancellation] CancellationToken cancellationToken = default) {
+        using var subscription = Register([eventType], null, false, predicate);
         using var closedCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
         _ = _closed.Task.ContinueWith(
-            _ =>
-            {
-                try
-                {
+            _ => {
+                try {
                     // ReSharper disable once AccessToDisposedClosure
                     closedCancellation.Cancel();
                 }
-                catch (ObjectDisposedException) { }
+                catch (ObjectDisposedException) {
+                }
             },
             CancellationToken.None,
             TaskContinuationOptions.ExecuteSynchronously,
@@ -303,82 +280,55 @@ public sealed class PokerEventHub(IEventTransport transport, string name = "even
 
         await StartAsync(closedCancellation.Token);
 
-        while (true)
-        {
+        while (true) {
             var draining = false;
 
-            try
-            {
-                if (!await subscription.Reader.WaitToReadAsync(closedCancellation.Token))
-                {
-                    break;
-                }
+            try {
+                if (!await subscription.Reader.WaitToReadAsync(closedCancellation.Token)) break;
             }
-            catch (OperationCanceledException)
-            {
+            catch (OperationCanceledException) {
                 draining = true;
             }
 
-            while (subscription.Reader.TryRead(out var pokerEvent))
-            {
-                yield return pokerEvent;
-            }
+            while (subscription.Reader.TryRead(out var pokerEvent)) yield return pokerEvent;
 
-            if (draining)
-            {
-                break;
-            }
+            if (draining) break;
         }
     }
 
-    public async Task RunForeverAsync(CancellationToken cancellationToken = default)
-    {
+    public async Task RunForeverAsync(CancellationToken cancellationToken = default) {
         await transport.ConnectAsync(cancellationToken);
 
         _ingest = CreateIngestChannel();
         await Task.WhenAll(ReadAsync(_ingest.Writer, cancellationToken), PumpAsync(_ingest.Reader, cancellationToken));
     }
 
-    internal void Remove(EventSubscription subscription)
-    {
-        lock (_gate)
-        {
-            foreach (var key in subscription.EventTypes)
-            {
-                if (!_subscriptions.TryGetValue(key, out var handlers))
-                {
-                    continue;
-                }
+    internal void Remove(EventSubscription subscription) {
+        lock (_gate) {
+            foreach (var key in subscription.EventTypes) {
+                if (!_subscriptions.TryGetValue(key, out var handlers)) continue;
 
                 handlers.Remove(subscription);
 
-                if (handlers.Count == 0)
-                {
-                    _subscriptions.Remove(key);
-                }
+                if (handlers.Count == 0) _subscriptions.Remove(key);
             }
         }
     }
 
-    internal void NoteClose(CloseInfo info) => _closeInfo = info;
+    internal void NoteClose(CloseInfo info) {
+        CloseInfo = info;
+    }
 
     private EventSubscription Register(IEnumerable<PokerEventType> eventTypes, PokerEventHandler? handler, bool inline,
-        Func<PokerEvent, bool>? predicate = null)
-    {
+        Func<PokerEvent, bool>? predicate = null) {
         var keys = eventTypes.Distinct().ToArray();
-        if (keys.Length == 0)
-        {
-            throw new PokerException("subscribe needs at least one event type");
-        }
+        if (keys.Length == 0) throw new PokerException("subscribe needs at least one event type");
 
         var subscription = new EventSubscription(this, keys, handler, inline, _logger, predicate);
 
-        lock (_gate)
-        {
-            foreach (var key in keys)
-            {
-                if (!_subscriptions.TryGetValue(key, out var handlers))
-                {
+        lock (_gate) {
+            foreach (var key in keys) {
+                if (!_subscriptions.TryGetValue(key, out var handlers)) {
                     handlers = [];
                     _subscriptions[key] = handlers;
                 }
@@ -390,123 +340,73 @@ public sealed class PokerEventHub(IEventTransport transport, string name = "even
         return subscription;
     }
 
-    private static Channel<PokerEvent> CreateIngestChannel() =>
-        Channel.CreateUnbounded<PokerEvent>(new UnboundedChannelOptions
-        {
+    private static Channel<PokerEvent> CreateIngestChannel() {
+        return Channel.CreateUnbounded<PokerEvent>(new UnboundedChannelOptions {
             SingleReader = true,
-            SingleWriter = true,
+            SingleWriter = true
         });
+    }
 
-    private async Task ReadAsync(ChannelWriter<PokerEvent> ingest, CancellationToken cancellationToken)
-    {
-        try
-        {
+    private async Task ReadAsync(ChannelWriter<PokerEvent> ingest, CancellationToken cancellationToken) {
+        try {
             await foreach (var pokerEvent in transport.EventsAsync(cancellationToken))
-            {
                 if (!ingest.TryWrite(pokerEvent))
-                {
                     _logger.LogWarning("dropped event on {Hub} ingest", _name);
-                }
-            }
         }
-        catch (OperationCanceledException)
-        {
+        catch (OperationCanceledException) {
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             _logger.LogError(e, "event feed failed on {Hub}", _name);
-            _closeInfo ??= new CloseInfo(null, e.Message);
+            CloseInfo ??= new CloseInfo(null, e.Message);
         }
-        finally
-        {
+        finally {
             ingest.TryComplete();
         }
     }
 
-    private async Task PumpAsync(ChannelReader<PokerEvent> ingest, CancellationToken cancellationToken)
-    {
-        try
-        {
-            await foreach (var pokerEvent in ingest.ReadAllAsync(cancellationToken))
-            {
-                await DispatchAsync(pokerEvent);
-            }
+    private async Task PumpAsync(ChannelReader<PokerEvent> ingest, CancellationToken cancellationToken) {
+        try {
+            await foreach (var pokerEvent in ingest.ReadAllAsync(cancellationToken)) await DispatchAsync(pokerEvent);
         }
-        catch (OperationCanceledException)
-        {
+        catch (OperationCanceledException) {
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             _logger.LogError(e, "event dispatch failed on {Hub}", _name);
-            _closeInfo ??= new CloseInfo(null, e.Message);
+            CloseInfo ??= new CloseInfo(null, e.Message);
         }
-        finally
-        {
+        finally {
             _closed.TrySetResult();
         }
     }
 
-    private async Task DispatchAsync(PokerEvent pokerEvent)
-    {
+    private async Task DispatchAsync(PokerEvent pokerEvent) {
         List<EventSubscription> targets;
 
-        lock (_gate)
-        {
+        lock (_gate) {
             targets = [];
 
-            if (_subscriptions.TryGetValue(PokerEventType.All, out var wildcard))
-            {
-                targets.AddRange(wildcard);
-            }
+            if (_subscriptions.TryGetValue(PokerEventType.All, out var wildcard)) targets.AddRange(wildcard);
 
             if (pokerEvent.EventType != PokerEventType.All &&
                 _subscriptions.TryGetValue(pokerEvent.EventType, out var handlers))
-            {
                 targets.AddRange(handlers);
-            }
         }
 
         foreach (var subscription in targets.Where(s =>
                      s is { IsActive: true, IsInline: true, Handler: not null } && s.Accepts(pokerEvent)))
-        {
-            try
-            {
+            try {
                 await subscription.Handler?.Invoke(pokerEvent)!;
             }
-            catch (OperationCanceledException)
-            {
+            catch (OperationCanceledException) {
                 throw;
             }
-            catch (Exception e)
-            {
+            catch (Exception e) {
                 _logger.LogError(e, "error in inline handler {Subscription} on {Hub}", subscription, _name);
             }
-        }
 
-        foreach (var subscription in targets.Where(s => s is { IsActive: true, IsInline: false } && s.Accepts(pokerEvent)))
-        {
+        foreach (var subscription in targets.Where(s =>
+                     s is { IsActive: true, IsInline: false } && s.Accepts(pokerEvent)))
             if (!subscription.Publish(pokerEvent))
-            {
                 _logger.LogWarning("dropped event for {Subscription} on {Hub}", subscription, _name);
-            }
-        }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await StopAsync();
-
-        List<EventSubscription> remaining;
-        lock (_gate)
-        {
-            remaining = _subscriptions.Values.SelectMany(handlers => handlers).Distinct().ToList();
-        }
-
-        foreach (var subscription in remaining)
-        {
-            subscription.Unsubscribe();
-        }
-
-        await transport.DisposeAsync();
     }
 }
