@@ -19,13 +19,13 @@ from pydantic import Field, StrictStr
 from typing import Any, Dict, List, Optional
 from typing_extensions import Annotated
 from openapi_client.models.game_active_game_dto import GameActiveGameDTO
+from openapi_client.models.game_card_dto import GameCardDTO
+from openapi_client.models.game_chip_exchange_dto import GameChipExchangeDTO
 from openapi_client.models.game_game_dto import GameGameDTO
-from openapi_client.models.game_game_id_action_post_request import GameGameIdActionPostRequest
-from openapi_client.models.game_game_id_chip_exchange_post_request import GameGameIdChipExchangePostRequest
-from openapi_client.models.game_game_id_hand_post_request import GameGameIdHandPostRequest
-from openapi_client.models.game_game_id_table_post_request import GameGameIdTablePostRequest
-from openapi_client.models.game_post_request import GamePostRequest
-from openapi_client.models.hand_evaluator_evaluate_post_request import HandEvaluatorEvaluatePostRequest
+from openapi_client.models.game_new_game_config_dto import GameNewGameConfigDTO
+from openapi_client.models.game_new_hand_dto import GameNewHandDTO
+from openapi_client.models.game_player_action_dto import GamePlayerActionDTO
+from openapi_client.models.game_table_dto import GameTableDTO
 from openapi_client.models.just_hand_evaluation_dto import JustHandEvaluationDTO
 from openapi_client.models.just_response_message_any import JustResponseMessageAny
 from openapi_client.models.just_response_message_game_game_dto import JustResponseMessageGameGameDTO
@@ -53,7 +53,7 @@ class GameApi:
     async def game_game_id_action_post(
         self,
         game_id: Annotated[StrictStr, Field(description="the id of the game")],
-        game_game_id_action_post_request: Annotated[GameGameIdActionPostRequest, Field(description="the action the player is preforming")],
+        game_player_action_dto: Annotated[GamePlayerActionDTO, Field(description="the action the player is preforming")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -73,8 +73,8 @@ class GameApi:
 
         :param game_id: the id of the game (required)
         :type game_id: str
-        :param game_game_id_action_post_request: the action the player is preforming (required)
-        :type game_game_id_action_post_request: GameGameIdActionPostRequest
+        :param game_player_action_dto: the action the player is preforming (required)
+        :type game_player_action_dto: GamePlayerActionDTO
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -99,7 +99,7 @@ class GameApi:
 
         _param = self._game_game_id_action_post_serialize(
             game_id=game_id,
-            game_game_id_action_post_request=game_game_id_action_post_request,
+            game_player_action_dto=game_player_action_dto,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -125,7 +125,7 @@ class GameApi:
     async def game_game_id_action_post_with_http_info(
         self,
         game_id: Annotated[StrictStr, Field(description="the id of the game")],
-        game_game_id_action_post_request: Annotated[GameGameIdActionPostRequest, Field(description="the action the player is preforming")],
+        game_player_action_dto: Annotated[GamePlayerActionDTO, Field(description="the action the player is preforming")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -145,8 +145,8 @@ class GameApi:
 
         :param game_id: the id of the game (required)
         :type game_id: str
-        :param game_game_id_action_post_request: the action the player is preforming (required)
-        :type game_game_id_action_post_request: GameGameIdActionPostRequest
+        :param game_player_action_dto: the action the player is preforming (required)
+        :type game_player_action_dto: GamePlayerActionDTO
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -171,7 +171,7 @@ class GameApi:
 
         _param = self._game_game_id_action_post_serialize(
             game_id=game_id,
-            game_game_id_action_post_request=game_game_id_action_post_request,
+            game_player_action_dto=game_player_action_dto,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -197,7 +197,7 @@ class GameApi:
     async def game_game_id_action_post_without_preload_content(
         self,
         game_id: Annotated[StrictStr, Field(description="the id of the game")],
-        game_game_id_action_post_request: Annotated[GameGameIdActionPostRequest, Field(description="the action the player is preforming")],
+        game_player_action_dto: Annotated[GamePlayerActionDTO, Field(description="the action the player is preforming")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -217,8 +217,8 @@ class GameApi:
 
         :param game_id: the id of the game (required)
         :type game_id: str
-        :param game_game_id_action_post_request: the action the player is preforming (required)
-        :type game_game_id_action_post_request: GameGameIdActionPostRequest
+        :param game_player_action_dto: the action the player is preforming (required)
+        :type game_player_action_dto: GamePlayerActionDTO
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -243,7 +243,7 @@ class GameApi:
 
         _param = self._game_game_id_action_post_serialize(
             game_id=game_id,
-            game_game_id_action_post_request=game_game_id_action_post_request,
+            game_player_action_dto=game_player_action_dto,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -264,7 +264,7 @@ class GameApi:
     def _game_game_id_action_post_serialize(
         self,
         game_id,
-        game_game_id_action_post_request,
+        game_player_action_dto,
         _request_auth,
         _content_type,
         _headers,
@@ -292,8 +292,8 @@ class GameApi:
         # process the header parameters
         # process the form parameters
         # process the body parameter
-        if game_game_id_action_post_request is not None:
-            _body_params = game_game_id_action_post_request
+        if game_player_action_dto is not None:
+            _body_params = game_player_action_dto
 
 
         # set the HTTP header `Accept`
@@ -345,7 +345,7 @@ class GameApi:
     async def game_game_id_chip_exchange_post(
         self,
         game_id: Annotated[StrictStr, Field(description="ID of the Game exchange chips in")],
-        game_game_id_chip_exchange_post_request: Annotated[GameGameIdChipExchangePostRequest, Field(description="a specification for the chips to exchange")],
+        game_chip_exchange_dto: Annotated[GameChipExchangeDTO, Field(description="a specification for the chips to exchange")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -365,8 +365,8 @@ class GameApi:
 
         :param game_id: ID of the Game exchange chips in (required)
         :type game_id: str
-        :param game_game_id_chip_exchange_post_request: a specification for the chips to exchange (required)
-        :type game_game_id_chip_exchange_post_request: GameGameIdChipExchangePostRequest
+        :param game_chip_exchange_dto: a specification for the chips to exchange (required)
+        :type game_chip_exchange_dto: GameChipExchangeDTO
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -391,7 +391,7 @@ class GameApi:
 
         _param = self._game_game_id_chip_exchange_post_serialize(
             game_id=game_id,
-            game_game_id_chip_exchange_post_request=game_game_id_chip_exchange_post_request,
+            game_chip_exchange_dto=game_chip_exchange_dto,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -417,7 +417,7 @@ class GameApi:
     async def game_game_id_chip_exchange_post_with_http_info(
         self,
         game_id: Annotated[StrictStr, Field(description="ID of the Game exchange chips in")],
-        game_game_id_chip_exchange_post_request: Annotated[GameGameIdChipExchangePostRequest, Field(description="a specification for the chips to exchange")],
+        game_chip_exchange_dto: Annotated[GameChipExchangeDTO, Field(description="a specification for the chips to exchange")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -437,8 +437,8 @@ class GameApi:
 
         :param game_id: ID of the Game exchange chips in (required)
         :type game_id: str
-        :param game_game_id_chip_exchange_post_request: a specification for the chips to exchange (required)
-        :type game_game_id_chip_exchange_post_request: GameGameIdChipExchangePostRequest
+        :param game_chip_exchange_dto: a specification for the chips to exchange (required)
+        :type game_chip_exchange_dto: GameChipExchangeDTO
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -463,7 +463,7 @@ class GameApi:
 
         _param = self._game_game_id_chip_exchange_post_serialize(
             game_id=game_id,
-            game_game_id_chip_exchange_post_request=game_game_id_chip_exchange_post_request,
+            game_chip_exchange_dto=game_chip_exchange_dto,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -489,7 +489,7 @@ class GameApi:
     async def game_game_id_chip_exchange_post_without_preload_content(
         self,
         game_id: Annotated[StrictStr, Field(description="ID of the Game exchange chips in")],
-        game_game_id_chip_exchange_post_request: Annotated[GameGameIdChipExchangePostRequest, Field(description="a specification for the chips to exchange")],
+        game_chip_exchange_dto: Annotated[GameChipExchangeDTO, Field(description="a specification for the chips to exchange")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -509,8 +509,8 @@ class GameApi:
 
         :param game_id: ID of the Game exchange chips in (required)
         :type game_id: str
-        :param game_game_id_chip_exchange_post_request: a specification for the chips to exchange (required)
-        :type game_game_id_chip_exchange_post_request: GameGameIdChipExchangePostRequest
+        :param game_chip_exchange_dto: a specification for the chips to exchange (required)
+        :type game_chip_exchange_dto: GameChipExchangeDTO
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -535,7 +535,7 @@ class GameApi:
 
         _param = self._game_game_id_chip_exchange_post_serialize(
             game_id=game_id,
-            game_game_id_chip_exchange_post_request=game_game_id_chip_exchange_post_request,
+            game_chip_exchange_dto=game_chip_exchange_dto,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -556,7 +556,7 @@ class GameApi:
     def _game_game_id_chip_exchange_post_serialize(
         self,
         game_id,
-        game_game_id_chip_exchange_post_request,
+        game_chip_exchange_dto,
         _request_auth,
         _content_type,
         _headers,
@@ -584,8 +584,8 @@ class GameApi:
         # process the header parameters
         # process the form parameters
         # process the body parameter
-        if game_game_id_chip_exchange_post_request is not None:
-            _body_params = game_game_id_chip_exchange_post_request
+        if game_chip_exchange_dto is not None:
+            _body_params = game_chip_exchange_dto
 
 
         # set the HTTP header `Accept`
@@ -929,7 +929,7 @@ class GameApi:
     async def game_game_id_hand_post(
         self,
         game_id: Annotated[StrictStr, Field(description="ID of the Game to join")],
-        game_game_id_hand_post_request: Annotated[GameGameIdHandPostRequest, Field(description="a dto containing new hand information")],
+        game_new_hand_dto: Annotated[GameNewHandDTO, Field(description="a dto containing new hand information")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -949,8 +949,8 @@ class GameApi:
 
         :param game_id: ID of the Game to join (required)
         :type game_id: str
-        :param game_game_id_hand_post_request: a dto containing new hand information (required)
-        :type game_game_id_hand_post_request: GameGameIdHandPostRequest
+        :param game_new_hand_dto: a dto containing new hand information (required)
+        :type game_new_hand_dto: GameNewHandDTO
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -975,7 +975,7 @@ class GameApi:
 
         _param = self._game_game_id_hand_post_serialize(
             game_id=game_id,
-            game_game_id_hand_post_request=game_game_id_hand_post_request,
+            game_new_hand_dto=game_new_hand_dto,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -1001,7 +1001,7 @@ class GameApi:
     async def game_game_id_hand_post_with_http_info(
         self,
         game_id: Annotated[StrictStr, Field(description="ID of the Game to join")],
-        game_game_id_hand_post_request: Annotated[GameGameIdHandPostRequest, Field(description="a dto containing new hand information")],
+        game_new_hand_dto: Annotated[GameNewHandDTO, Field(description="a dto containing new hand information")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1021,8 +1021,8 @@ class GameApi:
 
         :param game_id: ID of the Game to join (required)
         :type game_id: str
-        :param game_game_id_hand_post_request: a dto containing new hand information (required)
-        :type game_game_id_hand_post_request: GameGameIdHandPostRequest
+        :param game_new_hand_dto: a dto containing new hand information (required)
+        :type game_new_hand_dto: GameNewHandDTO
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1047,7 +1047,7 @@ class GameApi:
 
         _param = self._game_game_id_hand_post_serialize(
             game_id=game_id,
-            game_game_id_hand_post_request=game_game_id_hand_post_request,
+            game_new_hand_dto=game_new_hand_dto,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -1073,7 +1073,7 @@ class GameApi:
     async def game_game_id_hand_post_without_preload_content(
         self,
         game_id: Annotated[StrictStr, Field(description="ID of the Game to join")],
-        game_game_id_hand_post_request: Annotated[GameGameIdHandPostRequest, Field(description="a dto containing new hand information")],
+        game_new_hand_dto: Annotated[GameNewHandDTO, Field(description="a dto containing new hand information")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1093,8 +1093,8 @@ class GameApi:
 
         :param game_id: ID of the Game to join (required)
         :type game_id: str
-        :param game_game_id_hand_post_request: a dto containing new hand information (required)
-        :type game_game_id_hand_post_request: GameGameIdHandPostRequest
+        :param game_new_hand_dto: a dto containing new hand information (required)
+        :type game_new_hand_dto: GameNewHandDTO
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1119,7 +1119,7 @@ class GameApi:
 
         _param = self._game_game_id_hand_post_serialize(
             game_id=game_id,
-            game_game_id_hand_post_request=game_game_id_hand_post_request,
+            game_new_hand_dto=game_new_hand_dto,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -1140,7 +1140,7 @@ class GameApi:
     def _game_game_id_hand_post_serialize(
         self,
         game_id,
-        game_game_id_hand_post_request,
+        game_new_hand_dto,
         _request_auth,
         _content_type,
         _headers,
@@ -1168,8 +1168,8 @@ class GameApi:
         # process the header parameters
         # process the form parameters
         # process the body parameter
-        if game_game_id_hand_post_request is not None:
-            _body_params = game_game_id_hand_post_request
+        if game_new_hand_dto is not None:
+            _body_params = game_new_hand_dto
 
 
         # set the HTTP header `Accept`
@@ -2579,6 +2579,298 @@ class GameApi:
 
 
     @validate_call
+    async def game_game_id_state_post(
+        self,
+        game_id: Annotated[StrictStr, Field(description="the id of the game to start")],
+        game_table_dto: Annotated[GameTableDTO, Field(description="the game state object to start game from")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> JustResponseMessageString:
+        """start game from state
+
+        starts a game from a specific state
+
+        :param game_id: the id of the game to start (required)
+        :type game_id: str
+        :param game_table_dto: the game state object to start game from (required)
+        :type game_table_dto: GameTableDTO
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._game_game_id_state_post_serialize(
+            game_id=game_id,
+            game_table_dto=game_table_dto,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "JustResponseMessageString",
+            '400': "JustResponseMessageJustErrorDTO",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def game_game_id_state_post_with_http_info(
+        self,
+        game_id: Annotated[StrictStr, Field(description="the id of the game to start")],
+        game_table_dto: Annotated[GameTableDTO, Field(description="the game state object to start game from")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[JustResponseMessageString]:
+        """start game from state
+
+        starts a game from a specific state
+
+        :param game_id: the id of the game to start (required)
+        :type game_id: str
+        :param game_table_dto: the game state object to start game from (required)
+        :type game_table_dto: GameTableDTO
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._game_game_id_state_post_serialize(
+            game_id=game_id,
+            game_table_dto=game_table_dto,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "JustResponseMessageString",
+            '400': "JustResponseMessageJustErrorDTO",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def game_game_id_state_post_without_preload_content(
+        self,
+        game_id: Annotated[StrictStr, Field(description="the id of the game to start")],
+        game_table_dto: Annotated[GameTableDTO, Field(description="the game state object to start game from")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """start game from state
+
+        starts a game from a specific state
+
+        :param game_id: the id of the game to start (required)
+        :type game_id: str
+        :param game_table_dto: the game state object to start game from (required)
+        :type game_table_dto: GameTableDTO
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._game_game_id_state_post_serialize(
+            game_id=game_id,
+            game_table_dto=game_table_dto,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "JustResponseMessageString",
+            '400': "JustResponseMessageJustErrorDTO",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _game_game_id_state_post_serialize(
+        self,
+        game_id,
+        game_table_dto,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if game_id is not None:
+            _path_params['game_id'] = game_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+        if game_table_dto is not None:
+            _body_params = game_table_dto
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+        # set the HTTP header `Content-Type`
+        if _content_type:
+            _header_params['Content-Type'] = _content_type
+        else:
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
+            )
+            if _default_content_type is not None:
+                _header_params['Content-Type'] = _default_content_type
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'BearerAuth'
+        ]
+
+        return self.api_client.param_serialize(
+            method='POST',
+            resource_path='/game/{game_id}/state',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
     async def game_game_id_state_ws_get(
         self,
         game_id: Annotated[StrictStr, Field(description="ID of the Game to get events from")],
@@ -2823,298 +3115,6 @@ class GameApi:
         return self.api_client.param_serialize(
             method='GET',
             resource_path='/game/{game_id}/state/ws',
-            path_params=_path_params,
-            query_params=_query_params,
-            header_params=_header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            auth_settings=_auth_settings,
-            collection_formats=_collection_formats,
-            _host=_host,
-            _request_auth=_request_auth
-        )
-
-
-
-
-    @validate_call
-    async def game_game_id_table_post(
-        self,
-        game_id: Annotated[StrictStr, Field(description="the id of the game to set the table for")],
-        game_game_id_table_post_request: Annotated[GameGameIdTablePostRequest, Field(description="the game state object to load as a test game")],
-        _request_timeout: Union[
-            None,
-            Annotated[StrictFloat, Field(gt=0)],
-            Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
-        ] = None,
-        _request_auth: Optional[Dict[StrictStr, Any]] = None,
-        _content_type: Optional[StrictStr] = None,
-        _headers: Optional[Dict[StrictStr, Any]] = None,
-        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> JustResponseMessageString:
-        """Sets a table
-
-        creates a game for testing
-
-        :param game_id: the id of the game to set the table for (required)
-        :type game_id: str
-        :param game_game_id_table_post_request: the game state object to load as a test game (required)
-        :type game_game_id_table_post_request: GameGameIdTablePostRequest
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :type _request_timeout: int, tuple(int, int), optional
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the
-                              authentication in the spec for a single request.
-        :type _request_auth: dict, optional
-        :param _content_type: force content-type for the request.
-        :type _content_type: str, Optional
-        :param _headers: set to override the headers for a single
-                         request; this effectively ignores the headers
-                         in the spec for a single request.
-        :type _headers: dict, optional
-        :param _host_index: set to override the host_index for a single
-                            request; this effectively ignores the host_index
-                            in the spec for a single request.
-        :type _host_index: int, optional
-        :return: Returns the result object.
-        """ # noqa: E501
-
-        _param = self._game_game_id_table_post_serialize(
-            game_id=game_id,
-            game_game_id_table_post_request=game_game_id_table_post_request,
-            _request_auth=_request_auth,
-            _content_type=_content_type,
-            _headers=_headers,
-            _host_index=_host_index
-        )
-
-        _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JustResponseMessageString",
-            '400': "JustResponseMessageJustErrorDTO",
-        }
-        response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
-        )
-        await response_data.read()
-        return self.api_client.response_deserialize(
-            response_data=response_data,
-            response_types_map=_response_types_map,
-        ).data
-
-
-    @validate_call
-    async def game_game_id_table_post_with_http_info(
-        self,
-        game_id: Annotated[StrictStr, Field(description="the id of the game to set the table for")],
-        game_game_id_table_post_request: Annotated[GameGameIdTablePostRequest, Field(description="the game state object to load as a test game")],
-        _request_timeout: Union[
-            None,
-            Annotated[StrictFloat, Field(gt=0)],
-            Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
-        ] = None,
-        _request_auth: Optional[Dict[StrictStr, Any]] = None,
-        _content_type: Optional[StrictStr] = None,
-        _headers: Optional[Dict[StrictStr, Any]] = None,
-        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[JustResponseMessageString]:
-        """Sets a table
-
-        creates a game for testing
-
-        :param game_id: the id of the game to set the table for (required)
-        :type game_id: str
-        :param game_game_id_table_post_request: the game state object to load as a test game (required)
-        :type game_game_id_table_post_request: GameGameIdTablePostRequest
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :type _request_timeout: int, tuple(int, int), optional
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the
-                              authentication in the spec for a single request.
-        :type _request_auth: dict, optional
-        :param _content_type: force content-type for the request.
-        :type _content_type: str, Optional
-        :param _headers: set to override the headers for a single
-                         request; this effectively ignores the headers
-                         in the spec for a single request.
-        :type _headers: dict, optional
-        :param _host_index: set to override the host_index for a single
-                            request; this effectively ignores the host_index
-                            in the spec for a single request.
-        :type _host_index: int, optional
-        :return: Returns the result object.
-        """ # noqa: E501
-
-        _param = self._game_game_id_table_post_serialize(
-            game_id=game_id,
-            game_game_id_table_post_request=game_game_id_table_post_request,
-            _request_auth=_request_auth,
-            _content_type=_content_type,
-            _headers=_headers,
-            _host_index=_host_index
-        )
-
-        _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JustResponseMessageString",
-            '400': "JustResponseMessageJustErrorDTO",
-        }
-        response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
-        )
-        await response_data.read()
-        return self.api_client.response_deserialize(
-            response_data=response_data,
-            response_types_map=_response_types_map,
-        )
-
-
-    @validate_call
-    async def game_game_id_table_post_without_preload_content(
-        self,
-        game_id: Annotated[StrictStr, Field(description="the id of the game to set the table for")],
-        game_game_id_table_post_request: Annotated[GameGameIdTablePostRequest, Field(description="the game state object to load as a test game")],
-        _request_timeout: Union[
-            None,
-            Annotated[StrictFloat, Field(gt=0)],
-            Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
-        ] = None,
-        _request_auth: Optional[Dict[StrictStr, Any]] = None,
-        _content_type: Optional[StrictStr] = None,
-        _headers: Optional[Dict[StrictStr, Any]] = None,
-        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> RESTResponseType:
-        """Sets a table
-
-        creates a game for testing
-
-        :param game_id: the id of the game to set the table for (required)
-        :type game_id: str
-        :param game_game_id_table_post_request: the game state object to load as a test game (required)
-        :type game_game_id_table_post_request: GameGameIdTablePostRequest
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :type _request_timeout: int, tuple(int, int), optional
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the
-                              authentication in the spec for a single request.
-        :type _request_auth: dict, optional
-        :param _content_type: force content-type for the request.
-        :type _content_type: str, Optional
-        :param _headers: set to override the headers for a single
-                         request; this effectively ignores the headers
-                         in the spec for a single request.
-        :type _headers: dict, optional
-        :param _host_index: set to override the host_index for a single
-                            request; this effectively ignores the host_index
-                            in the spec for a single request.
-        :type _host_index: int, optional
-        :return: Returns the result object.
-        """ # noqa: E501
-
-        _param = self._game_game_id_table_post_serialize(
-            game_id=game_id,
-            game_game_id_table_post_request=game_game_id_table_post_request,
-            _request_auth=_request_auth,
-            _content_type=_content_type,
-            _headers=_headers,
-            _host_index=_host_index
-        )
-
-        _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JustResponseMessageString",
-            '400': "JustResponseMessageJustErrorDTO",
-        }
-        response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
-        )
-        return response_data.response
-
-
-    def _game_game_id_table_post_serialize(
-        self,
-        game_id,
-        game_game_id_table_post_request,
-        _request_auth,
-        _content_type,
-        _headers,
-        _host_index,
-    ) -> RequestSerialized:
-
-        _host = None
-
-        _collection_formats: Dict[str, str] = {
-        }
-
-        _path_params: Dict[str, str] = {}
-        _query_params: List[Tuple[str, str]] = []
-        _header_params: Dict[str, Optional[str]] = _headers or {}
-        _form_params: List[Tuple[str, str]] = []
-        _files: Dict[
-            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
-        ] = {}
-        _body_params: Optional[bytes] = None
-
-        # process the path parameters
-        if game_id is not None:
-            _path_params['game_id'] = game_id
-        # process the query parameters
-        # process the header parameters
-        # process the form parameters
-        # process the body parameter
-        if game_game_id_table_post_request is not None:
-            _body_params = game_game_id_table_post_request
-
-
-        # set the HTTP header `Accept`
-        if 'Accept' not in _header_params:
-            _header_params['Accept'] = self.api_client.select_header_accept(
-                [
-                    'application/json'
-                ]
-            )
-
-        # set the HTTP header `Content-Type`
-        if _content_type:
-            _header_params['Content-Type'] = _content_type
-        else:
-            _default_content_type = (
-                self.api_client.select_header_content_type(
-                    [
-                        'application/json'
-                    ]
-                )
-            )
-            if _default_content_type is not None:
-                _header_params['Content-Type'] = _default_content_type
-
-        # authentication setting
-        _auth_settings: List[str] = [
-            'BearerAuth'
-        ]
-
-        return self.api_client.param_serialize(
-            method='POST',
-            resource_path='/game/{game_id}/table',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -3378,7 +3378,7 @@ class GameApi:
     @validate_call
     async def game_post(
         self,
-        game_post_request: Annotated[GamePostRequest, Field(description="an object defining configuration information for the new game")],
+        game_new_game_config_dto: Annotated[GameNewGameConfigDTO, Field(description="an object defining configuration information for the new game")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3396,8 +3396,8 @@ class GameApi:
 
         creates a new game from a configuration file
 
-        :param game_post_request: an object defining configuration information for the new game (required)
-        :type game_post_request: GamePostRequest
+        :param game_new_game_config_dto: an object defining configuration information for the new game (required)
+        :type game_new_game_config_dto: GameNewGameConfigDTO
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -3421,7 +3421,7 @@ class GameApi:
         """ # noqa: E501
 
         _param = self._game_post_serialize(
-            game_post_request=game_post_request,
+            game_new_game_config_dto=game_new_game_config_dto,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -3446,7 +3446,7 @@ class GameApi:
     @validate_call
     async def game_post_with_http_info(
         self,
-        game_post_request: Annotated[GamePostRequest, Field(description="an object defining configuration information for the new game")],
+        game_new_game_config_dto: Annotated[GameNewGameConfigDTO, Field(description="an object defining configuration information for the new game")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3464,8 +3464,8 @@ class GameApi:
 
         creates a new game from a configuration file
 
-        :param game_post_request: an object defining configuration information for the new game (required)
-        :type game_post_request: GamePostRequest
+        :param game_new_game_config_dto: an object defining configuration information for the new game (required)
+        :type game_new_game_config_dto: GameNewGameConfigDTO
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -3489,7 +3489,7 @@ class GameApi:
         """ # noqa: E501
 
         _param = self._game_post_serialize(
-            game_post_request=game_post_request,
+            game_new_game_config_dto=game_new_game_config_dto,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -3514,7 +3514,7 @@ class GameApi:
     @validate_call
     async def game_post_without_preload_content(
         self,
-        game_post_request: Annotated[GamePostRequest, Field(description="an object defining configuration information for the new game")],
+        game_new_game_config_dto: Annotated[GameNewGameConfigDTO, Field(description="an object defining configuration information for the new game")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3532,8 +3532,8 @@ class GameApi:
 
         creates a new game from a configuration file
 
-        :param game_post_request: an object defining configuration information for the new game (required)
-        :type game_post_request: GamePostRequest
+        :param game_new_game_config_dto: an object defining configuration information for the new game (required)
+        :type game_new_game_config_dto: GameNewGameConfigDTO
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -3557,7 +3557,7 @@ class GameApi:
         """ # noqa: E501
 
         _param = self._game_post_serialize(
-            game_post_request=game_post_request,
+            game_new_game_config_dto=game_new_game_config_dto,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -3577,7 +3577,7 @@ class GameApi:
 
     def _game_post_serialize(
         self,
-        game_post_request,
+        game_new_game_config_dto,
         _request_auth,
         _content_type,
         _headers,
@@ -3603,8 +3603,8 @@ class GameApi:
         # process the header parameters
         # process the form parameters
         # process the body parameter
-        if game_post_request is not None:
-            _body_params = game_post_request
+        if game_new_game_config_dto is not None:
+            _body_params = game_new_game_config_dto
 
 
         # set the HTTP header `Accept`
@@ -3655,7 +3655,7 @@ class GameApi:
     @validate_call
     async def hand_evaluator_evaluate_post(
         self,
-        hand_evaluator_evaluate_post_request: Annotated[Optional[HandEvaluatorEvaluatePostRequest], Field(description="hand to evaluate, either 5 or 7 cards")],
+        game_card_dto: Annotated[List[GameCardDTO], Field(description="hand to evaluate, either 5 or 7 cards")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3673,8 +3673,8 @@ class GameApi:
 
         Evaluator? I hardly...
 
-        :param hand_evaluator_evaluate_post_request: hand to evaluate, either 5 or 7 cards (required)
-        :type hand_evaluator_evaluate_post_request: HandEvaluatorEvaluatePostRequest
+        :param game_card_dto: hand to evaluate, either 5 or 7 cards (required)
+        :type game_card_dto: List[GameCardDTO]
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -3698,7 +3698,7 @@ class GameApi:
         """ # noqa: E501
 
         _param = self._hand_evaluator_evaluate_post_serialize(
-            hand_evaluator_evaluate_post_request=hand_evaluator_evaluate_post_request,
+            game_card_dto=game_card_dto,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -3722,7 +3722,7 @@ class GameApi:
     @validate_call
     async def hand_evaluator_evaluate_post_with_http_info(
         self,
-        hand_evaluator_evaluate_post_request: Annotated[Optional[HandEvaluatorEvaluatePostRequest], Field(description="hand to evaluate, either 5 or 7 cards")],
+        game_card_dto: Annotated[List[GameCardDTO], Field(description="hand to evaluate, either 5 or 7 cards")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3740,8 +3740,8 @@ class GameApi:
 
         Evaluator? I hardly...
 
-        :param hand_evaluator_evaluate_post_request: hand to evaluate, either 5 or 7 cards (required)
-        :type hand_evaluator_evaluate_post_request: HandEvaluatorEvaluatePostRequest
+        :param game_card_dto: hand to evaluate, either 5 or 7 cards (required)
+        :type game_card_dto: List[GameCardDTO]
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -3765,7 +3765,7 @@ class GameApi:
         """ # noqa: E501
 
         _param = self._hand_evaluator_evaluate_post_serialize(
-            hand_evaluator_evaluate_post_request=hand_evaluator_evaluate_post_request,
+            game_card_dto=game_card_dto,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -3789,7 +3789,7 @@ class GameApi:
     @validate_call
     async def hand_evaluator_evaluate_post_without_preload_content(
         self,
-        hand_evaluator_evaluate_post_request: Annotated[Optional[HandEvaluatorEvaluatePostRequest], Field(description="hand to evaluate, either 5 or 7 cards")],
+        game_card_dto: Annotated[List[GameCardDTO], Field(description="hand to evaluate, either 5 or 7 cards")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3807,8 +3807,8 @@ class GameApi:
 
         Evaluator? I hardly...
 
-        :param hand_evaluator_evaluate_post_request: hand to evaluate, either 5 or 7 cards (required)
-        :type hand_evaluator_evaluate_post_request: HandEvaluatorEvaluatePostRequest
+        :param game_card_dto: hand to evaluate, either 5 or 7 cards (required)
+        :type game_card_dto: List[GameCardDTO]
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -3832,7 +3832,7 @@ class GameApi:
         """ # noqa: E501
 
         _param = self._hand_evaluator_evaluate_post_serialize(
-            hand_evaluator_evaluate_post_request=hand_evaluator_evaluate_post_request,
+            game_card_dto=game_card_dto,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -3851,7 +3851,7 @@ class GameApi:
 
     def _hand_evaluator_evaluate_post_serialize(
         self,
-        hand_evaluator_evaluate_post_request,
+        game_card_dto,
         _request_auth,
         _content_type,
         _headers,
@@ -3861,6 +3861,7 @@ class GameApi:
         _host = None
 
         _collection_formats: Dict[str, str] = {
+            'GameCardDTO': '',
         }
 
         _path_params: Dict[str, str] = {}
@@ -3877,8 +3878,8 @@ class GameApi:
         # process the header parameters
         # process the form parameters
         # process the body parameter
-        if hand_evaluator_evaluate_post_request is not None:
-            _body_params = hand_evaluator_evaluate_post_request
+        if game_card_dto is not None:
+            _body_params = game_card_dto
 
 
         # set the HTTP header `Accept`
@@ -3909,7 +3910,7 @@ class GameApi:
 
         return self.api_client.param_serialize(
             method='POST',
-            resource_path='/hand-evaluator/evaluate',
+            resource_path='/hand-evaluator/evaluate/',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,

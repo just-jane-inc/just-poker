@@ -9,4 +9,6 @@ swag init \
   -o ./docs \
   --ot json,yaml
 
+./fixswagger.sh
+
 go build .

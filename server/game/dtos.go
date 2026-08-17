@@ -28,10 +28,13 @@ type NewHandDTO struct {
 // two ChipStackDTO.
 type ChipExchangeDTO struct {
 	// the stack to give during the exchange
-	Give ChipStackDTO
+	UserID string `json:"user_id,omitempty"`
+
+	// the stack to give during the exchange
+	Give ChipStackDTO `json:"give"`
 
 	// the stack to receive as a result of the exchange
-	Receive ChipStackDTO
+	Receive ChipStackDTO `json:"receive"`
 }
 
 // ChipCountDTO a dto describing the denomation and count
@@ -108,7 +111,7 @@ type PlayerActionDTO struct {
 	Bet ChipStackDTO `json:"chips"`
 
 	// a timestamp capturing when a succesful action was accepted by the game
-	AcceptedAt *time.Time `json:"accepted_at"`
+	AcceptedAt *time.Time `json:"accepted_at" extensions:"x-nullable"`
 }
 
 // GameDTO a dto describing the current state of an entire game
@@ -117,10 +120,10 @@ type GameDTO struct {
 	ID string `json:"id"`
 
 	// the time that the game started originally
-	StartedAt *time.Time `json:"started_at"`
+	StartedAt *time.Time `json:"started_at" extensions:"x-nullable"`
 
 	// the time that the game ended
-	EndedAt *time.Time `json:"ended_at"`
+	EndedAt *time.Time `json:"ended_at" extensions:"x-nullable"`
 
 	// the configuration used to setup the game
 	Config NewGameConfigDTO `json:"game_config"`

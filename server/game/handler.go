@@ -238,6 +238,7 @@ func OnCreateGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	g.createdBy = userID
 	if err = CurrentGames.InsertGame(g); err != nil {
 		just.InternalError(fmt.Sprintf("encountered error inserting game into cache: %v game could not be stored", err)).WriteJSONResponse(w)
 		return
@@ -247,20 +248,20 @@ func OnCreateGame(w http.ResponseWriter, r *http.Request) {
 	just.Logger.Debugf("game lobby [%s] created for [%s]", g.id, userID)
 }
 
-// OnSetTable godoc
-// @Summary      Sets a table
-// @Description  creates a game for testing
+// OnStartGameFromState godoc
+// @Summary      start game from state
+// @Description  starts a game from a specific state
 // @Tags         Game
 // @Accept       json
 // @Produce      json
-// @Param game_id path string true "the id of the game to set the table for"
-// @Param request body TableDTO true "the game state object to load as a test game"
+// @Param game_id path string true "the id of the game to start"
+// @Param request body TableDTO true "the game state object to start game from"
 // @Success      200 {object} just.ResponseMessage[string] "game created - game id as string"
 // @Failure      400 {object} just.ResponseMessage[just.ErrorDTO]
 // @Security BearerAuth
-// @Router       /game/{game_id}/table [post]
-func OnSetTable(w http.ResponseWriter, r *http.Request) {
-	_, _, err := just.GetAuthorizedUser(r)
+// @Router       /game/{game_id}/state [post]
+func OnStartGameFromState(w http.ResponseWriter, r *http.Request) {
+	userID, _, err := just.GetAuthorizedUser(r)
 	if err != nil {
 		just.Logger.Errorf("encountered error: %v", err)
 		just.MissingToken().WriteJSONResponse(w)
@@ -280,7 +281,13 @@ func OnSetTable(w http.ResponseWriter, r *http.Request) {
 		just.NotFound("game not found", just.GameNotFound).WriteJSONResponse(w)
 	}
 
+	if g.createdBy != userID {
+		just.Unauthorized().WriteJSONResponse(w)
+		return
+	}
+
 	g.table = table.AsTable()
+	just.OK("game_started", g.id).WriteJSONResponse(w)
 }
 
 // OnExchangeChips godoc
@@ -325,6 +332,7 @@ func OnExchangeChips(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var exchange ChipExchangeDTO
+	exchange.UserID = userID
 	if err := json.NewDecoder(r.Body).Decode(&exchange); err != nil {
 		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
 		return
@@ -336,6 +344,7 @@ func OnExchangeChips(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	g.table.sendMessageToConnections("chip_exchange", exchange)
 	just.OK("chips_exchanged", struct{}{}).WriteJSONResponse(w)
 }
 
@@ -366,7 +375,6 @@ func OnStartGame(w http.ResponseWriter, r *http.Request) {
 	}
 
 	g.joinGameLock.Lock()
-	handleUpdates(g, g.AsDTO(), "starting_game")
 	err = g.TryStartGame()
 	g.joinGameLock.Unlock()
 	if err != nil {
@@ -374,6 +382,7 @@ func OnStartGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	handleUpdates(g, g.AsDTO(), "starting_game")
 	handleUpdates(g, g.AsDTO(), "game_state_update")
 	go g.ProccessPlayerActions(make(chan any))
 

@@ -40,7 +40,8 @@ class TestGameChipExchangeDTO(unittest.TestCase):
                     },
                 receive = {
                     'key' : 56
-                    }
+                    },
+                user_id = ''
             )
         else:
             return GameChipExchangeDTO(

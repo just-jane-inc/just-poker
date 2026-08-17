@@ -12,6 +12,8 @@
     kevin@suffe.cool
 ****************************************************************/
 
+// :3
+// -- LainVT
 int main(int argc, char **argv) {
   int eval = -1;
   if (argc == 6) {

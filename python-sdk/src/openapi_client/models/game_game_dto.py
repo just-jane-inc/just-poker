@@ -81,6 +81,16 @@ class GameGameDTO(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of table
         if self.table:
             _dict['table'] = self.table.to_dict()
+        # set to None if ended_at (nullable) is None
+        # and model_fields_set contains the field
+        if self.ended_at is None and "ended_at" in self.model_fields_set:
+            _dict['ended_at'] = None
+
+        # set to None if started_at (nullable) is None
+        # and model_fields_set contains the field
+        if self.started_at is None and "started_at" in self.model_fields_set:
+            _dict['started_at'] = None
+
         return _dict
 
     @classmethod

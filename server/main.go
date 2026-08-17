@@ -169,6 +169,11 @@ func main() {
 	)
 
 	apiMux.HandleFunc(
+		"POST /game/{game_id}/state",
+		game.OnStartGameFromState,
+	)
+
+	apiMux.HandleFunc(
 		"POST /game/{game_id}/chip/exchange",
 		game.OnExchangeChips,
 	)
@@ -236,6 +241,7 @@ func main() {
 
 	fmt.Println("just__started")
 
+	fmt.Printf("listening on :%s\n", just.Env.Port)
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}

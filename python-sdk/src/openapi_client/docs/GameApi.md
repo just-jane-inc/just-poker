@@ -13,15 +13,15 @@ Method | HTTP request | Description
 [**game_game_id_state_get**](GameApi.md#game_game_id_state_get) | **GET** /game/{game_id}/state | Game State
 [**game_game_id_state_listen_get**](GameApi.md#game_game_id_state_listen_get) | **GET** /game/{game_id}/state/listen | Get Listener
 [**game_game_id_state_listen_post**](GameApi.md#game_game_id_state_listen_post) | **POST** /game/{game_id}/state/listen | Register Listener
+[**game_game_id_state_post**](GameApi.md#game_game_id_state_post) | **POST** /game/{game_id}/state | start game from state
 [**game_game_id_state_ws_get**](GameApi.md#game_game_id_state_ws_get) | **GET** /game/{game_id}/state/ws | Connect Updates
-[**game_game_id_table_post**](GameApi.md#game_game_id_table_post) | **POST** /game/{game_id}/table | Sets a table
 [**game_get**](GameApi.md#game_get) | **GET** /game | Gets Active Games
 [**game_post**](GameApi.md#game_post) | **POST** /game | Create Game
-[**hand_evaluator_evaluate_post**](GameApi.md#hand_evaluator_evaluate_post) | **POST** /hand-evaluator/evaluate | Evaluate a Hand
+[**hand_evaluator_evaluate_post**](GameApi.md#hand_evaluator_evaluate_post) | **POST** /hand-evaluator/evaluate/ | Evaluate a Hand
 
 
 # **game_game_id_action_post**
-> JustResponseMessageAny game_game_id_action_post(game_id, game_game_id_action_post_request)
+> JustResponseMessageAny game_game_id_action_post(game_id, game_player_action_dto)
 
 Player Action
 
@@ -33,7 +33,7 @@ post the action preformed by a player
 
 ```python
 import openapi_client
-from openapi_client.models.game_game_id_action_post_request import GameGameIdActionPostRequest
+from openapi_client.models.game_player_action_dto import GamePlayerActionDTO
 from openapi_client.models.just_response_message_any import JustResponseMessageAny
 from openapi_client.rest import ApiException
 from pprint import pprint
@@ -59,11 +59,11 @@ async with openapi_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = openapi_client.GameApi(api_client)
     game_id = 'game_id_example' # str | the id of the game
-    game_game_id_action_post_request = openapi_client.GameGameIdActionPostRequest() # GameGameIdActionPostRequest | the action the player is preforming
+    game_player_action_dto = openapi_client.GamePlayerActionDTO() # GamePlayerActionDTO | the action the player is preforming
 
     try:
         # Player Action
-        api_response = await api_instance.game_game_id_action_post(game_id, game_game_id_action_post_request)
+        api_response = await api_instance.game_game_id_action_post(game_id, game_player_action_dto)
         print("The response of GameApi->game_game_id_action_post:\n")
         pprint(api_response)
     except Exception as e:
@@ -78,7 +78,7 @@ async with openapi_client.ApiClient(configuration) as api_client:
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **game_id** | **str**| the id of the game | 
- **game_game_id_action_post_request** | [**GameGameIdActionPostRequest**](GameGameIdActionPostRequest.md)| the action the player is preforming | 
+ **game_player_action_dto** | [**GamePlayerActionDTO**](GamePlayerActionDTO.md)| the action the player is preforming | 
 
 ### Return type
 
@@ -103,7 +103,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **game_game_id_chip_exchange_post**
-> JustResponseMessageAny game_game_id_chip_exchange_post(game_id, game_game_id_chip_exchange_post_request)
+> JustResponseMessageAny game_game_id_chip_exchange_post(game_id, game_chip_exchange_dto)
 
 Exchange Chips
 
@@ -115,7 +115,7 @@ exchange chips in the players stack with the tables rack
 
 ```python
 import openapi_client
-from openapi_client.models.game_game_id_chip_exchange_post_request import GameGameIdChipExchangePostRequest
+from openapi_client.models.game_chip_exchange_dto import GameChipExchangeDTO
 from openapi_client.models.just_response_message_any import JustResponseMessageAny
 from openapi_client.rest import ApiException
 from pprint import pprint
@@ -141,11 +141,11 @@ async with openapi_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = openapi_client.GameApi(api_client)
     game_id = 'game_id_example' # str | ID of the Game exchange chips in
-    game_game_id_chip_exchange_post_request = openapi_client.GameGameIdChipExchangePostRequest() # GameGameIdChipExchangePostRequest | a specification for the chips to exchange
+    game_chip_exchange_dto = openapi_client.GameChipExchangeDTO() # GameChipExchangeDTO | a specification for the chips to exchange
 
     try:
         # Exchange Chips
-        api_response = await api_instance.game_game_id_chip_exchange_post(game_id, game_game_id_chip_exchange_post_request)
+        api_response = await api_instance.game_game_id_chip_exchange_post(game_id, game_chip_exchange_dto)
         print("The response of GameApi->game_game_id_chip_exchange_post:\n")
         pprint(api_response)
     except Exception as e:
@@ -160,7 +160,7 @@ async with openapi_client.ApiClient(configuration) as api_client:
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **game_id** | **str**| ID of the Game exchange chips in | 
- **game_game_id_chip_exchange_post_request** | [**GameGameIdChipExchangePostRequest**](GameGameIdChipExchangePostRequest.md)| a specification for the chips to exchange | 
+ **game_chip_exchange_dto** | [**GameChipExchangeDTO**](GameChipExchangeDTO.md)| a specification for the chips to exchange | 
 
 ### Return type
 
@@ -266,7 +266,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **game_game_id_hand_post**
-> object game_game_id_hand_post(game_id, game_game_id_hand_post_request)
+> object game_game_id_hand_post(game_id, game_new_hand_dto)
 
 Start Next Hand
 
@@ -278,7 +278,7 @@ Starts the next poker hand
 
 ```python
 import openapi_client
-from openapi_client.models.game_game_id_hand_post_request import GameGameIdHandPostRequest
+from openapi_client.models.game_new_hand_dto import GameNewHandDTO
 from openapi_client.rest import ApiException
 from pprint import pprint
 
@@ -303,11 +303,11 @@ async with openapi_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = openapi_client.GameApi(api_client)
     game_id = 'game_id_example' # str | ID of the Game to join
-    game_game_id_hand_post_request = openapi_client.GameGameIdHandPostRequest() # GameGameIdHandPostRequest | a dto containing new hand information
+    game_new_hand_dto = openapi_client.GameNewHandDTO() # GameNewHandDTO | a dto containing new hand information
 
     try:
         # Start Next Hand
-        api_response = await api_instance.game_game_id_hand_post(game_id, game_game_id_hand_post_request)
+        api_response = await api_instance.game_game_id_hand_post(game_id, game_new_hand_dto)
         print("The response of GameApi->game_game_id_hand_post:\n")
         pprint(api_response)
     except Exception as e:
@@ -322,7 +322,7 @@ async with openapi_client.ApiClient(configuration) as api_client:
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **game_id** | **str**| ID of the Game to join | 
- **game_game_id_hand_post_request** | [**GameGameIdHandPostRequest**](GameGameIdHandPostRequest.md)| a dto containing new hand information | 
+ **game_new_hand_dto** | [**GameNewHandDTO**](GameNewHandDTO.md)| a dto containing new hand information | 
 
 ### Return type
 
@@ -720,6 +720,88 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **game_game_id_state_post**
+> JustResponseMessageString game_game_id_state_post(game_id, game_table_dto)
+
+start game from state
+
+starts a game from a specific state
+
+### Example
+
+* Bearer Authentication (BearerAuth):
+
+```python
+import openapi_client
+from openapi_client.models.game_table_dto import GameTableDTO
+from openapi_client.models.just_response_message_string import JustResponseMessageString
+from openapi_client.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to https://game.bahms.org/api/poker
+# See configuration.py for a list of all supported configuration parameters.
+configuration = openapi_client.Configuration(
+    host = "https://game.bahms.org/api/poker"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+# Configure Bearer authorization: BearerAuth
+configuration = openapi_client.Configuration(
+    access_token = os.environ["BEARER_TOKEN"]
+)
+
+# Enter a context with an instance of the API client
+async with openapi_client.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = openapi_client.GameApi(api_client)
+    game_id = 'game_id_example' # str | the id of the game to start
+    game_table_dto = openapi_client.GameTableDTO() # GameTableDTO | the game state object to start game from
+
+    try:
+        # start game from state
+        api_response = await api_instance.game_game_id_state_post(game_id, game_table_dto)
+        print("The response of GameApi->game_game_id_state_post:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling GameApi->game_game_id_state_post: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **game_id** | **str**| the id of the game to start | 
+ **game_table_dto** | [**GameTableDTO**](GameTableDTO.md)| the game state object to start game from | 
+
+### Return type
+
+[**JustResponseMessageString**](JustResponseMessageString.md)
+
+### Authorization
+
+[BearerAuth](../README.md#BearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | game created - game id as string |  -  |
+**400** | Bad Request |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **game_game_id_state_ws_get**
 > object game_game_id_state_ws_get(game_id)
 
@@ -784,88 +866,6 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 **200** | OK |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **game_game_id_table_post**
-> JustResponseMessageString game_game_id_table_post(game_id, game_game_id_table_post_request)
-
-Sets a table
-
-creates a game for testing
-
-### Example
-
-* Bearer Authentication (BearerAuth):
-
-```python
-import openapi_client
-from openapi_client.models.game_game_id_table_post_request import GameGameIdTablePostRequest
-from openapi_client.models.just_response_message_string import JustResponseMessageString
-from openapi_client.rest import ApiException
-from pprint import pprint
-
-# Defining the host is optional and defaults to https://game.bahms.org/api/poker
-# See configuration.py for a list of all supported configuration parameters.
-configuration = openapi_client.Configuration(
-    host = "https://game.bahms.org/api/poker"
-)
-
-# The client must configure the authentication and authorization parameters
-# in accordance with the API server security policy.
-# Examples for each auth method are provided below, use the example that
-# satisfies your auth use case.
-
-# Configure Bearer authorization: BearerAuth
-configuration = openapi_client.Configuration(
-    access_token = os.environ["BEARER_TOKEN"]
-)
-
-# Enter a context with an instance of the API client
-async with openapi_client.ApiClient(configuration) as api_client:
-    # Create an instance of the API class
-    api_instance = openapi_client.GameApi(api_client)
-    game_id = 'game_id_example' # str | the id of the game to set the table for
-    game_game_id_table_post_request = openapi_client.GameGameIdTablePostRequest() # GameGameIdTablePostRequest | the game state object to load as a test game
-
-    try:
-        # Sets a table
-        api_response = await api_instance.game_game_id_table_post(game_id, game_game_id_table_post_request)
-        print("The response of GameApi->game_game_id_table_post:\n")
-        pprint(api_response)
-    except Exception as e:
-        print("Exception when calling GameApi->game_game_id_table_post: %s\n" % e)
-```
-
-
-
-### Parameters
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **game_id** | **str**| the id of the game to set the table for | 
- **game_game_id_table_post_request** | [**GameGameIdTablePostRequest**](GameGameIdTablePostRequest.md)| the game state object to load as a test game | 
-
-### Return type
-
-[**JustResponseMessageString**](JustResponseMessageString.md)
-
-### Authorization
-
-[BearerAuth](../README.md#BearerAuth)
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-### HTTP response details
-
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-**200** | game created - game id as string |  -  |
-**400** | Bad Request |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -934,7 +934,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **game_post**
-> JustResponseMessageString game_post(game_post_request)
+> JustResponseMessageString game_post(game_new_game_config_dto)
 
 Create Game
 
@@ -946,7 +946,7 @@ creates a new game from a configuration file
 
 ```python
 import openapi_client
-from openapi_client.models.game_post_request import GamePostRequest
+from openapi_client.models.game_new_game_config_dto import GameNewGameConfigDTO
 from openapi_client.models.just_response_message_string import JustResponseMessageString
 from openapi_client.rest import ApiException
 from pprint import pprint
@@ -971,11 +971,11 @@ configuration = openapi_client.Configuration(
 async with openapi_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = openapi_client.GameApi(api_client)
-    game_post_request = openapi_client.GamePostRequest() # GamePostRequest | an object defining configuration information for the new game
+    game_new_game_config_dto = openapi_client.GameNewGameConfigDTO() # GameNewGameConfigDTO | an object defining configuration information for the new game
 
     try:
         # Create Game
-        api_response = await api_instance.game_post(game_post_request)
+        api_response = await api_instance.game_post(game_new_game_config_dto)
         print("The response of GameApi->game_post:\n")
         pprint(api_response)
     except Exception as e:
@@ -989,7 +989,7 @@ async with openapi_client.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **game_post_request** | [**GamePostRequest**](GamePostRequest.md)| an object defining configuration information for the new game | 
+ **game_new_game_config_dto** | [**GameNewGameConfigDTO**](GameNewGameConfigDTO.md)| an object defining configuration information for the new game | 
 
 ### Return type
 
@@ -1014,7 +1014,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **hand_evaluator_evaluate_post**
-> JustHandEvaluationDTO hand_evaluator_evaluate_post(hand_evaluator_evaluate_post_request)
+> JustHandEvaluationDTO hand_evaluator_evaluate_post(game_card_dto)
 
 Evaluate a Hand
 
@@ -1025,7 +1025,7 @@ Evaluator? I hardly...
 
 ```python
 import openapi_client
-from openapi_client.models.hand_evaluator_evaluate_post_request import HandEvaluatorEvaluatePostRequest
+from openapi_client.models.game_card_dto import GameCardDTO
 from openapi_client.models.just_hand_evaluation_dto import JustHandEvaluationDTO
 from openapi_client.rest import ApiException
 from pprint import pprint
@@ -1041,11 +1041,11 @@ configuration = openapi_client.Configuration(
 async with openapi_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = openapi_client.GameApi(api_client)
-    hand_evaluator_evaluate_post_request = openapi_client.HandEvaluatorEvaluatePostRequest() # HandEvaluatorEvaluatePostRequest | hand to evaluate, either 5 or 7 cards
+    game_card_dto = [openapi_client.GameCardDTO()] # List[GameCardDTO] | hand to evaluate, either 5 or 7 cards
 
     try:
         # Evaluate a Hand
-        api_response = await api_instance.hand_evaluator_evaluate_post(hand_evaluator_evaluate_post_request)
+        api_response = await api_instance.hand_evaluator_evaluate_post(game_card_dto)
         print("The response of GameApi->hand_evaluator_evaluate_post:\n")
         pprint(api_response)
     except Exception as e:
@@ -1059,7 +1059,7 @@ async with openapi_client.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **hand_evaluator_evaluate_post_request** | [**HandEvaluatorEvaluatePostRequest**](HandEvaluatorEvaluatePostRequest.md)| hand to evaluate, either 5 or 7 cards | 
+ **game_card_dto** | [**List[GameCardDTO]**](GameCardDTO.md)| hand to evaluate, either 5 or 7 cards | 
 
 ### Return type
 

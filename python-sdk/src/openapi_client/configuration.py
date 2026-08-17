@@ -543,7 +543,7 @@ class Configuration:
         return [
             {
                 'url': "https://game.bahms.org/api/poker",
-                'description': "production api idk whatever you want to have the description here......yeaaaaaaah, exactly umm and now the game",
+                'description': "No description provided",
             }
         ]
 

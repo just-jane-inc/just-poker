@@ -29,6 +29,9 @@ type game struct {
 	pauseGameSemaphor   chan any
 	playerActionChannel chan *playerAction
 	denominations       map[int]any
+
+	// id of the user who created this game
+	createdBy string
 }
 
 func (c *CurrentGamesCache) GetCurrentGames() []ActiveGameDTO {

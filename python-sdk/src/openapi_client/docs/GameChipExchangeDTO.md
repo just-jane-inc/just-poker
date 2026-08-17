@@ -7,6 +7,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **give** | **Dict[str, int]** | an optional mapping of chips that is required by some action types. | [optional] 
 **receive** | **Dict[str, int]** | an optional mapping of chips that is required by some action types. | [optional] 
+**user_id** | **str** | the stack to give during the exchange | [optional] 
 
 ## Example
 

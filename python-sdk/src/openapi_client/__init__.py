@@ -30,29 +30,21 @@ __all__ = [
     "ApiKeyError",
     "ApiAttributeError",
     "ApiException",
-    "AdminGameGameIdStatusPostRequest",
-    "AdminGameGameIdTablePostRequest",
     "AdminGameStatus",
     "AdminGameStatusDTO",
     "GameActiveGameDTO",
     "GameCardDTO",
     "GameChipExchangeDTO",
     "GameGameDTO",
-    "GameGameIdActionPostRequest",
-    "GameGameIdChipExchangePostRequest",
-    "GameGameIdHandPostRequest",
-    "GameGameIdTablePostRequest",
     "GameHandDTO",
     "GameNewGameConfigDTO",
     "GameNewHandDTO",
     "GamePlayerActionDTO",
     "GamePlayerDTO",
     "GamePlayerIntent",
-    "GamePostRequest",
     "GameRoundDTO",
     "GameRoundType",
     "GameTableDTO",
-    "HandEvaluatorEvaluatePostRequest",
     "JustErrorCode",
     "JustErrorDTO",
     "JustHandEvaluationDTO",
@@ -80,29 +72,21 @@ from openapi_client.exceptions import ApiAttributeError as ApiAttributeError
 from openapi_client.exceptions import ApiException as ApiException
 
 # import models into sdk package
-from openapi_client.models.admin_game_game_id_status_post_request import AdminGameGameIdStatusPostRequest as AdminGameGameIdStatusPostRequest
-from openapi_client.models.admin_game_game_id_table_post_request import AdminGameGameIdTablePostRequest as AdminGameGameIdTablePostRequest
 from openapi_client.models.admin_game_status import AdminGameStatus as AdminGameStatus
 from openapi_client.models.admin_game_status_dto import AdminGameStatusDTO as AdminGameStatusDTO
 from openapi_client.models.game_active_game_dto import GameActiveGameDTO as GameActiveGameDTO
 from openapi_client.models.game_card_dto import GameCardDTO as GameCardDTO
 from openapi_client.models.game_chip_exchange_dto import GameChipExchangeDTO as GameChipExchangeDTO
 from openapi_client.models.game_game_dto import GameGameDTO as GameGameDTO
-from openapi_client.models.game_game_id_action_post_request import GameGameIdActionPostRequest as GameGameIdActionPostRequest
-from openapi_client.models.game_game_id_chip_exchange_post_request import GameGameIdChipExchangePostRequest as GameGameIdChipExchangePostRequest
-from openapi_client.models.game_game_id_hand_post_request import GameGameIdHandPostRequest as GameGameIdHandPostRequest
-from openapi_client.models.game_game_id_table_post_request import GameGameIdTablePostRequest as GameGameIdTablePostRequest
 from openapi_client.models.game_hand_dto import GameHandDTO as GameHandDTO
 from openapi_client.models.game_new_game_config_dto import GameNewGameConfigDTO as GameNewGameConfigDTO
 from openapi_client.models.game_new_hand_dto import GameNewHandDTO as GameNewHandDTO
 from openapi_client.models.game_player_action_dto import GamePlayerActionDTO as GamePlayerActionDTO
 from openapi_client.models.game_player_dto import GamePlayerDTO as GamePlayerDTO
 from openapi_client.models.game_player_intent import GamePlayerIntent as GamePlayerIntent
-from openapi_client.models.game_post_request import GamePostRequest as GamePostRequest
 from openapi_client.models.game_round_dto import GameRoundDTO as GameRoundDTO
 from openapi_client.models.game_round_type import GameRoundType as GameRoundType
 from openapi_client.models.game_table_dto import GameTableDTO as GameTableDTO
-from openapi_client.models.hand_evaluator_evaluate_post_request import HandEvaluatorEvaluatePostRequest as HandEvaluatorEvaluatePostRequest
 from openapi_client.models.just_error_code import JustErrorCode as JustErrorCode
 from openapi_client.models.just_error_dto import JustErrorDTO as JustErrorDTO
 from openapi_client.models.just_hand_evaluation_dto import JustHandEvaluationDTO as JustHandEvaluationDTO

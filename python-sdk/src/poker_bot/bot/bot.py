@@ -1,20 +1,10 @@
 import asyncio
 import logging
 
+import openapi_client as api
 import poker_bot.bot.poker_exceptions as ex
 import poker_bot.bot.poker_helpers as help
 import poker_bot.bot.websocket_events as ws
-from openapi_client import (
-    GameApi,
-    GameChipExchangeDTO,
-    GameGameDTO,
-    GameGameIdActionPostRequest,
-    GameGameIdChipExchangePostRequest,
-    GamePlayerActionDTO,
-    UserApi,
-)
-from openapi_client.models.game_player_dto import GamePlayerDTO
-from openapi_client.models.game_player_intent import GamePlayerIntent
 from poker_bot.bot.event_hub import (
     EventHub,
     EventSubscriber,
@@ -57,13 +47,13 @@ class PokerBot:
         self._base_url = base_url
         self._token = token
         self._api_client = help.create_connection(base_url, token)
-        self._user_api = UserApi(self._api_client)
-        self._game_api = GameApi(self._api_client)
+        self._user_api = api.UserApi(self._api_client)
+        self._game_api = api.api.GameApi(self._api_client)
         self._joined = False
         self._user_id = user_id
-        self._player: GamePlayerDTO | None = None
+        self._player: api.GamePlayerDTO | None = None
         self._current_stack: list[help.Chips] = []
-        self._current_state: GameGameDTO | None = None
+        self._current_state: api.GameGameDTO | None = None
         self._listener: ws.WebSocketListener | None = None
         self._hub: EventHub | None = None
         self._state_subscription: EventSubscriber | None = None
@@ -76,8 +66,8 @@ class PokerBot:
 
         return total
 
-    def get_game_api(self) -> GameApi:
-        return GameApi(self._api_client)
+    def get_game_api(self) -> api.GameApi:
+        return api.GameApi(self._api_client)
 
     async def join_game(self):
         """joins the configured game for this bot - if the bot is already joined to the game will noop"""
@@ -91,7 +81,7 @@ class PokerBot:
         """starts the game configured for this bot"""
         await self._game_api.game_game_id_started_post(self._game_id)
 
-    async def get_game_state(self) -> GameGameDTO | None:
+    async def get_game_state(self) -> api.GameGameDTO | None:
         """gets the current game state
 
         when getting the game state this will also update the internally tracked game state.
@@ -160,8 +150,8 @@ class PokerBot:
         """
         give_stack = {str(s.denomination): s.count for s in give}
         receive_stack = {str(s.denomination): s.count for s in receive}
-        dto = GameChipExchangeDTO(give=give_stack, receive=receive_stack)
-        req = GameGameIdChipExchangePostRequest(dto)
+        dto = api.GameChipExchangeDTO(give=give_stack, receive=receive_stack)
+        req = api.GameGameIdChipExchangePostRequest(dto)
         resp = await self._game_api.game_game_id_chip_exchange_post(self._game_id, req)
         if resp.type == "error":
             raise ex.CustomException("error in chip exchange: %s", resp.data.error)
@@ -248,7 +238,7 @@ class PokerBot:
         if not self.is_my_turn():
             return False
 
-        return await self.send_action(GamePlayerIntent.PlayerIntentCheck, {})
+        return await self.send_action(api.GamePlayerIntent.PlayerIntentCheck, {})
 
     async def all_in(self):
         """sends the all in action after waiting for the bots turn
@@ -261,7 +251,7 @@ class PokerBot:
         if not self.is_my_turn():
             return False
 
-        await self.send_action(GamePlayerIntent.PlayerIntentAllIn, {})
+        await self.send_action(api.GamePlayerIntent.PlayerIntentAllIn, {})
 
     async def raise_bet(self, raise_to: int):
         """sends action to raise bet after waiting for the bots turn
@@ -285,7 +275,7 @@ class PokerBot:
         await self.try_cover_bet(raise_to, bet)
         stack = help.convert_chips(bet)
 
-        await self.send_action(GamePlayerIntent.PlayerIntentRaise, stack)
+        await self.send_action(api.GamePlayerIntent.PlayerIntentRaise, stack)
 
     async def ante(self):
         """sends action to raise bet after waiting for the bots turn
@@ -309,7 +299,7 @@ class PokerBot:
         await self.try_cover_bet(amount, bet)
         stack = help.convert_chips(bet)
 
-        await self.send_action(GamePlayerIntent.PlayerIntentAnte, stack)
+        await self.send_action(api.GamePlayerIntent.PlayerIntentAnte, stack)
 
     async def call(self):
         """sends action to call after waiting for the bots turn
@@ -336,7 +326,7 @@ class PokerBot:
         await self.try_cover_bet(amount, bet)
         stack = help.convert_chips(bet)
 
-        await self.send_action(GamePlayerIntent.PlayerIntentCall, stack)
+        await self.send_action(api.GamePlayerIntent.PlayerIntentCall, stack)
 
     async def fold(self):
         """sends action to call after waiting for the bots turn
@@ -352,7 +342,7 @@ class PokerBot:
         if not self.is_my_turn():
             return False
 
-        await self.send_action(GamePlayerIntent.PlayerIntentFold)
+        await self.send_action(api.GamePlayerIntent.PlayerIntentFold)
 
     async def send_action(self, intent: str, bet: dict[str, int] | None = None):
         """send an action to the joined game
@@ -368,8 +358,8 @@ class PokerBot:
         if bet is None:
             bet = {}
 
-        dto = GamePlayerActionDTO(chips=bet, intent=intent)
-        req = GameGameIdActionPostRequest(dto)
+        dto = api.GamePlayerActionDTO(chips=bet, intent=intent)
+        req = api.GameGameIdActionPostRequest(dto)
         # TODO return if this is successful, bubble up to return all helpers too
         await self._game_api.game_game_id_action_post(self._game_id, req)
 
@@ -432,7 +422,7 @@ class PokerBot:
 
         return result
 
-    def _ingest_game_dto(self, state: GameGameDTO):
+    def _ingest_game_dto(self, state: api.GameGameDTO):
         """updates the internal model based on a new state
 
         alters the _current_state field as well as the _player and _current_stack
@@ -464,7 +454,7 @@ class PokerBot:
         return self._current_state.table.current_round.current_player_position
 
     def _ingest_websocket_event(self, event: WebSocketEvent):
-        if event.data is not None and isinstance(event.data, GameGameDTO):
+        if event.data is not None and isinstance(event.data, api.GameGameDTO):
             self._ingest_game_dto(event.data)
 
     async def __aenter__(self) -> "PokerBot":

@@ -58,11 +58,11 @@ async with openapi_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = openapi_client.AdminApi(api_client)
     game_id = 'game_id_example' # str | ID of the Game to update status of
-    admin_game_game_id_status_post_request = openapi_client.AdminGameGameIdStatusPostRequest() # AdminGameGameIdStatusPostRequest | the status of the game to set
+    admin_game_status_dto = openapi_client.AdminGameStatusDTO() # AdminGameStatusDTO | the status of the game to set
 
     try:
         # Update Game Status
-        api_response = await api_instance.admin_game_game_id_status_post(game_id, admin_game_game_id_status_post_request)
+        api_response = await api_instance.admin_game_game_id_status_post(game_id, admin_game_status_dto)
         print("The response of AdminApi->admin_game_game_id_status_post:\n")
         pprint(api_response)
     except ApiException as e:
@@ -87,39 +87,31 @@ Class | Method | HTTP request | Description
 *GameApi* | [**game_game_id_state_get**](openapi_client/docs/GameApi.md#game_game_id_state_get) | **GET** /game/{game_id}/state | Game State
 *GameApi* | [**game_game_id_state_listen_get**](openapi_client/docs/GameApi.md#game_game_id_state_listen_get) | **GET** /game/{game_id}/state/listen | Get Listener
 *GameApi* | [**game_game_id_state_listen_post**](openapi_client/docs/GameApi.md#game_game_id_state_listen_post) | **POST** /game/{game_id}/state/listen | Register Listener
+*GameApi* | [**game_game_id_state_post**](openapi_client/docs/GameApi.md#game_game_id_state_post) | **POST** /game/{game_id}/state | start game from state
 *GameApi* | [**game_game_id_state_ws_get**](openapi_client/docs/GameApi.md#game_game_id_state_ws_get) | **GET** /game/{game_id}/state/ws | Connect Updates
-*GameApi* | [**game_game_id_table_post**](openapi_client/docs/GameApi.md#game_game_id_table_post) | **POST** /game/{game_id}/table | Sets a table
 *GameApi* | [**game_get**](openapi_client/docs/GameApi.md#game_get) | **GET** /game | Gets Active Games
 *GameApi* | [**game_post**](openapi_client/docs/GameApi.md#game_post) | **POST** /game | Create Game
-*GameApi* | [**hand_evaluator_evaluate_post**](openapi_client/docs/GameApi.md#hand_evaluator_evaluate_post) | **POST** /hand-evaluator/evaluate | Evaluate a Hand
+*GameApi* | [**hand_evaluator_evaluate_post**](openapi_client/docs/GameApi.md#hand_evaluator_evaluate_post) | **POST** /hand-evaluator/evaluate/ | Evaluate a Hand
 *UserApi* | [**user_me_delete**](openapi_client/docs/UserApi.md#user_me_delete) | **DELETE** /user/me | delete requesting user
 
 
 ## Documentation For Models
 
- - [AdminGameGameIdStatusPostRequest](openapi_client/docs/AdminGameGameIdStatusPostRequest.md)
- - [AdminGameGameIdTablePostRequest](openapi_client/docs/AdminGameGameIdTablePostRequest.md)
  - [AdminGameStatus](openapi_client/docs/AdminGameStatus.md)
  - [AdminGameStatusDTO](openapi_client/docs/AdminGameStatusDTO.md)
  - [GameActiveGameDTO](openapi_client/docs/GameActiveGameDTO.md)
  - [GameCardDTO](openapi_client/docs/GameCardDTO.md)
  - [GameChipExchangeDTO](openapi_client/docs/GameChipExchangeDTO.md)
  - [GameGameDTO](openapi_client/docs/GameGameDTO.md)
- - [GameGameIdActionPostRequest](openapi_client/docs/GameGameIdActionPostRequest.md)
- - [GameGameIdChipExchangePostRequest](openapi_client/docs/GameGameIdChipExchangePostRequest.md)
- - [GameGameIdHandPostRequest](openapi_client/docs/GameGameIdHandPostRequest.md)
- - [GameGameIdTablePostRequest](openapi_client/docs/GameGameIdTablePostRequest.md)
  - [GameHandDTO](openapi_client/docs/GameHandDTO.md)
  - [GameNewGameConfigDTO](openapi_client/docs/GameNewGameConfigDTO.md)
  - [GameNewHandDTO](openapi_client/docs/GameNewHandDTO.md)
  - [GamePlayerActionDTO](openapi_client/docs/GamePlayerActionDTO.md)
  - [GamePlayerDTO](openapi_client/docs/GamePlayerDTO.md)
  - [GamePlayerIntent](openapi_client/docs/GamePlayerIntent.md)
- - [GamePostRequest](openapi_client/docs/GamePostRequest.md)
  - [GameRoundDTO](openapi_client/docs/GameRoundDTO.md)
  - [GameRoundType](openapi_client/docs/GameRoundType.md)
  - [GameTableDTO](openapi_client/docs/GameTableDTO.md)
- - [HandEvaluatorEvaluatePostRequest](openapi_client/docs/HandEvaluatorEvaluatePostRequest.md)
  - [JustErrorCode](openapi_client/docs/JustErrorCode.md)
  - [JustErrorDTO](openapi_client/docs/JustErrorDTO.md)
  - [JustHandEvaluationDTO](openapi_client/docs/JustHandEvaluationDTO.md)

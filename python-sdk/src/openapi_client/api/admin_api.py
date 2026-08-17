@@ -18,8 +18,8 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictStr
 from typing import Any, Dict
 from typing_extensions import Annotated
-from openapi_client.models.admin_game_game_id_status_post_request import AdminGameGameIdStatusPostRequest
-from openapi_client.models.admin_game_game_id_table_post_request import AdminGameGameIdTablePostRequest
+from openapi_client.models.admin_game_status_dto import AdminGameStatusDTO
+from openapi_client.models.game_table_dto import GameTableDTO
 
 from openapi_client.api_client import ApiClient, RequestSerialized
 from openapi_client.api_response import ApiResponse
@@ -43,7 +43,7 @@ class AdminApi:
     async def admin_game_game_id_status_post(
         self,
         game_id: Annotated[StrictStr, Field(description="ID of the Game to update status of")],
-        admin_game_game_id_status_post_request: Annotated[AdminGameGameIdStatusPostRequest, Field(description="the status of the game to set")],
+        admin_game_status_dto: Annotated[AdminGameStatusDTO, Field(description="the status of the game to set")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -63,8 +63,8 @@ class AdminApi:
 
         :param game_id: ID of the Game to update status of (required)
         :type game_id: str
-        :param admin_game_game_id_status_post_request: the status of the game to set (required)
-        :type admin_game_game_id_status_post_request: AdminGameGameIdStatusPostRequest
+        :param admin_game_status_dto: the status of the game to set (required)
+        :type admin_game_status_dto: AdminGameStatusDTO
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -89,7 +89,7 @@ class AdminApi:
 
         _param = self._admin_game_game_id_status_post_serialize(
             game_id=game_id,
-            admin_game_game_id_status_post_request=admin_game_game_id_status_post_request,
+            admin_game_status_dto=admin_game_status_dto,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -115,7 +115,7 @@ class AdminApi:
     async def admin_game_game_id_status_post_with_http_info(
         self,
         game_id: Annotated[StrictStr, Field(description="ID of the Game to update status of")],
-        admin_game_game_id_status_post_request: Annotated[AdminGameGameIdStatusPostRequest, Field(description="the status of the game to set")],
+        admin_game_status_dto: Annotated[AdminGameStatusDTO, Field(description="the status of the game to set")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -135,8 +135,8 @@ class AdminApi:
 
         :param game_id: ID of the Game to update status of (required)
         :type game_id: str
-        :param admin_game_game_id_status_post_request: the status of the game to set (required)
-        :type admin_game_game_id_status_post_request: AdminGameGameIdStatusPostRequest
+        :param admin_game_status_dto: the status of the game to set (required)
+        :type admin_game_status_dto: AdminGameStatusDTO
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -161,7 +161,7 @@ class AdminApi:
 
         _param = self._admin_game_game_id_status_post_serialize(
             game_id=game_id,
-            admin_game_game_id_status_post_request=admin_game_game_id_status_post_request,
+            admin_game_status_dto=admin_game_status_dto,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -187,7 +187,7 @@ class AdminApi:
     async def admin_game_game_id_status_post_without_preload_content(
         self,
         game_id: Annotated[StrictStr, Field(description="ID of the Game to update status of")],
-        admin_game_game_id_status_post_request: Annotated[AdminGameGameIdStatusPostRequest, Field(description="the status of the game to set")],
+        admin_game_status_dto: Annotated[AdminGameStatusDTO, Field(description="the status of the game to set")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -207,8 +207,8 @@ class AdminApi:
 
         :param game_id: ID of the Game to update status of (required)
         :type game_id: str
-        :param admin_game_game_id_status_post_request: the status of the game to set (required)
-        :type admin_game_game_id_status_post_request: AdminGameGameIdStatusPostRequest
+        :param admin_game_status_dto: the status of the game to set (required)
+        :type admin_game_status_dto: AdminGameStatusDTO
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -233,7 +233,7 @@ class AdminApi:
 
         _param = self._admin_game_game_id_status_post_serialize(
             game_id=game_id,
-            admin_game_game_id_status_post_request=admin_game_game_id_status_post_request,
+            admin_game_status_dto=admin_game_status_dto,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -254,7 +254,7 @@ class AdminApi:
     def _admin_game_game_id_status_post_serialize(
         self,
         game_id,
-        admin_game_game_id_status_post_request,
+        admin_game_status_dto,
         _request_auth,
         _content_type,
         _headers,
@@ -282,8 +282,8 @@ class AdminApi:
         # process the header parameters
         # process the form parameters
         # process the body parameter
-        if admin_game_game_id_status_post_request is not None:
-            _body_params = admin_game_game_id_status_post_request
+        if admin_game_status_dto is not None:
+            _body_params = admin_game_status_dto
 
 
         # set the HTTP header `Accept`
@@ -335,7 +335,7 @@ class AdminApi:
     async def admin_game_game_id_table_post(
         self,
         game_id: Annotated[StrictStr, Field(description="ID of the Game to update status of")],
-        admin_game_game_id_table_post_request: Annotated[AdminGameGameIdTablePostRequest, Field(description="the table struct to apply")],
+        game_table_dto: Annotated[GameTableDTO, Field(description="the table struct to apply")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -355,8 +355,8 @@ class AdminApi:
 
         :param game_id: ID of the Game to update status of (required)
         :type game_id: str
-        :param admin_game_game_id_table_post_request: the table struct to apply (required)
-        :type admin_game_game_id_table_post_request: AdminGameGameIdTablePostRequest
+        :param game_table_dto: the table struct to apply (required)
+        :type game_table_dto: GameTableDTO
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -381,7 +381,7 @@ class AdminApi:
 
         _param = self._admin_game_game_id_table_post_serialize(
             game_id=game_id,
-            admin_game_game_id_table_post_request=admin_game_game_id_table_post_request,
+            game_table_dto=game_table_dto,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -407,7 +407,7 @@ class AdminApi:
     async def admin_game_game_id_table_post_with_http_info(
         self,
         game_id: Annotated[StrictStr, Field(description="ID of the Game to update status of")],
-        admin_game_game_id_table_post_request: Annotated[AdminGameGameIdTablePostRequest, Field(description="the table struct to apply")],
+        game_table_dto: Annotated[GameTableDTO, Field(description="the table struct to apply")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -427,8 +427,8 @@ class AdminApi:
 
         :param game_id: ID of the Game to update status of (required)
         :type game_id: str
-        :param admin_game_game_id_table_post_request: the table struct to apply (required)
-        :type admin_game_game_id_table_post_request: AdminGameGameIdTablePostRequest
+        :param game_table_dto: the table struct to apply (required)
+        :type game_table_dto: GameTableDTO
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -453,7 +453,7 @@ class AdminApi:
 
         _param = self._admin_game_game_id_table_post_serialize(
             game_id=game_id,
-            admin_game_game_id_table_post_request=admin_game_game_id_table_post_request,
+            game_table_dto=game_table_dto,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -479,7 +479,7 @@ class AdminApi:
     async def admin_game_game_id_table_post_without_preload_content(
         self,
         game_id: Annotated[StrictStr, Field(description="ID of the Game to update status of")],
-        admin_game_game_id_table_post_request: Annotated[AdminGameGameIdTablePostRequest, Field(description="the table struct to apply")],
+        game_table_dto: Annotated[GameTableDTO, Field(description="the table struct to apply")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -499,8 +499,8 @@ class AdminApi:
 
         :param game_id: ID of the Game to update status of (required)
         :type game_id: str
-        :param admin_game_game_id_table_post_request: the table struct to apply (required)
-        :type admin_game_game_id_table_post_request: AdminGameGameIdTablePostRequest
+        :param game_table_dto: the table struct to apply (required)
+        :type game_table_dto: GameTableDTO
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -525,7 +525,7 @@ class AdminApi:
 
         _param = self._admin_game_game_id_table_post_serialize(
             game_id=game_id,
-            admin_game_game_id_table_post_request=admin_game_game_id_table_post_request,
+            game_table_dto=game_table_dto,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -546,7 +546,7 @@ class AdminApi:
     def _admin_game_game_id_table_post_serialize(
         self,
         game_id,
-        admin_game_game_id_table_post_request,
+        game_table_dto,
         _request_auth,
         _content_type,
         _headers,
@@ -574,8 +574,8 @@ class AdminApi:
         # process the header parameters
         # process the form parameters
         # process the body parameter
-        if admin_game_game_id_table_post_request is not None:
-            _body_params = admin_game_game_id_table_post_request
+        if game_table_dto is not None:
+            _body_params = game_table_dto
 
 
         # set the HTTP header `Accept`

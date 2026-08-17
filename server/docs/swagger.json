@@ -55,6 +55,10 @@
                     },
                     "receive": {
                         "$ref": "#/components/schemas/game.ChipStackDTO"
+                    },
+                    "user_id": {
+                        "description": "the stack to give during the exchange",
+                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -70,7 +74,8 @@
                 "properties": {
                     "ended_at": {
                         "description": "the time that the game ended",
-                        "type": "string"
+                        "type": "string",
+                        "x-nullable": true
                     },
                     "game_config": {
                         "$ref": "#/components/schemas/game.NewGameConfigDTO"
@@ -81,7 +86,8 @@
                     },
                     "started_at": {
                         "description": "the time that the game started originally",
-                        "type": "string"
+                        "type": "string",
+                        "x-nullable": true
                     },
                     "table": {
                         "$ref": "#/components/schemas/game.TableDTO"
@@ -161,7 +167,8 @@
                 "properties": {
                     "accepted_at": {
                         "description": "a timestamp capturing when a succesful action was accepted by the game",
-                        "type": "string"
+                        "type": "string",
+                        "x-nullable": true
                     },
                     "chips": {
                         "$ref": "#/components/schemas/game.ChipStackDTO"
@@ -497,9 +504,6 @@
                             "schema": {
                                 "oneOf": [
                                     {
-                                        "type": "object"
-                                    },
-                                    {
                                         "$ref": "#/components/schemas/admin.GameStatusDTO",
                                         "summary": "status",
                                         "description": "the status of the game to set"
@@ -556,9 +560,6 @@
                         "application/json": {
                             "schema": {
                                 "oneOf": [
-                                    {
-                                        "type": "object"
-                                    },
                                     {
                                         "$ref": "#/components/schemas/game.TableDTO",
                                         "summary": "status",
@@ -627,9 +628,6 @@
                         "application/json": {
                             "schema": {
                                 "oneOf": [
-                                    {
-                                        "type": "object"
-                                    },
                                     {
                                         "$ref": "#/components/schemas/game.NewGameConfigDTO",
                                         "summary": "request",
@@ -751,9 +749,6 @@
                             "schema": {
                                 "oneOf": [
                                     {
-                                        "type": "object"
-                                    },
-                                    {
                                         "$ref": "#/components/schemas/game.PlayerActionDTO",
                                         "summary": "request",
                                         "description": "the action the player is preforming"
@@ -818,9 +813,6 @@
                             "schema": {
                                 "oneOf": [
                                     {
-                                        "type": "object"
-                                    },
-                                    {
                                         "$ref": "#/components/schemas/game.ChipExchangeDTO",
                                         "summary": "request",
                                         "description": "a specification for the chips to exchange"
@@ -884,9 +876,6 @@
                         "application/json": {
                             "schema": {
                                 "oneOf": [
-                                    {
-                                        "type": "object"
-                                    },
                                     {
                                         "$ref": "#/components/schemas/game.NewHandDTO",
                                         "summary": "new_hand",
@@ -1089,6 +1078,68 @@
                 "tags": [
                     "Game"
                 ]
+            },
+            "post": {
+                "description": "starts a game from a specific state",
+                "parameters": [
+                    {
+                        "description": "the id of the game to start",
+                        "in": "path",
+                        "name": "game_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "$ref": "#/components/schemas/game.TableDTO",
+                                        "summary": "request",
+                                        "description": "the game state object to start game from"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "the game state object to start game from",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-string"
+                                }
+                            }
+                        },
+                        "description": "game created - game id as string"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "start game from state",
+                "tags": [
+                    "Game"
+                ]
             }
         },
         "/game/{game_id}/state/listen": {
@@ -1178,74 +1229,7 @@
                 ]
             }
         },
-        "/game/{game_id}/table": {
-            "post": {
-                "description": "creates a game for testing",
-                "parameters": [
-                    {
-                        "description": "the id of the game to set the table for",
-                        "in": "path",
-                        "name": "game_id",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "oneOf": [
-                                    {
-                                        "type": "object"
-                                    },
-                                    {
-                                        "$ref": "#/components/schemas/game.TableDTO",
-                                        "summary": "request",
-                                        "description": "the game state object to load as a test game"
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    "description": "the game state object to load as a test game",
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/just.ResponseMessage-string"
-                                }
-                            }
-                        },
-                        "description": "game created - game id as string"
-                    },
-                    "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
-                    }
-                },
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "summary": "Sets a table",
-                "tags": [
-                    "Game"
-                ]
-            }
-        },
-        "/hand-evaluator/evaluate": {
+        "/hand-evaluator/evaluate/": {
             "post": {
                 "description": "Evaluator? I hardly...",
                 "requestBody": {
@@ -1253,9 +1237,6 @@
                         "application/json": {
                             "schema": {
                                 "oneOf": [
-                                    {
-                                        "type": "object"
-                                    },
                                     {
                                         "items": {
                                             "$ref": "#/components/schemas/game.CardDTO"

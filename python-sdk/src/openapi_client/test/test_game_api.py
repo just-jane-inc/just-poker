@@ -89,17 +89,17 @@ class TestGameApi(unittest.IsolatedAsyncioTestCase):
         """
         pass
 
+    async def test_game_game_id_state_post(self) -> None:
+        """Test case for game_game_id_state_post
+
+        start game from state
+        """
+        pass
+
     async def test_game_game_id_state_ws_get(self) -> None:
         """Test case for game_game_id_state_ws_get
 
         Connect Updates
-        """
-        pass
-
-    async def test_game_game_id_table_post(self) -> None:
-        """Test case for game_game_id_table_post
-
-        Sets a table
         """
         pass
 

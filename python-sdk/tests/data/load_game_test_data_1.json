@@ -1,0 +1,89 @@
+{
+  "players": [
+    {
+      "user_id": "45",
+      "display_name": "jane",
+      "user_type": "bot",
+      "position": 0,
+      "hole": [],
+      "stack": {
+        "10": 10,
+        "100": 3,
+        "50": 4,
+        "500": 1
+      },
+      "current_bet": {
+        "50": 1
+      },
+      "pot_contribution": 0,
+      "state": "inactive"
+    },
+    {
+      "user_id": "50",
+      "display_name": "rae",
+      "user_type": "bot",
+      "position": 1,
+      "hole": [],
+      "stack": {
+        "10": 10,
+        "100": 6,
+        "50": 7,
+        "500": 1
+      },
+      "current_bet": {},
+      "pot_contribution": 0,
+      "state": "active"
+    },
+    {
+      "user_id": "49",
+      "display_name": "wolf",
+      "user_type": "bot",
+      "position": 2,
+      "hole": [],
+      "stack": {
+        "10": 67,
+        "100": 0,
+        "50": 0,
+        "500": 0
+      },
+      "current_bet": {},
+      "pot_contribution": 0,
+      "state": "inactive"
+    },
+    {
+      "user_id": "48",
+      "display_name": "red",
+      "user_type": "bot",
+      "position": 3,
+      "hole": [],
+      "stack": {
+        "10": 10,
+        "100": 4,
+        "50": 3,
+        "500": 1
+      },
+      "current_bet": {},
+      "pot_contribution": 0,
+      "state": "inactive"
+    }
+  ],
+  "pot": {
+    "50": 1
+  },
+  "street": [],
+  "current_round": {
+    "bet": 100,
+    "current_player_position": 1,
+    "current_aggressor": 2,
+    "current_round_type": "setup"
+  },
+  "current_hand": {
+    "id": 19,
+    "big_blind": 100,
+    "small_blind": 50,
+    "started_at": "0001-01-01T00:00:00Z"
+  },
+  "button_position": 3,
+  "small_blind_position": 0,
+  "big_blind_position": 1
+}

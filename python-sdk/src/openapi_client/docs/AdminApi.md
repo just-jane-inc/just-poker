@@ -9,7 +9,7 @@ Method | HTTP request | Description
 
 
 # **admin_game_game_id_status_post**
-> object admin_game_game_id_status_post(game_id, admin_game_game_id_status_post_request)
+> object admin_game_game_id_status_post(game_id, admin_game_status_dto)
 
 Update Game Status
 
@@ -21,7 +21,7 @@ Changes the status of an active game, for use by admins
 
 ```python
 import openapi_client
-from openapi_client.models.admin_game_game_id_status_post_request import AdminGameGameIdStatusPostRequest
+from openapi_client.models.admin_game_status_dto import AdminGameStatusDTO
 from openapi_client.rest import ApiException
 from pprint import pprint
 
@@ -46,11 +46,11 @@ async with openapi_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = openapi_client.AdminApi(api_client)
     game_id = 'game_id_example' # str | ID of the Game to update status of
-    admin_game_game_id_status_post_request = openapi_client.AdminGameGameIdStatusPostRequest() # AdminGameGameIdStatusPostRequest | the status of the game to set
+    admin_game_status_dto = openapi_client.AdminGameStatusDTO() # AdminGameStatusDTO | the status of the game to set
 
     try:
         # Update Game Status
-        api_response = await api_instance.admin_game_game_id_status_post(game_id, admin_game_game_id_status_post_request)
+        api_response = await api_instance.admin_game_game_id_status_post(game_id, admin_game_status_dto)
         print("The response of AdminApi->admin_game_game_id_status_post:\n")
         pprint(api_response)
     except Exception as e:
@@ -65,7 +65,7 @@ async with openapi_client.ApiClient(configuration) as api_client:
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **game_id** | **str**| ID of the Game to update status of | 
- **admin_game_game_id_status_post_request** | [**AdminGameGameIdStatusPostRequest**](AdminGameGameIdStatusPostRequest.md)| the status of the game to set | 
+ **admin_game_status_dto** | [**AdminGameStatusDTO**](AdminGameStatusDTO.md)| the status of the game to set | 
 
 ### Return type
 
@@ -90,7 +90,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **admin_game_game_id_table_post**
-> object admin_game_game_id_table_post(game_id, admin_game_game_id_table_post_request)
+> object admin_game_game_id_table_post(game_id, game_table_dto)
 
 Change Game Table
 
@@ -102,7 +102,7 @@ Changes the state of an active game
 
 ```python
 import openapi_client
-from openapi_client.models.admin_game_game_id_table_post_request import AdminGameGameIdTablePostRequest
+from openapi_client.models.game_table_dto import GameTableDTO
 from openapi_client.rest import ApiException
 from pprint import pprint
 
@@ -127,11 +127,11 @@ async with openapi_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = openapi_client.AdminApi(api_client)
     game_id = 'game_id_example' # str | ID of the Game to update status of
-    admin_game_game_id_table_post_request = openapi_client.AdminGameGameIdTablePostRequest() # AdminGameGameIdTablePostRequest | the table struct to apply
+    game_table_dto = openapi_client.GameTableDTO() # GameTableDTO | the table struct to apply
 
     try:
         # Change Game Table
-        api_response = await api_instance.admin_game_game_id_table_post(game_id, admin_game_game_id_table_post_request)
+        api_response = await api_instance.admin_game_game_id_table_post(game_id, game_table_dto)
         print("The response of AdminApi->admin_game_game_id_table_post:\n")
         pprint(api_response)
     except Exception as e:
@@ -146,7 +146,7 @@ async with openapi_client.ApiClient(configuration) as api_client:
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **game_id** | **str**| ID of the Game to update status of | 
- **admin_game_game_id_table_post_request** | [**AdminGameGameIdTablePostRequest**](AdminGameGameIdTablePostRequest.md)| the table struct to apply | 
+ **game_table_dto** | [**GameTableDTO**](GameTableDTO.md)| the table struct to apply | 
 
 ### Return type
 

@@ -17,7 +17,7 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
@@ -29,7 +29,8 @@ class GameChipExchangeDTO(BaseModel):
     """ # noqa: E501
     give: Optional[Dict[str, StrictInt]] = Field(default=None, description="an optional mapping of chips that is required by some action types.")
     receive: Optional[Dict[str, StrictInt]] = Field(default=None, description="an optional mapping of chips that is required by some action types.")
-    __properties: ClassVar[List[str]] = ["give", "receive"]
+    user_id: Optional[StrictStr] = Field(default=None, description="the stack to give during the exchange")
+    __properties: ClassVar[List[str]] = ["give", "receive", "user_id"]
 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -83,7 +84,8 @@ class GameChipExchangeDTO(BaseModel):
 
         _obj = cls.model_validate({
             "give": obj.get("give"),
-            "receive": obj.get("receive")
+            "receive": obj.get("receive"),
+            "user_id": obj.get("user_id")
         })
         return _obj
 
