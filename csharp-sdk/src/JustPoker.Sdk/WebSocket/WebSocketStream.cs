@@ -1,142 +1,15 @@
 using System.Net.WebSockets;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using JustPoker.OpenApi.Model;
+using JustPoker.Sdk.Enums;
+using JustPoker.Sdk.Interfaces;
+using JustPoker.Sdk.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace JustPoker.Sdk;
-
-public sealed record CloseInfo(int? Code, string Reason);
-
-public enum PokerEventType {
-    Unknown,
-    [PokerEventMeta(Text = "*")] All,
-
-    [PokerEventMeta(Text = "welcome", DataType = typeof(GameGameDTO))]
-    Welcome,
-
-    [PokerEventMeta(Text = "game_state_update", DataType = typeof(GameGameDTO))]
-    GameStateUpdate,
-
-    [PokerEventMeta(Text = "starting_game", DataType = typeof(GameGameDTO))]
-    StartingGame,
-
-    [PokerEventMeta(Text = "player_action", DataType = typeof(GamePlayerActionDTO))]
-    PlayerAction,
-
-    [PokerEventMeta(Text = "payout", DataType = typeof(JsonNode))]
-    Payout,
-
-    [PokerEventMeta(Text = "round_start", DataType = typeof(GameRoundDTO))]
-    RoundStart,
-
-    [PokerEventMeta(Text = "hand_started", DataType = typeof(JsonNode))]
-    HandStarted,
-
-    [PokerEventMeta(Text = "game_over", DataType = typeof(List<GamePlayerDTO>))]
-    GameOver
-}
-
-public static class PokerEventTypeExtensions {
-    private static readonly Dictionary<PokerEventType, PokerEventMetaAttribute> Meta = BuildMeta();
-
-    private static readonly Dictionary<string, PokerEventType> ByText = Meta
-        .Where(entry => entry.Key is not (PokerEventType.All or PokerEventType.Unknown))
-        .ToDictionary(entry => entry.Value.Text ?? entry.Key.ToString(), entry => entry.Key,
-            StringComparer.OrdinalIgnoreCase);
-
-    public static string GetText(this PokerEventType value) {
-        return Meta.TryGetValue(value, out var meta) && meta.Text is { Length: > 0 } text ? text : value.ToString();
-    }
-
-    public static Type GetDataType(this PokerEventType value) {
-        return Meta.TryGetValue(value, out var meta) ? meta.DataType : typeof(JsonNode);
-    }
-
-    public static PokerEventType FromString(string type) {
-        return ByText.GetValueOrDefault(type, PokerEventType.Unknown);
-    }
-
-    private static Dictionary<PokerEventType, PokerEventMetaAttribute> BuildMeta() {
-        var meta = new Dictionary<PokerEventType, PokerEventMetaAttribute>();
-
-        foreach (var field in typeof(PokerEventType).GetFields(BindingFlags.Public | BindingFlags.Static))
-            if (field.GetCustomAttribute<PokerEventMetaAttribute>() is { } attribute)
-                meta[(PokerEventType)field.GetValue(null)!] = attribute;
-
-        return meta;
-    }
-}
-
-[AttributeUsage(AttributeTargets.Field)]
-public sealed class PokerEventMetaAttribute : Attribute {
-    public string? Text { get; set; }
-    public Type DataType { get; set; } = typeof(JsonNode);
-}
-
-public sealed class PokerEvent(
-    PokerEventType eventType,
-    JsonNode? data,
-    long id = 0,
-    string timeSent = "",
-    JsonNode? raw = null) {
-    public PokerEventType EventType { get; } = eventType;
-    public long Id { get; } = id;
-    public string TimeSent { get; } = timeSent;
-    public JsonNode? RawData { get; } = data;
-    public JsonNode? Raw { get; } = raw;
-
-    public object? Data() {
-        return Deserialize(EventType.GetDataType());
-    }
-
-    public T? DataAs<T>() where T : class {
-        if (RawData is null) return null;
-
-        if (typeof(T) == typeof(JsonNode)) return RawData as T;
-
-        if (EventType.GetDataType() == typeof(T)) return Deserialize(typeof(T)) as T;
-
-        return null;
-    }
-
-    private object? Deserialize(Type dataType) {
-        if (RawData is null) return null;
-
-        if (dataType == typeof(JsonNode)) return RawData;
-
-        try {
-            return RawData.Deserialize(dataType, PokerJson.Options);
-        }
-        catch (JsonException) {
-            return RawData;
-        }
-    }
-}
-
-public interface IEventTransport : IAsyncDisposable {
-    Task ConnectAsync(CancellationToken cancellationToken = default);
-
-    Task CloseAsync();
-
-    IAsyncEnumerable<PokerEvent> EventsAsync(CancellationToken cancellationToken = default);
-}
-
-public sealed class WebSocketStreamOptions {
-    public bool Reconnect { get; set; } = true;
-
-    public int MaxRetries { get; set; }
-
-    public TimeSpan RetryBackoff { get; set; } = TimeSpan.FromSeconds(1);
-
-    public TimeSpan MaxRetryBackoff { get; set; } = TimeSpan.FromSeconds(30);
-
-    public Action<CloseInfo>? OnClose { get; set; }
-}
+namespace JustPoker.Sdk.WebSocket;
 
 public sealed class WebSocketStream : IEventTransport {
     private const int ReceiveBufferSize = 8 * 1024;

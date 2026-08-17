@@ -1,5 +1,7 @@
 using JustPoker.OpenApi.Api;
 using JustPoker.OpenApi.Model;
+using JustPoker.Sdk.Enums;
+using JustPoker.Sdk.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

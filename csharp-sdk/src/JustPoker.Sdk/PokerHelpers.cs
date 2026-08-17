@@ -1,106 +1,13 @@
-using System.Runtime.CompilerServices;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 using JustPoker.OpenApi.Api;
 using JustPoker.OpenApi.Client;
 using JustPoker.OpenApi.Extensions;
 using JustPoker.OpenApi.Model;
+using JustPoker.Sdk.Models;
 using Microsoft.Extensions.DependencyInjection;
 
 // ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace JustPoker.Sdk;
-
-public sealed class Chips(int denomination, int count) {
-    public int Denomination { get; } = denomination;
-    public int Count { get; set; } = count;
-    public int Value => Denomination * Count;
-
-    public override string ToString() {
-        return $"{Count}x{Denomination}";
-    }
-}
-
-public enum CardSuit {
-    Spade = 's',
-    Heart = 'h',
-    Diamond = 'd',
-    Club = 'c',
-    Unknown = 'x'
-}
-
-public enum CardRank {
-    Ace = 'A',
-    Two = '2',
-    Three = '3',
-    Four = '4',
-    Five = '5',
-    Six = '6',
-    Seven = '7',
-    Eight = '8',
-    Nine = '9',
-    Ten = 'T',
-    Jack = 'J',
-    Queen = 'Q',
-    King = 'K',
-    Unknown = 'x'
-}
-
-public sealed class Card(CardRank rank, CardSuit suit) {
-    private const int DeckBase = 0x1F0A0;
-
-    private static readonly Dictionary<CardSuit, int> SuitOffsets = new() {
-        [CardSuit.Spade] = 0x00,
-        [CardSuit.Heart] = 0x10,
-        [CardSuit.Diamond] = 0x20,
-        [CardSuit.Club] = 0x30
-    };
-
-    private static readonly Dictionary<CardRank, int> RankOffsets = new() {
-        [CardRank.Ace] = 1,
-        [CardRank.Two] = 2,
-        [CardRank.Three] = 3,
-        [CardRank.Four] = 4,
-        [CardRank.Five] = 5,
-        [CardRank.Six] = 6,
-        [CardRank.Seven] = 7,
-        [CardRank.Eight] = 8,
-        [CardRank.Nine] = 9,
-        [CardRank.Ten] = 10,
-        [CardRank.Jack] = 11,
-        [CardRank.Queen] = 13,
-        [CardRank.King] = 14
-    };
-
-    public CardRank Rank { get; } = rank;
-    public CardSuit Suit { get; } = suit;
-
-    public static Card FromDto(GameCardDTO dto) {
-        var cardRank = dto.Rank is { } rank && Enum.IsDefined(typeof(CardRank), rank)
-            ? (CardRank)rank
-            : CardRank.Unknown;
-        var cardSuit = dto.Suit is { } suit && Enum.IsDefined(typeof(CardSuit), suit)
-            ? (CardSuit)suit
-            : CardSuit.Unknown;
-        return new Card(cardRank, cardSuit);
-    }
-
-    public GameCardDTO ToDto() {
-        return new GameCardDTO((int)Rank, (int)Suit);
-    }
-
-    public string ToUnicode() {
-        if (!SuitOffsets.TryGetValue(Suit, out var suitOffset) || !RankOffsets.TryGetValue(Rank, out var rankOffset))
-            return char.ConvertFromUtf32(DeckBase);
-
-        return char.ConvertFromUtf32(DeckBase + suitOffset + rankOffset);
-    }
-
-    public override string ToString() {
-        return $"{(char)Rank}{(char)Suit}";
-    }
-}
 
 public static class PokerHelpers {
     public static int ChipSum(IDictionary<string, int> stack) {
@@ -129,6 +36,7 @@ public static class PokerHelpers {
 
             if (!string.IsNullOrEmpty(token)) config.AddTokens(new BearerToken(token));
 
+            // Disabled as the need is no longer there. But maintained in case swagger changes and we need quick testing.
             // config.ConfigureJsonOptions(options =>
             //     options.Converters.Insert(0, new NullTolerantModelConverterFactory()));
         });
@@ -200,69 +108,5 @@ public static class PokerHelpers {
 
         var response = await api.UserMeDeleteAsync();
         ThrowError(response, "delete user");
-    }
-}
-
-internal static class PokerJson {
-    public static JsonSerializerOptions Options { get; } = BuildOptions();
-
-    private static JsonSerializerOptions BuildOptions() {
-        using var provider = PokerHelpers.CreateApiProvider(ClientUtils.BASE_ADDRESS);
-        return provider.GetRequiredService<JsonSerializerOptionsProvider>().Options;
-    }
-}
-
-[Obsolete("x-nullable set to true in swaggo gen to fix")]
-internal sealed class NullTolerantModelConverterFactory : JsonConverterFactory {
-    private const string ModelNamespace = "JustPoker.OpenApi.Model";
-
-    public override bool CanConvert(Type t) {
-        return t is { IsClass: true, Namespace: ModelNamespace };
-    }
-
-    public override JsonConverter CreateConverter(Type t, JsonSerializerOptions options) {
-        return (JsonConverter)Activator.CreateInstance(
-            typeof(NullTolerantModelConverter<>).MakeGenericType(t))!;
-    }
-}
-
-[Obsolete("x-nullable set to true in swaggo gen to fix")]
-internal sealed class NullTolerantModelConverter<T> : JsonConverter<T> where T : class {
-    private static readonly ConditionalWeakTable<JsonSerializerOptions, JsonSerializerOptions> Clean = new();
-
-    private static JsonSerializerOptions CleanOptions(JsonSerializerOptions options) {
-        return Clean.GetValue(options, static src => {
-            var copy = new JsonSerializerOptions(src);
-            for (var i = copy.Converters.Count - 1; i >= 0; i--)
-                if (copy.Converters[i] is NullTolerantModelConverterFactory)
-                    copy.Converters.RemoveAt(i);
-            return copy;
-        });
-    }
-
-    public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
-        var node = JsonNode.Parse(ref reader);
-        if (node is null) return null;
-        StripNulls(node);
-        return node.Deserialize<T>(CleanOptions(options));
-    }
-
-    public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options) {
-        JsonSerializer.Serialize(writer, value, CleanOptions(options));
-    }
-
-    private static void StripNulls(JsonNode node) {
-        switch (node) {
-            case JsonObject obj:
-                foreach (var key in obj.Where(e => e.Value is null).Select(e => e.Key).ToList())
-                    obj.Remove(key);
-                foreach (var entry in obj.Where(e => e.Value is not null))
-                    StripNulls(entry.Value!);
-                break;
-            case JsonArray array:
-                foreach (var item in array.Where(i => i is not null))
-                    StripNulls(item!);
-                break;
-        }
     }
 }

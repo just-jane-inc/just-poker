@@ -2,6 +2,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using JustPoker.Sdk;
+using JustPoker.Sdk.Enums;
+using JustPoker.Sdk.Models;
 using Microsoft.Extensions.Logging;
 
 namespace JustPoker.Listener;
@@ -22,7 +24,7 @@ internal static class Program {
             LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Information));
         var logger = loggerFactory.CreateLogger("listener");
 
-        var configFile = Path.Combine(Path.GetDirectoryName(GetSourceFilePathName())!, "../Example/users.json");
+        var configFile = Path.Combine(Path.GetDirectoryName(GetSourceFilePathName())!, "../config/users.json");
         var users = JsonSerializer.Deserialize<Dictionary<string, UserConfig>>(await File.ReadAllTextAsync(configFile));
 
         if (users is null) {
@@ -68,11 +70,11 @@ internal static class Program {
         if (pokerEvent.EventType == PokerEventType.GameOver) gameOverTask.SetResult();
     }
 
-    private sealed record UserConfig {
-        [JsonPropertyName("token")] public string Token { get; } = string.Empty;
-
-        [JsonPropertyName("user_id")] public string UserId { get; } = string.Empty;
-    }
+    private sealed record UserConfig(
+        [property: JsonPropertyName("token")] string Token,
+        [property: JsonPropertyName("user_id")]
+        string UserId
+    );
 
     private sealed record ExampleOptions(string BaseUrl, string GameId, string User) {
         public static ExampleOptions? Parse(string[] args) {

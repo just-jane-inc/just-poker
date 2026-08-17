@@ -1,4 +1,4 @@
-namespace JustPoker.Sdk;
+namespace JustPoker.Sdk.Models;
 
 public class PokerException : Exception {
     public PokerException(string message)

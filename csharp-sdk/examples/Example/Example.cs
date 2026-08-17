@@ -3,6 +3,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using JustPoker.OpenApi.Model;
 using JustPoker.Sdk;
+using JustPoker.Sdk.Enums;
+using JustPoker.Sdk.Models;
 using Microsoft.Extensions.Logging;
 
 namespace JustPoker.Examples;
@@ -23,7 +25,7 @@ internal static class Program {
             LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Information));
         var logger = loggerFactory.CreateLogger("example");
 
-        var configFile = Path.Combine(Path.GetDirectoryName(GetSourceFilePathName())!, "users.json");
+        var configFile = Path.Combine(Path.GetDirectoryName(GetSourceFilePathName())!, "../config/users.json");
         var users = JsonSerializer.Deserialize<Dictionary<string, UserConfig>>(await File.ReadAllTextAsync(configFile));
 
         if (users is null) {
@@ -162,11 +164,11 @@ internal static class Program {
         }
     }
 
-    private sealed record UserConfig {
-        [JsonPropertyName("token")] public string Token { get; } = string.Empty;
-
-        [JsonPropertyName("user_id")] public string UserId { get; } = string.Empty;
-    }
+    private sealed record UserConfig(
+        [property: JsonPropertyName("token")] string Token,
+        [property: JsonPropertyName("user_id")]
+        string UserId
+    );
 
     private sealed record ExampleOptions(string BaseUrl, string GameId, string User) {
         public static ExampleOptions? Parse(string[] args) {
