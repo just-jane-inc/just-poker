@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example", "examples\Example
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JustPoker.OpenApi.Test", "generated\src\JustPoker.OpenApi.Test\JustPoker.OpenApi.Test.csproj", "{636EBA6B-56FE-4BBA-A276-F13AA6A51298}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Listener", "examples\Listener\Listener.csproj", "{F353BABF-BBFF-4860-9DFC-4CA45A6C0381}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,6 +79,18 @@ Global
 		{636EBA6B-56FE-4BBA-A276-F13AA6A51298}.Release|x64.Build.0 = Release|Any CPU
 		{636EBA6B-56FE-4BBA-A276-F13AA6A51298}.Release|x86.ActiveCfg = Release|Any CPU
 		{636EBA6B-56FE-4BBA-A276-F13AA6A51298}.Release|x86.Build.0 = Release|Any CPU
+		{F353BABF-BBFF-4860-9DFC-4CA45A6C0381}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F353BABF-BBFF-4860-9DFC-4CA45A6C0381}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F353BABF-BBFF-4860-9DFC-4CA45A6C0381}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F353BABF-BBFF-4860-9DFC-4CA45A6C0381}.Debug|x64.Build.0 = Debug|Any CPU
+		{F353BABF-BBFF-4860-9DFC-4CA45A6C0381}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F353BABF-BBFF-4860-9DFC-4CA45A6C0381}.Debug|x86.Build.0 = Debug|Any CPU
+		{F353BABF-BBFF-4860-9DFC-4CA45A6C0381}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F353BABF-BBFF-4860-9DFC-4CA45A6C0381}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F353BABF-BBFF-4860-9DFC-4CA45A6C0381}.Release|x64.ActiveCfg = Release|Any CPU
+		{F353BABF-BBFF-4860-9DFC-4CA45A6C0381}.Release|x64.Build.0 = Release|Any CPU
+		{F353BABF-BBFF-4860-9DFC-4CA45A6C0381}.Release|x86.ActiveCfg = Release|Any CPU
+		{F353BABF-BBFF-4860-9DFC-4CA45A6C0381}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -87,5 +101,6 @@ Global
 		{02F847B0-00DF-433A-B32F-98154784306B} = {D2C2D6E4-A956-7A77-79EC-8F5D9F5AD261}
 		{BB55C2E4-61F4-4ECD-91C3-C9D7782815F5} = {B36A84DF-456D-A817-6EDD-3EC3E7F6E11F}
 		{636EBA6B-56FE-4BBA-A276-F13AA6A51298} = {D2C2D6E4-A956-7A77-79EC-8F5D9F5AD261}
+		{F353BABF-BBFF-4860-9DFC-4CA45A6C0381} = {B36A84DF-456D-A817-6EDD-3EC3E7F6E11F}
 	EndGlobalSection
 EndGlobal

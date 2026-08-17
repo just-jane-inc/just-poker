@@ -77,7 +77,8 @@ internal static class Program
 
         // start up
         await bot.InitializeAsync();
-        await bot.JoinGameAsync();
+        if (!bot.Joined)
+            await bot.JoinGameAsync();
         logger.LogInformation("Joined Game");
         
         if (bot.CurrentState?.StartedAt is null)
