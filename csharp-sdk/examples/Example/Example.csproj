@@ -11,7 +11,10 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.6" />
-    <ProjectReference Include="../../src/JustPoker.Sdk/JustPoker.Sdk.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\JustPoker.Sdk\JustPoker.Sdk.csproj" />
   </ItemGroup>
 
 </Project>

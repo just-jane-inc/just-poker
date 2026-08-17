@@ -62,7 +62,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/_admin_game__game_id__status_post_request"
+              allOf:
+              - $ref: "#/components/schemas/admin.GameStatusDTO"
+              description: the status of the game to set
+              summary: status
         description: the status of the game to set
         required: true
       responses:
@@ -95,7 +98,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/_admin_game__game_id__table_post_request"
+              allOf:
+              - $ref: "#/components/schemas/game.TableDTO"
+              description: the table struct to apply
+              summary: status
         description: the table struct to apply
         required: true
       responses:
@@ -134,7 +140,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/_game_post_request"
+              allOf:
+              - $ref: "#/components/schemas/game.NewGameConfigDTO"
+              description: an object defining configuration information for the new
+                game
+              summary: request
         description: an object defining configuration information for the new game
         required: true
       responses:
@@ -206,7 +216,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/_game__game_id__action_post_request"
+              allOf:
+              - $ref: "#/components/schemas/game.PlayerActionDTO"
+              description: the action the player is preforming
+              summary: request
         description: the action the player is preforming
         required: true
       responses:
@@ -243,7 +256,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/_game__game_id__chip_exchange_post_request"
+              allOf:
+              - $ref: "#/components/schemas/game.ChipExchangeDTO"
+              description: a specification for the chips to exchange
+              summary: request
         description: a specification for the chips to exchange
         required: true
       responses:
@@ -280,7 +296,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/_game__game_id__hand_post_request"
+              allOf:
+              - $ref: "#/components/schemas/game.NewHandDTO"
+              description: a dto containing new hand information
+              summary: new_hand
         description: a dto containing new hand information
         required: true
       responses:
@@ -403,6 +422,45 @@ paths:
       summary: Game State
       tags:
       - Game
+    post:
+      description: starts a game from a specific state
+      parameters:
+      - description: the id of the game to start
+        explode: false
+        in: path
+        name: game_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: "#/components/schemas/game.TableDTO"
+              description: the game state object to start game from
+              summary: request
+        description: the game state object to start game from
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-string"
+          description: game created - game id as string
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+          description: Bad Request
+      security:
+      - BearerAuth: []
+      summary: start game from state
+      tags:
+      - Game
   /game/{game_id}/state/listen:
     get:
       description: creates a listener that will begin buffering game events that can
@@ -466,51 +524,18 @@ paths:
       summary: Connect Updates
       tags:
       - Game
-  /game/{game_id}/table:
-    post:
-      description: creates a game for testing
-      parameters:
-      - description: the id of the game to set the table for
-        explode: false
-        in: path
-        name: game_id
-        required: true
-        schema:
-          type: string
-        style: simple
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/_game__game_id__table_post_request"
-        description: the game state object to load as a test game
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/just.ResponseMessage-string"
-          description: game created - game id as string
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
-          description: Bad Request
-      security:
-      - BearerAuth: []
-      summary: Sets a table
-      tags:
-      - Game
-  /hand-evaluator/evaluate:
+  /hand-evaluator/evaluate/:
     post:
       description: Evaluator? I hardly...
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/_hand_evaluator_evaluate_post_request"
+              items:
+                $ref: "#/components/schemas/game.CardDTO"
+              title: hand
+              type: array
+              default: null
         description: "hand to evaluate, either 5 or 7 cards"
         required: true
       responses:
@@ -626,6 +651,9 @@ components:
             type: integer
           description: an optional mapping of chips that is required by some action
             types.
+        user_id:
+          description: the stack to give during the exchange
+          type: string
     game.ChipStackDTO:
       additionalProperties:
         type: integer
@@ -701,6 +729,7 @@ components:
         ended_at:
           description: the time that the game ended
           type: string
+          x-nullable: true
         game_config:
           $ref: "#/components/schemas/game.NewGameConfigDTO"
         id:
@@ -709,6 +738,7 @@ components:
         started_at:
           description: the time that the game started originally
           type: string
+          x-nullable: true
         table:
           $ref: "#/components/schemas/game.TableDTO"
     game.HandDTO:
@@ -788,6 +818,7 @@ components:
           description: a timestamp capturing when a succesful action was accepted
             by the game
           type: string
+          x-nullable: true
         chips:
           additionalProperties:
             type: integer
@@ -1183,63 +1214,6 @@ components:
       - UserTypeHuman
       - UserTypeAdmin
       - UserTypeGameMaster
-    _admin_game__game_id__status_post_request:
-      oneOf:
-      - type: object
-      - allOf:
-        - $ref: "#/components/schemas/admin.GameStatusDTO"
-        description: the status of the game to set
-        summary: status
-    _admin_game__game_id__table_post_request:
-      oneOf:
-      - type: object
-      - allOf:
-        - $ref: "#/components/schemas/game.TableDTO"
-        description: the table struct to apply
-        summary: status
-    _game_post_request:
-      oneOf:
-      - type: object
-      - allOf:
-        - $ref: "#/components/schemas/game.NewGameConfigDTO"
-        description: an object defining configuration information for the new game
-        summary: request
-    _game__game_id__action_post_request:
-      oneOf:
-      - type: object
-      - allOf:
-        - $ref: "#/components/schemas/game.PlayerActionDTO"
-        description: the action the player is preforming
-        summary: request
-    _game__game_id__chip_exchange_post_request:
-      oneOf:
-      - type: object
-      - allOf:
-        - $ref: "#/components/schemas/game.ChipExchangeDTO"
-        description: a specification for the chips to exchange
-        summary: request
-    _game__game_id__hand_post_request:
-      oneOf:
-      - type: object
-      - allOf:
-        - $ref: "#/components/schemas/game.NewHandDTO"
-        description: a dto containing new hand information
-        summary: new_hand
-    _game__game_id__table_post_request:
-      oneOf:
-      - type: object
-      - allOf:
-        - $ref: "#/components/schemas/game.TableDTO"
-        description: the game state object to load as a test game
-        summary: request
-    _hand_evaluator_evaluate_post_request:
-      oneOf:
-      - type: object
-      - items:
-          $ref: "#/components/schemas/game.CardDTO"
-        title: hand
-        type: array
-        default: null
   securitySchemes:
     BearerAuth:
       description: Type "Bearer" followed by a space and your token (e.g. "Bearer

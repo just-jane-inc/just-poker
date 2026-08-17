@@ -46,10 +46,10 @@ namespace JustPoker.OpenApi.Api
         /// </remarks>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="gameId">ID of the Game to update status of</param>
-        /// <param name="adminGameGameIdStatusPostRequest">the status of the game to set</param>
+        /// <param name="adminGameStatusDTO">the status of the game to set</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IAdminGameGameIdStatusPostApiResponse"/>&gt;</returns>
-        Task<IAdminGameGameIdStatusPostApiResponse> AdminGameGameIdStatusPostAsync(string gameId, AdminGameGameIdStatusPostRequest adminGameGameIdStatusPostRequest, System.Threading.CancellationToken cancellationToken = default);
+        Task<IAdminGameGameIdStatusPostApiResponse> AdminGameGameIdStatusPostAsync(string gameId, AdminGameStatusDTO adminGameStatusDTO, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Update Game Status
@@ -58,10 +58,10 @@ namespace JustPoker.OpenApi.Api
         /// Changes the status of an active game, for use by admins
         /// </remarks>
         /// <param name="gameId">ID of the Game to update status of</param>
-        /// <param name="adminGameGameIdStatusPostRequest">the status of the game to set</param>
+        /// <param name="adminGameStatusDTO">the status of the game to set</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IAdminGameGameIdStatusPostApiResponse"/>?&gt;</returns>
-        Task<IAdminGameGameIdStatusPostApiResponse?> AdminGameGameIdStatusPostOrDefaultAsync(string gameId, AdminGameGameIdStatusPostRequest adminGameGameIdStatusPostRequest, System.Threading.CancellationToken cancellationToken = default);
+        Task<IAdminGameGameIdStatusPostApiResponse?> AdminGameGameIdStatusPostOrDefaultAsync(string gameId, AdminGameStatusDTO adminGameStatusDTO, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Change Game Table
@@ -71,10 +71,10 @@ namespace JustPoker.OpenApi.Api
         /// </remarks>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="gameId">ID of the Game to update status of</param>
-        /// <param name="adminGameGameIdTablePostRequest">the table struct to apply</param>
+        /// <param name="gameTableDTO">the table struct to apply</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IAdminGameGameIdTablePostApiResponse"/>&gt;</returns>
-        Task<IAdminGameGameIdTablePostApiResponse> AdminGameGameIdTablePostAsync(string gameId, AdminGameGameIdTablePostRequest adminGameGameIdTablePostRequest, System.Threading.CancellationToken cancellationToken = default);
+        Task<IAdminGameGameIdTablePostApiResponse> AdminGameGameIdTablePostAsync(string gameId, GameTableDTO gameTableDTO, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Change Game Table
@@ -83,10 +83,10 @@ namespace JustPoker.OpenApi.Api
         /// Changes the state of an active game
         /// </remarks>
         /// <param name="gameId">ID of the Game to update status of</param>
-        /// <param name="adminGameGameIdTablePostRequest">the table struct to apply</param>
+        /// <param name="gameTableDTO">the table struct to apply</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IAdminGameGameIdTablePostApiResponse"/>?&gt;</returns>
-        Task<IAdminGameGameIdTablePostApiResponse?> AdminGameGameIdTablePostOrDefaultAsync(string gameId, AdminGameGameIdTablePostRequest adminGameGameIdTablePostRequest, System.Threading.CancellationToken cancellationToken = default);
+        Task<IAdminGameGameIdTablePostApiResponse?> AdminGameGameIdTablePostOrDefaultAsync(string gameId, GameTableDTO gameTableDTO, System.Threading.CancellationToken cancellationToken = default);
     }
 
     /// <summary>
@@ -212,21 +212,21 @@ namespace JustPoker.OpenApi.Api
             BearerTokenProvider = bearerTokenProvider;
         }
 
-        partial void FormatAdminGameGameIdStatusPost(ref string gameId, AdminGameGameIdStatusPostRequest adminGameGameIdStatusPostRequest);
+        partial void FormatAdminGameGameIdStatusPost(ref string gameId, AdminGameStatusDTO adminGameStatusDTO);
 
         /// <summary>
         /// Validates the request parameters
         /// </summary>
         /// <param name="gameId"></param>
-        /// <param name="adminGameGameIdStatusPostRequest"></param>
+        /// <param name="adminGameStatusDTO"></param>
         /// <returns></returns>
-        private void ValidateAdminGameGameIdStatusPost(string gameId, AdminGameGameIdStatusPostRequest adminGameGameIdStatusPostRequest)
+        private void ValidateAdminGameGameIdStatusPost(string gameId, AdminGameStatusDTO adminGameStatusDTO)
         {
             if (gameId == null)
                 throw new ArgumentNullException(nameof(gameId));
 
-            if (adminGameGameIdStatusPostRequest == null)
-                throw new ArgumentNullException(nameof(adminGameGameIdStatusPostRequest));
+            if (adminGameStatusDTO == null)
+                throw new ArgumentNullException(nameof(adminGameStatusDTO));
         }
 
         /// <summary>
@@ -234,11 +234,11 @@ namespace JustPoker.OpenApi.Api
         /// </summary>
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="gameId"></param>
-        /// <param name="adminGameGameIdStatusPostRequest"></param>
-        private void AfterAdminGameGameIdStatusPostDefaultImplementation(IAdminGameGameIdStatusPostApiResponse apiResponseLocalVar, string gameId, AdminGameGameIdStatusPostRequest adminGameGameIdStatusPostRequest)
+        /// <param name="adminGameStatusDTO"></param>
+        private void AfterAdminGameGameIdStatusPostDefaultImplementation(IAdminGameGameIdStatusPostApiResponse apiResponseLocalVar, string gameId, AdminGameStatusDTO adminGameStatusDTO)
         {
             bool suppressDefaultLog = false;
-            AfterAdminGameGameIdStatusPost(ref suppressDefaultLog, apiResponseLocalVar, gameId, adminGameGameIdStatusPostRequest);
+            AfterAdminGameGameIdStatusPost(ref suppressDefaultLog, apiResponseLocalVar, gameId, adminGameStatusDTO);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -249,8 +249,8 @@ namespace JustPoker.OpenApi.Api
         /// <param name="suppressDefaultLog"></param>
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="gameId"></param>
-        /// <param name="adminGameGameIdStatusPostRequest"></param>
-        partial void AfterAdminGameGameIdStatusPost(ref bool suppressDefaultLog, IAdminGameGameIdStatusPostApiResponse apiResponseLocalVar, string gameId, AdminGameGameIdStatusPostRequest adminGameGameIdStatusPostRequest);
+        /// <param name="adminGameStatusDTO"></param>
+        partial void AfterAdminGameGameIdStatusPost(ref bool suppressDefaultLog, IAdminGameGameIdStatusPostApiResponse apiResponseLocalVar, string gameId, AdminGameStatusDTO adminGameStatusDTO);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -259,11 +259,11 @@ namespace JustPoker.OpenApi.Api
         /// <param name="pathFormatLocalVar"></param>
         /// <param name="pathLocalVar"></param>
         /// <param name="gameId"></param>
-        /// <param name="adminGameGameIdStatusPostRequest"></param>
-        private void OnErrorAdminGameGameIdStatusPostDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string gameId, AdminGameGameIdStatusPostRequest adminGameGameIdStatusPostRequest)
+        /// <param name="adminGameStatusDTO"></param>
+        private void OnErrorAdminGameGameIdStatusPostDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string gameId, AdminGameStatusDTO adminGameStatusDTO)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorAdminGameGameIdStatusPost(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, gameId, adminGameGameIdStatusPostRequest);
+            OnErrorAdminGameGameIdStatusPost(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, gameId, adminGameStatusDTO);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -276,21 +276,21 @@ namespace JustPoker.OpenApi.Api
         /// <param name="pathFormatLocalVar"></param>
         /// <param name="pathLocalVar"></param>
         /// <param name="gameId"></param>
-        /// <param name="adminGameGameIdStatusPostRequest"></param>
-        partial void OnErrorAdminGameGameIdStatusPost(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string gameId, AdminGameGameIdStatusPostRequest adminGameGameIdStatusPostRequest);
+        /// <param name="adminGameStatusDTO"></param>
+        partial void OnErrorAdminGameGameIdStatusPost(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string gameId, AdminGameStatusDTO adminGameStatusDTO);
 
         /// <summary>
         /// Update Game Status Changes the status of an active game, for use by admins
         /// </summary>
         /// <param name="gameId">ID of the Game to update status of</param>
-        /// <param name="adminGameGameIdStatusPostRequest">the status of the game to set</param>
+        /// <param name="adminGameStatusDTO">the status of the game to set</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IAdminGameGameIdStatusPostApiResponse"/>&gt;</returns>
-        public async Task<IAdminGameGameIdStatusPostApiResponse?> AdminGameGameIdStatusPostOrDefaultAsync(string gameId, AdminGameGameIdStatusPostRequest adminGameGameIdStatusPostRequest, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IAdminGameGameIdStatusPostApiResponse?> AdminGameGameIdStatusPostOrDefaultAsync(string gameId, AdminGameStatusDTO adminGameStatusDTO, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await AdminGameGameIdStatusPostAsync(gameId, adminGameGameIdStatusPostRequest, cancellationToken).ConfigureAwait(false);
+                return await AdminGameGameIdStatusPostAsync(gameId, adminGameStatusDTO, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -303,18 +303,18 @@ namespace JustPoker.OpenApi.Api
         /// </summary>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="gameId">ID of the Game to update status of</param>
-        /// <param name="adminGameGameIdStatusPostRequest">the status of the game to set</param>
+        /// <param name="adminGameStatusDTO">the status of the game to set</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IAdminGameGameIdStatusPostApiResponse"/>&gt;</returns>
-        public async Task<IAdminGameGameIdStatusPostApiResponse> AdminGameGameIdStatusPostAsync(string gameId, AdminGameGameIdStatusPostRequest adminGameGameIdStatusPostRequest, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IAdminGameGameIdStatusPostApiResponse> AdminGameGameIdStatusPostAsync(string gameId, AdminGameStatusDTO adminGameStatusDTO, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
             try
             {
-                ValidateAdminGameGameIdStatusPost(gameId, adminGameGameIdStatusPostRequest);
+                ValidateAdminGameGameIdStatusPost(gameId, adminGameStatusDTO);
 
-                FormatAdminGameGameIdStatusPost(ref gameId, adminGameGameIdStatusPostRequest);
+                FormatAdminGameGameIdStatusPost(ref gameId, adminGameStatusDTO);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -326,9 +326,9 @@ namespace JustPoker.OpenApi.Api
                         : string.Concat(HttpClient.BaseAddress.AbsolutePath.TrimEnd('/'), "/admin/game/{game_id}/status");
                     uriBuilderLocalVar.Path = uriBuilderLocalVar.Path.Replace("%7Bgame_id%7D", Uri.EscapeDataString(gameId.ToString()));
 
-                    httpRequestMessageLocalVar.Content = (adminGameGameIdStatusPostRequest as object) is JustPoker.OpenApi.Client.FileParameter fileParameterLocalVar
+                    httpRequestMessageLocalVar.Content = (adminGameStatusDTO as object) is JustPoker.OpenApi.Client.FileParameter fileParameterLocalVar
                         ? httpRequestMessageLocalVar.Content = new StreamContent(fileParameterLocalVar.Content)
-                        : httpRequestMessageLocalVar.Content = new StringContent(JsonSerializer.Serialize(adminGameGameIdStatusPostRequest, _jsonSerializerOptions));
+                        : httpRequestMessageLocalVar.Content = new StringContent(JsonSerializer.Serialize(adminGameStatusDTO, _jsonSerializerOptions));
 
                     List<TokenBase> tokenBaseLocalVars = new List<TokenBase>();
                     httpRequestMessageLocalVar.RequestUri = uriBuilderLocalVar.Uri;
@@ -374,7 +374,7 @@ namespace JustPoker.OpenApi.Api
                             }
                         }
 
-                        AfterAdminGameGameIdStatusPostDefaultImplementation(apiResponseLocalVar, gameId, adminGameGameIdStatusPostRequest);
+                        AfterAdminGameGameIdStatusPostDefaultImplementation(apiResponseLocalVar, gameId, adminGameStatusDTO);
 
                         Events.ExecuteOnAdminGameGameIdStatusPost(apiResponseLocalVar);
 
@@ -388,7 +388,7 @@ namespace JustPoker.OpenApi.Api
             }
             catch(Exception e)
             {
-                OnErrorAdminGameGameIdStatusPostDefaultImplementation(e, "/admin/game/{game_id}/status", uriBuilderLocalVar.Path, gameId, adminGameGameIdStatusPostRequest);
+                OnErrorAdminGameGameIdStatusPostDefaultImplementation(e, "/admin/game/{game_id}/status", uriBuilderLocalVar.Path, gameId, adminGameStatusDTO);
                 Events.ExecuteOnErrorAdminGameGameIdStatusPost(e);
                 throw;
             }
@@ -493,21 +493,21 @@ namespace JustPoker.OpenApi.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatAdminGameGameIdTablePost(ref string gameId, AdminGameGameIdTablePostRequest adminGameGameIdTablePostRequest);
+        partial void FormatAdminGameGameIdTablePost(ref string gameId, GameTableDTO gameTableDTO);
 
         /// <summary>
         /// Validates the request parameters
         /// </summary>
         /// <param name="gameId"></param>
-        /// <param name="adminGameGameIdTablePostRequest"></param>
+        /// <param name="gameTableDTO"></param>
         /// <returns></returns>
-        private void ValidateAdminGameGameIdTablePost(string gameId, AdminGameGameIdTablePostRequest adminGameGameIdTablePostRequest)
+        private void ValidateAdminGameGameIdTablePost(string gameId, GameTableDTO gameTableDTO)
         {
             if (gameId == null)
                 throw new ArgumentNullException(nameof(gameId));
 
-            if (adminGameGameIdTablePostRequest == null)
-                throw new ArgumentNullException(nameof(adminGameGameIdTablePostRequest));
+            if (gameTableDTO == null)
+                throw new ArgumentNullException(nameof(gameTableDTO));
         }
 
         /// <summary>
@@ -515,11 +515,11 @@ namespace JustPoker.OpenApi.Api
         /// </summary>
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="gameId"></param>
-        /// <param name="adminGameGameIdTablePostRequest"></param>
-        private void AfterAdminGameGameIdTablePostDefaultImplementation(IAdminGameGameIdTablePostApiResponse apiResponseLocalVar, string gameId, AdminGameGameIdTablePostRequest adminGameGameIdTablePostRequest)
+        /// <param name="gameTableDTO"></param>
+        private void AfterAdminGameGameIdTablePostDefaultImplementation(IAdminGameGameIdTablePostApiResponse apiResponseLocalVar, string gameId, GameTableDTO gameTableDTO)
         {
             bool suppressDefaultLog = false;
-            AfterAdminGameGameIdTablePost(ref suppressDefaultLog, apiResponseLocalVar, gameId, adminGameGameIdTablePostRequest);
+            AfterAdminGameGameIdTablePost(ref suppressDefaultLog, apiResponseLocalVar, gameId, gameTableDTO);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -530,8 +530,8 @@ namespace JustPoker.OpenApi.Api
         /// <param name="suppressDefaultLog"></param>
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="gameId"></param>
-        /// <param name="adminGameGameIdTablePostRequest"></param>
-        partial void AfterAdminGameGameIdTablePost(ref bool suppressDefaultLog, IAdminGameGameIdTablePostApiResponse apiResponseLocalVar, string gameId, AdminGameGameIdTablePostRequest adminGameGameIdTablePostRequest);
+        /// <param name="gameTableDTO"></param>
+        partial void AfterAdminGameGameIdTablePost(ref bool suppressDefaultLog, IAdminGameGameIdTablePostApiResponse apiResponseLocalVar, string gameId, GameTableDTO gameTableDTO);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -540,11 +540,11 @@ namespace JustPoker.OpenApi.Api
         /// <param name="pathFormatLocalVar"></param>
         /// <param name="pathLocalVar"></param>
         /// <param name="gameId"></param>
-        /// <param name="adminGameGameIdTablePostRequest"></param>
-        private void OnErrorAdminGameGameIdTablePostDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string gameId, AdminGameGameIdTablePostRequest adminGameGameIdTablePostRequest)
+        /// <param name="gameTableDTO"></param>
+        private void OnErrorAdminGameGameIdTablePostDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string gameId, GameTableDTO gameTableDTO)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorAdminGameGameIdTablePost(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, gameId, adminGameGameIdTablePostRequest);
+            OnErrorAdminGameGameIdTablePost(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, gameId, gameTableDTO);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -557,21 +557,21 @@ namespace JustPoker.OpenApi.Api
         /// <param name="pathFormatLocalVar"></param>
         /// <param name="pathLocalVar"></param>
         /// <param name="gameId"></param>
-        /// <param name="adminGameGameIdTablePostRequest"></param>
-        partial void OnErrorAdminGameGameIdTablePost(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string gameId, AdminGameGameIdTablePostRequest adminGameGameIdTablePostRequest);
+        /// <param name="gameTableDTO"></param>
+        partial void OnErrorAdminGameGameIdTablePost(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string gameId, GameTableDTO gameTableDTO);
 
         /// <summary>
         /// Change Game Table Changes the state of an active game
         /// </summary>
         /// <param name="gameId">ID of the Game to update status of</param>
-        /// <param name="adminGameGameIdTablePostRequest">the table struct to apply</param>
+        /// <param name="gameTableDTO">the table struct to apply</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IAdminGameGameIdTablePostApiResponse"/>&gt;</returns>
-        public async Task<IAdminGameGameIdTablePostApiResponse?> AdminGameGameIdTablePostOrDefaultAsync(string gameId, AdminGameGameIdTablePostRequest adminGameGameIdTablePostRequest, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IAdminGameGameIdTablePostApiResponse?> AdminGameGameIdTablePostOrDefaultAsync(string gameId, GameTableDTO gameTableDTO, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await AdminGameGameIdTablePostAsync(gameId, adminGameGameIdTablePostRequest, cancellationToken).ConfigureAwait(false);
+                return await AdminGameGameIdTablePostAsync(gameId, gameTableDTO, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -584,18 +584,18 @@ namespace JustPoker.OpenApi.Api
         /// </summary>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="gameId">ID of the Game to update status of</param>
-        /// <param name="adminGameGameIdTablePostRequest">the table struct to apply</param>
+        /// <param name="gameTableDTO">the table struct to apply</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IAdminGameGameIdTablePostApiResponse"/>&gt;</returns>
-        public async Task<IAdminGameGameIdTablePostApiResponse> AdminGameGameIdTablePostAsync(string gameId, AdminGameGameIdTablePostRequest adminGameGameIdTablePostRequest, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IAdminGameGameIdTablePostApiResponse> AdminGameGameIdTablePostAsync(string gameId, GameTableDTO gameTableDTO, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
             try
             {
-                ValidateAdminGameGameIdTablePost(gameId, adminGameGameIdTablePostRequest);
+                ValidateAdminGameGameIdTablePost(gameId, gameTableDTO);
 
-                FormatAdminGameGameIdTablePost(ref gameId, adminGameGameIdTablePostRequest);
+                FormatAdminGameGameIdTablePost(ref gameId, gameTableDTO);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -607,9 +607,9 @@ namespace JustPoker.OpenApi.Api
                         : string.Concat(HttpClient.BaseAddress.AbsolutePath.TrimEnd('/'), "/admin/game/{game_id}/table");
                     uriBuilderLocalVar.Path = uriBuilderLocalVar.Path.Replace("%7Bgame_id%7D", Uri.EscapeDataString(gameId.ToString()));
 
-                    httpRequestMessageLocalVar.Content = (adminGameGameIdTablePostRequest as object) is JustPoker.OpenApi.Client.FileParameter fileParameterLocalVar
+                    httpRequestMessageLocalVar.Content = (gameTableDTO as object) is JustPoker.OpenApi.Client.FileParameter fileParameterLocalVar
                         ? httpRequestMessageLocalVar.Content = new StreamContent(fileParameterLocalVar.Content)
-                        : httpRequestMessageLocalVar.Content = new StringContent(JsonSerializer.Serialize(adminGameGameIdTablePostRequest, _jsonSerializerOptions));
+                        : httpRequestMessageLocalVar.Content = new StringContent(JsonSerializer.Serialize(gameTableDTO, _jsonSerializerOptions));
 
                     List<TokenBase> tokenBaseLocalVars = new List<TokenBase>();
                     httpRequestMessageLocalVar.RequestUri = uriBuilderLocalVar.Uri;
@@ -655,7 +655,7 @@ namespace JustPoker.OpenApi.Api
                             }
                         }
 
-                        AfterAdminGameGameIdTablePostDefaultImplementation(apiResponseLocalVar, gameId, adminGameGameIdTablePostRequest);
+                        AfterAdminGameGameIdTablePostDefaultImplementation(apiResponseLocalVar, gameId, gameTableDTO);
 
                         Events.ExecuteOnAdminGameGameIdTablePost(apiResponseLocalVar);
 
@@ -669,7 +669,7 @@ namespace JustPoker.OpenApi.Api
             }
             catch(Exception e)
             {
-                OnErrorAdminGameGameIdTablePostDefaultImplementation(e, "/admin/game/{game_id}/table", uriBuilderLocalVar.Path, gameId, adminGameGameIdTablePostRequest);
+                OnErrorAdminGameGameIdTablePostDefaultImplementation(e, "/admin/game/{game_id}/table", uriBuilderLocalVar.Path, gameId, gameTableDTO);
                 Events.ExecuteOnErrorAdminGameGameIdTablePost(e);
                 throw;
             }

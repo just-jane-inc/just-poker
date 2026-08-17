@@ -70,5 +70,14 @@ namespace JustPoker.OpenApi.Test.Model
         {
             // TODO unit test for the property 'Receive'
         }
+
+        /// <summary>
+        /// Test the property 'UserId'
+        /// </summary>
+        [Fact]
+        public void UserIdTest()
+        {
+            // TODO unit test for the property 'UserId'
+        }
     }
 }

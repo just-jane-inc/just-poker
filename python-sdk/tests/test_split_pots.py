@@ -9,9 +9,7 @@ from helpers import (
 import openapi_client as api
 import poker_bot.bot.poker_helpers as help
 from openapi_client.models.game_card_dto import GameCardDTO
-from openapi_client.models.game_game_id_hand_post_request import (
-    GameGameIdHandPostRequest,
-)
+
 from openapi_client.models.game_new_hand_dto import GameNewHandDTO
 from poker_bot.bot import bot
 
@@ -70,7 +68,7 @@ async def test_post_new_hand_with_deck():
     )
 
     resp = await game_api.game_game_id_hand_post(
-        game_id, GameGameIdHandPostRequest(GameNewHandDTO(deck=deck))
+        game_id, GameNewHandDTO(deck=deck)
     )
 
     assert resp
@@ -111,7 +109,7 @@ async def test_post_new_hand_with_deck():
     )
 
     resp = await game_api.game_game_id_hand_post(
-        game_id, GameGameIdHandPostRequest(GameNewHandDTO(deck=deck))
+        game_id, GameNewHandDTO(deck=deck)
     )
 
     assert resp

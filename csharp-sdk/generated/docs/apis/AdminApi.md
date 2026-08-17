@@ -9,7 +9,7 @@ All URIs are relative to *https://game.bahms.org/api/poker*
 
 <a id="admingamegameidstatuspost"></a>
 # **AdminGameGameIdStatusPost**
-> Object AdminGameGameIdStatusPost (string gameId, AdminGameGameIdStatusPostRequest adminGameGameIdStatusPostRequest)
+> Object AdminGameGameIdStatusPost (string gameId, AdminGameStatusDTO adminGameStatusDTO)
 
 Update Game Status
 
@@ -21,7 +21,7 @@ Changes the status of an active game, for use by admins
 | Name | Type | Description | Notes |
 |------|------|-------------|-------|
 | **gameId** | **string** | ID of the Game to update status of |  |
-| **adminGameGameIdStatusPostRequest** | [**AdminGameGameIdStatusPostRequest**](AdminGameGameIdStatusPostRequest.md) | the status of the game to set |  |
+| **adminGameStatusDTO** | [**AdminGameStatusDTO**](AdminGameStatusDTO.md) | the status of the game to set |  |
 
 ### Return type
 
@@ -47,7 +47,7 @@ Changes the status of an active game, for use by admins
 
 <a id="admingamegameidtablepost"></a>
 # **AdminGameGameIdTablePost**
-> Object AdminGameGameIdTablePost (string gameId, AdminGameGameIdTablePostRequest adminGameGameIdTablePostRequest)
+> Object AdminGameGameIdTablePost (string gameId, GameTableDTO gameTableDTO)
 
 Change Game Table
 
@@ -59,7 +59,7 @@ Changes the state of an active game
 | Name | Type | Description | Notes |
 |------|------|-------------|-------|
 | **gameId** | **string** | ID of the Game to update status of |  |
-| **adminGameGameIdTablePostRequest** | [**AdminGameGameIdTablePostRequest**](AdminGameGameIdTablePostRequest.md) | the table struct to apply |  |
+| **gameTableDTO** | [**GameTableDTO**](GameTableDTO.md) | the table struct to apply |  |
 
 ### Return type
 

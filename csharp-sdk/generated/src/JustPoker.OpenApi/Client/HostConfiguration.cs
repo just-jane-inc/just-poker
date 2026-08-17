@@ -43,8 +43,6 @@ namespace JustPoker.OpenApi.Client
             _jsonOptions.Converters.Add(new DateTimeNullableJsonConverter());
             _jsonOptions.Converters.Add(new DateOnlyJsonConverter());
             _jsonOptions.Converters.Add(new DateOnlyNullableJsonConverter());
-            _jsonOptions.Converters.Add(new AdminGameGameIdStatusPostRequestJsonConverter());
-            _jsonOptions.Converters.Add(new AdminGameGameIdTablePostRequestJsonConverter());
             _jsonOptions.Converters.Add(new AdminGameStatusJsonConverter());
             _jsonOptions.Converters.Add(new AdminGameStatusNullableJsonConverter());
             _jsonOptions.Converters.Add(new AdminGameStatusDTOJsonConverter());
@@ -52,10 +50,6 @@ namespace JustPoker.OpenApi.Client
             _jsonOptions.Converters.Add(new GameCardDTOJsonConverter());
             _jsonOptions.Converters.Add(new GameChipExchangeDTOJsonConverter());
             _jsonOptions.Converters.Add(new GameGameDTOJsonConverter());
-            _jsonOptions.Converters.Add(new GameGameIdActionPostRequestJsonConverter());
-            _jsonOptions.Converters.Add(new GameGameIdChipExchangePostRequestJsonConverter());
-            _jsonOptions.Converters.Add(new GameGameIdHandPostRequestJsonConverter());
-            _jsonOptions.Converters.Add(new GameGameIdTablePostRequestJsonConverter());
             _jsonOptions.Converters.Add(new GameHandDTOJsonConverter());
             _jsonOptions.Converters.Add(new GameNewGameConfigDTOJsonConverter());
             _jsonOptions.Converters.Add(new GameNewHandDTOJsonConverter());
@@ -63,12 +57,10 @@ namespace JustPoker.OpenApi.Client
             _jsonOptions.Converters.Add(new GamePlayerDTOJsonConverter());
             _jsonOptions.Converters.Add(new GamePlayerIntentJsonConverter());
             _jsonOptions.Converters.Add(new GamePlayerIntentNullableJsonConverter());
-            _jsonOptions.Converters.Add(new GamePostRequestJsonConverter());
             _jsonOptions.Converters.Add(new GameRoundDTOJsonConverter());
             _jsonOptions.Converters.Add(new GameRoundTypeJsonConverter());
             _jsonOptions.Converters.Add(new GameRoundTypeNullableJsonConverter());
             _jsonOptions.Converters.Add(new GameTableDTOJsonConverter());
-            _jsonOptions.Converters.Add(new HandEvaluatorEvaluatePostRequestJsonConverter());
             _jsonOptions.Converters.Add(new JustErrorCodeJsonConverter());
             _jsonOptions.Converters.Add(new JustErrorCodeNullableJsonConverter());
             _jsonOptions.Converters.Add(new JustErrorDTOJsonConverter());

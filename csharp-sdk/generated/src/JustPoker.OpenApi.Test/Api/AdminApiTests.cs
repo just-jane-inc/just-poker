@@ -57,8 +57,8 @@ namespace JustPoker.OpenApi.Test.Api
         public async Task AdminGameGameIdStatusPostAsyncTest()
         {
             string gameId = default!;
-            AdminGameGameIdStatusPostRequest adminGameGameIdStatusPostRequest = default!;
-            var response = await _instance.AdminGameGameIdStatusPostAsync(gameId, adminGameGameIdStatusPostRequest);
+            AdminGameStatusDTO adminGameStatusDTO = default!;
+            var response = await _instance.AdminGameGameIdStatusPostAsync(gameId, adminGameStatusDTO);
             var model = response.Ok();
             Assert.IsType<Object>(model);
         }
@@ -70,8 +70,8 @@ namespace JustPoker.OpenApi.Test.Api
         public async Task AdminGameGameIdTablePostAsyncTest()
         {
             string gameId = default!;
-            AdminGameGameIdTablePostRequest adminGameGameIdTablePostRequest = default!;
-            var response = await _instance.AdminGameGameIdTablePostAsync(gameId, adminGameGameIdTablePostRequest);
+            GameTableDTO gameTableDTO = default!;
+            var response = await _instance.AdminGameGameIdTablePostAsync(gameId, gameTableDTO);
             var model = response.Ok();
             Assert.IsType<Object>(model);
         }

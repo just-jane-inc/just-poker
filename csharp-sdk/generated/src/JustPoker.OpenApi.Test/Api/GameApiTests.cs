@@ -57,8 +57,8 @@ namespace JustPoker.OpenApi.Test.Api
         public async Task GameGameIdActionPostAsyncTest()
         {
             string gameId = default!;
-            GameGameIdActionPostRequest gameGameIdActionPostRequest = default!;
-            var response = await _instance.GameGameIdActionPostAsync(gameId, gameGameIdActionPostRequest);
+            GamePlayerActionDTO gamePlayerActionDTO = default!;
+            var response = await _instance.GameGameIdActionPostAsync(gameId, gamePlayerActionDTO);
             var model = response.Ok();
             Assert.IsType<JustResponseMessageAny>(model);
         }
@@ -70,8 +70,8 @@ namespace JustPoker.OpenApi.Test.Api
         public async Task GameGameIdChipExchangePostAsyncTest()
         {
             string gameId = default!;
-            GameGameIdChipExchangePostRequest gameGameIdChipExchangePostRequest = default!;
-            var response = await _instance.GameGameIdChipExchangePostAsync(gameId, gameGameIdChipExchangePostRequest);
+            GameChipExchangeDTO gameChipExchangeDTO = default!;
+            var response = await _instance.GameGameIdChipExchangePostAsync(gameId, gameChipExchangeDTO);
             var model = response.Ok();
             Assert.IsType<JustResponseMessageAny>(model);
         }
@@ -96,8 +96,8 @@ namespace JustPoker.OpenApi.Test.Api
         public async Task GameGameIdHandPostAsyncTest()
         {
             string gameId = default!;
-            GameGameIdHandPostRequest gameGameIdHandPostRequest = default!;
-            var response = await _instance.GameGameIdHandPostAsync(gameId, gameGameIdHandPostRequest);
+            GameNewHandDTO gameNewHandDTO = default!;
+            var response = await _instance.GameGameIdHandPostAsync(gameId, gameNewHandDTO);
             var model = response.Ok();
             Assert.IsType<Object>(model);
         }
@@ -163,6 +163,19 @@ namespace JustPoker.OpenApi.Test.Api
         }
 
         /// <summary>
+        /// Test GameGameIdStatePost
+        /// </summary>
+        [Fact (Skip = "not implemented")]
+        public async Task GameGameIdStatePostAsyncTest()
+        {
+            string gameId = default!;
+            GameTableDTO gameTableDTO = default!;
+            var response = await _instance.GameGameIdStatePostAsync(gameId, gameTableDTO);
+            var model = response.Ok();
+            Assert.IsType<JustResponseMessageString>(model);
+        }
+
+        /// <summary>
         /// Test GameGameIdStateWsGet
         /// </summary>
         [Fact (Skip = "not implemented")]
@@ -172,19 +185,6 @@ namespace JustPoker.OpenApi.Test.Api
             var response = await _instance.GameGameIdStateWsGetAsync(gameId);
             var model = response.Ok();
             Assert.IsType<Object>(model);
-        }
-
-        /// <summary>
-        /// Test GameGameIdTablePost
-        /// </summary>
-        [Fact (Skip = "not implemented")]
-        public async Task GameGameIdTablePostAsyncTest()
-        {
-            string gameId = default!;
-            GameGameIdTablePostRequest gameGameIdTablePostRequest = default!;
-            var response = await _instance.GameGameIdTablePostAsync(gameId, gameGameIdTablePostRequest);
-            var model = response.Ok();
-            Assert.IsType<JustResponseMessageString>(model);
         }
 
         /// <summary>
@@ -204,8 +204,8 @@ namespace JustPoker.OpenApi.Test.Api
         [Fact (Skip = "not implemented")]
         public async Task GamePostAsyncTest()
         {
-            GamePostRequest gamePostRequest = default!;
-            var response = await _instance.GamePostAsync(gamePostRequest);
+            GameNewGameConfigDTO gameNewGameConfigDTO = default!;
+            var response = await _instance.GamePostAsync(gameNewGameConfigDTO);
             var model = response.Ok();
             Assert.IsType<JustResponseMessageString>(model);
         }
@@ -216,8 +216,8 @@ namespace JustPoker.OpenApi.Test.Api
         [Fact (Skip = "not implemented")]
         public async Task HandEvaluatorEvaluatePostAsyncTest()
         {
-            HandEvaluatorEvaluatePostRequest? handEvaluatorEvaluatePostRequest = default!;
-            var response = await _instance.HandEvaluatorEvaluatePostAsync(handEvaluatorEvaluatePostRequest);
+            List<GameCardDTO> gameCardDTO = default!;
+            var response = await _instance.HandEvaluatorEvaluatePostAsync(gameCardDTO);
             var model = response.Ok();
             Assert.IsType<JustHandEvaluationDTO>(model);
         }

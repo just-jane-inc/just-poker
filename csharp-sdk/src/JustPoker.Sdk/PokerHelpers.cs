@@ -130,23 +130,9 @@ public static class PokerHelpers
             {
                 config.AddTokens(new BearerToken(token));
             }
-            
-            // TODO TODO TODO TODO TODO TODO
 
-            // some stuff was null and causing the generated code to blow up (mostly the endDate on gamegamedto JANE!!!)
-            config.ConfigureJsonOptions(options =>
-                options.Converters.Insert(0, new NullTolerantModelConverterFactory()));
-            
-            // fix for serializing the action post request to json as it was always ending up empty due to weird swagger shenanigans
-            config.ConfigureJsonOptions(options =>
-                options.Converters.Insert(0, new ActionPostRequestConverter()));
-            // yeah this also no worky for chip exchange, serializer sends empty
-            config.ConfigureJsonOptions(options =>
-                options.Converters.Insert(0, new ChipExchangeRequestConverter()));
-            
-            // There may be other post request objects that do not serialize properly
-            // TODO look into root cause (swagger gen having union of object and $ref may be why?)
-            // Is there a way to make codegen handle this batter or do we need to identify and solve all via converters...
+            // config.ConfigureJsonOptions(options =>
+            //     options.Converters.Insert(0, new NullTolerantModelConverterFactory()));
             
         });
 
@@ -190,7 +176,7 @@ public static class PokerHelpers
         await using var provider = CreateApiProvider(baseUrl, token);
         var api = provider.GetRequiredService<IGameApi>();
 
-        var response = await api.GamePostAsync(new GamePostRequest(config));
+        var response = await api.GamePostAsync(config);
         ThrowError(response, "create game");
         return response.TryOk(out var message) ? message.Data : null;
     }
@@ -243,6 +229,8 @@ internal static class PokerJson
         return provider.GetRequiredService<JsonSerializerOptionsProvider>().Options;
     }
 }
+
+[Obsolete("x-nullable set to true in swaggo gen to fix")]
 internal sealed class NullTolerantModelConverterFactory : JsonConverterFactory
 {
     private const string ModelNamespace = "JustPoker.OpenApi.Model";
@@ -254,6 +242,7 @@ internal sealed class NullTolerantModelConverterFactory : JsonConverterFactory
             typeof(NullTolerantModelConverter<>).MakeGenericType(t))!;
 }
 
+[Obsolete("x-nullable set to true in swaggo gen to fix")]
 internal sealed class NullTolerantModelConverter<T> : JsonConverter<T> where T : class
 {
     private static readonly ConditionalWeakTable<JsonSerializerOptions, JsonSerializerOptions> Clean = new();
@@ -295,50 +284,4 @@ internal sealed class NullTolerantModelConverter<T> : JsonConverter<T> where T :
                 break;
         }
     }
-}
-
-internal sealed class ActionPostRequestConverter : JsonConverter<GameGameIdActionPostRequest>
-{
-    public override GameGameIdActionPostRequest Read(ref Utf8JsonReader reader, Type objectType, JsonSerializerOptions options) => 
-        new(JsonSerializer.Deserialize<GamePlayerActionDTO>(ref reader, options)!);
-    
-    public override void Write(Utf8JsonWriter writer, GameGameIdActionPostRequest actionReq, JsonSerializerOptions options)
-    {
-        if (actionReq.GamePlayerActionDTO is not null)
-        {
-            JsonSerializer.Serialize(writer, actionReq.GamePlayerActionDTO, options);
-        }
-        else if (actionReq.Object is not null)
-        {
-            JsonSerializer.Serialize(writer, actionReq.Object, options);
-        }
-        else
-        {
-            writer.WriteStartObject();
-        }
-    }
-
-}
-
-internal sealed class ChipExchangeRequestConverter : JsonConverter<GameGameIdChipExchangePostRequest>
-{
-    public override GameGameIdChipExchangePostRequest Read(ref Utf8JsonReader reader, Type objectType, JsonSerializerOptions options) => 
-        new(JsonSerializer.Deserialize<GameChipExchangeDTO>(ref reader, options)!);
-    
-    public override void Write(Utf8JsonWriter writer, GameGameIdChipExchangePostRequest actionReq, JsonSerializerOptions options)
-    {
-        if (actionReq.GameChipExchangeDTO is not null)
-        {
-            JsonSerializer.Serialize(writer, actionReq.GameChipExchangeDTO, options);
-        }
-        else if (actionReq.Object is not null)
-        {
-            JsonSerializer.Serialize(writer, actionReq.Object, options);
-        }
-        else
-        {
-            writer.WriteStartObject();
-        }
-    }
-
 }

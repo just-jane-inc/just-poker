@@ -1,4 +1,3 @@
-using System.Text.Json;
 using JustPoker.OpenApi.Api;
 using JustPoker.OpenApi.Model;
 using Microsoft.Extensions.DependencyInjection;
@@ -192,7 +191,7 @@ public sealed class PokerBot : IAsyncDisposable
         
         var req = new GameChipExchangeDTO(giveStack, receiveStack);
         var response =
-            await GameApi.GameGameIdChipExchangePostAsync(GameId, new GameGameIdChipExchangePostRequest(req));
+            await GameApi.GameGameIdChipExchangePostAsync(GameId, req);
         PokerHelpers.ThrowError(response, "chip exchange");
     }
 
@@ -403,8 +402,7 @@ public sealed class PokerBot : IAsyncDisposable
             Intent = intent,
         };
         
-        var req = new GameGameIdActionPostRequest(dto);
-        var response = await GameApi.GameGameIdActionPostAsync(GameId, req);
+        var response = await GameApi.GameGameIdActionPostAsync(GameId, dto);
         PokerHelpers.ThrowError(response, $"action {intent}");
         return true;
     }

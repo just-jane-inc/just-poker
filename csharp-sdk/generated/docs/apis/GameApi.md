@@ -13,15 +13,15 @@ All URIs are relative to *https://game.bahms.org/api/poker*
 | [**GameGameIdStateGet**](GameApi.md#gamegameidstateget) | **GET** /game/{game_id}/state | Game State |
 | [**GameGameIdStateListenGet**](GameApi.md#gamegameidstatelistenget) | **GET** /game/{game_id}/state/listen | Get Listener |
 | [**GameGameIdStateListenPost**](GameApi.md#gamegameidstatelistenpost) | **POST** /game/{game_id}/state/listen | Register Listener |
+| [**GameGameIdStatePost**](GameApi.md#gamegameidstatepost) | **POST** /game/{game_id}/state | start game from state |
 | [**GameGameIdStateWsGet**](GameApi.md#gamegameidstatewsget) | **GET** /game/{game_id}/state/ws | Connect Updates |
-| [**GameGameIdTablePost**](GameApi.md#gamegameidtablepost) | **POST** /game/{game_id}/table | Sets a table |
 | [**GameGet**](GameApi.md#gameget) | **GET** /game | Gets Active Games |
 | [**GamePost**](GameApi.md#gamepost) | **POST** /game | Create Game |
-| [**HandEvaluatorEvaluatePost**](GameApi.md#handevaluatorevaluatepost) | **POST** /hand-evaluator/evaluate | Evaluate a Hand |
+| [**HandEvaluatorEvaluatePost**](GameApi.md#handevaluatorevaluatepost) | **POST** /hand-evaluator/evaluate/ | Evaluate a Hand |
 
 <a id="gamegameidactionpost"></a>
 # **GameGameIdActionPost**
-> JustResponseMessageAny GameGameIdActionPost (string gameId, GameGameIdActionPostRequest gameGameIdActionPostRequest)
+> JustResponseMessageAny GameGameIdActionPost (string gameId, GamePlayerActionDTO gamePlayerActionDTO)
 
 Player Action
 
@@ -33,7 +33,7 @@ post the action preformed by a player
 | Name | Type | Description | Notes |
 |------|------|-------------|-------|
 | **gameId** | **string** | the id of the game |  |
-| **gameGameIdActionPostRequest** | [**GameGameIdActionPostRequest**](GameGameIdActionPostRequest.md) | the action the player is preforming |  |
+| **gamePlayerActionDTO** | [**GamePlayerActionDTO**](GamePlayerActionDTO.md) | the action the player is preforming |  |
 
 ### Return type
 
@@ -59,7 +59,7 @@ post the action preformed by a player
 
 <a id="gamegameidchipexchangepost"></a>
 # **GameGameIdChipExchangePost**
-> JustResponseMessageAny GameGameIdChipExchangePost (string gameId, GameGameIdChipExchangePostRequest gameGameIdChipExchangePostRequest)
+> JustResponseMessageAny GameGameIdChipExchangePost (string gameId, GameChipExchangeDTO gameChipExchangeDTO)
 
 Exchange Chips
 
@@ -71,7 +71,7 @@ exchange chips in the players stack with the tables rack
 | Name | Type | Description | Notes |
 |------|------|-------------|-------|
 | **gameId** | **string** | ID of the Game exchange chips in |  |
-| **gameGameIdChipExchangePostRequest** | [**GameGameIdChipExchangePostRequest**](GameGameIdChipExchangePostRequest.md) | a specification for the chips to exchange |  |
+| **gameChipExchangeDTO** | [**GameChipExchangeDTO**](GameChipExchangeDTO.md) | a specification for the chips to exchange |  |
 
 ### Return type
 
@@ -135,7 +135,7 @@ Delete a game
 
 <a id="gamegameidhandpost"></a>
 # **GameGameIdHandPost**
-> Object GameGameIdHandPost (string gameId, GameGameIdHandPostRequest gameGameIdHandPostRequest)
+> Object GameGameIdHandPost (string gameId, GameNewHandDTO gameNewHandDTO)
 
 Start Next Hand
 
@@ -147,7 +147,7 @@ Starts the next poker hand
 | Name | Type | Description | Notes |
 |------|------|-------------|-------|
 | **gameId** | **string** | ID of the Game to join |  |
-| **gameGameIdHandPostRequest** | [**GameGameIdHandPostRequest**](GameGameIdHandPostRequest.md) | a dto containing new hand information |  |
+| **gameNewHandDTO** | [**GameNewHandDTO**](GameNewHandDTO.md) | a dto containing new hand information |  |
 
 ### Return type
 
@@ -356,6 +356,44 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../../README.md#documentation-for-api-endpoints) [[Back to Model list]](../../README.md#documentation-for-models) [[Back to README]](../../README.md)
 
+<a id="gamegameidstatepost"></a>
+# **GameGameIdStatePost**
+> JustResponseMessageString GameGameIdStatePost (string gameId, GameTableDTO gameTableDTO)
+
+start game from state
+
+starts a game from a specific state
+
+
+### Parameters
+
+| Name | Type | Description | Notes |
+|------|------|-------------|-------|
+| **gameId** | **string** | the id of the game to start |  |
+| **gameTableDTO** | [**GameTableDTO**](GameTableDTO.md) | the game state object to start game from |  |
+
+### Return type
+
+[**JustResponseMessageString**](JustResponseMessageString.md)
+
+### Authorization
+
+[BearerAuth](../README.md#BearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | game created - game id as string |  -  |
+| **400** | Bad Request |  -  |
+
+[[Back to top]](#) [[Back to API list]](../../README.md#documentation-for-api-endpoints) [[Back to Model list]](../../README.md#documentation-for-models) [[Back to README]](../../README.md)
+
 <a id="gamegameidstatewsget"></a>
 # **GameGameIdStateWsGet**
 > Object GameGameIdStateWsGet (string gameId)
@@ -389,44 +427,6 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
-
-[[Back to top]](#) [[Back to API list]](../../README.md#documentation-for-api-endpoints) [[Back to Model list]](../../README.md#documentation-for-models) [[Back to README]](../../README.md)
-
-<a id="gamegameidtablepost"></a>
-# **GameGameIdTablePost**
-> JustResponseMessageString GameGameIdTablePost (string gameId, GameGameIdTablePostRequest gameGameIdTablePostRequest)
-
-Sets a table
-
-creates a game for testing
-
-
-### Parameters
-
-| Name | Type | Description | Notes |
-|------|------|-------------|-------|
-| **gameId** | **string** | the id of the game to set the table for |  |
-| **gameGameIdTablePostRequest** | [**GameGameIdTablePostRequest**](GameGameIdTablePostRequest.md) | the game state object to load as a test game |  |
-
-### Return type
-
-[**JustResponseMessageString**](JustResponseMessageString.md)
-
-### Authorization
-
-[BearerAuth](../README.md#BearerAuth)
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | game created - game id as string |  -  |
-| **400** | Bad Request |  -  |
 
 [[Back to top]](#) [[Back to API list]](../../README.md#documentation-for-api-endpoints) [[Back to Model list]](../../README.md#documentation-for-models) [[Back to README]](../../README.md)
 
@@ -464,7 +464,7 @@ No authorization required
 
 <a id="gamepost"></a>
 # **GamePost**
-> JustResponseMessageString GamePost (GamePostRequest gamePostRequest)
+> JustResponseMessageString GamePost (GameNewGameConfigDTO gameNewGameConfigDTO)
 
 Create Game
 
@@ -475,7 +475,7 @@ creates a new game from a configuration file
 
 | Name | Type | Description | Notes |
 |------|------|-------------|-------|
-| **gamePostRequest** | [**GamePostRequest**](GamePostRequest.md) | an object defining configuration information for the new game |  |
+| **gameNewGameConfigDTO** | [**GameNewGameConfigDTO**](GameNewGameConfigDTO.md) | an object defining configuration information for the new game |  |
 
 ### Return type
 
@@ -501,7 +501,7 @@ creates a new game from a configuration file
 
 <a id="handevaluatorevaluatepost"></a>
 # **HandEvaluatorEvaluatePost**
-> JustHandEvaluationDTO HandEvaluatorEvaluatePost (HandEvaluatorEvaluatePostRequest handEvaluatorEvaluatePostRequest)
+> JustHandEvaluationDTO HandEvaluatorEvaluatePost (List<GameCardDTO> gameCardDTO)
 
 Evaluate a Hand
 
@@ -512,7 +512,7 @@ Evaluator? I hardly...
 
 | Name | Type | Description | Notes |
 |------|------|-------------|-------|
-| **handEvaluatorEvaluatePostRequest** | [**HandEvaluatorEvaluatePostRequest**](HandEvaluatorEvaluatePostRequest.md) | hand to evaluate, either 5 or 7 cards |  |
+| **gameCardDTO** | [**List&lt;GameCardDTO&gt;**](GameCardDTO.md) | hand to evaluate, either 5 or 7 cards |  |
 
 ### Return type
 

@@ -201,7 +201,7 @@ namespace JustPoker.OpenApi.Model
                     switch (localVarJsonPropertyName)
                     {
                         case "ended_at":
-                            endedAt = new Option<string?>(utf8JsonReader.GetString()!);
+                            endedAt = new Option<string?>(utf8JsonReader.GetString());
                             break;
                         case "game_config":
                             gameConfig = new Option<GameNewGameConfigDTO?>(JsonSerializer.Deserialize<GameNewGameConfigDTO>(ref utf8JsonReader, jsonSerializerOptions)!);
@@ -210,7 +210,7 @@ namespace JustPoker.OpenApi.Model
                             id = new Option<string?>(utf8JsonReader.GetString()!);
                             break;
                         case "started_at":
-                            startedAt = new Option<string?>(utf8JsonReader.GetString()!);
+                            startedAt = new Option<string?>(utf8JsonReader.GetString());
                             break;
                         case "table":
                             table = new Option<GameTableDTO?>(JsonSerializer.Deserialize<GameTableDTO>(ref utf8JsonReader, jsonSerializerOptions)!);
@@ -221,17 +221,11 @@ namespace JustPoker.OpenApi.Model
                 }
             }
 
-            if (endedAt.IsSet && endedAt.Value == null)
-                throw new ArgumentNullException(nameof(endedAt), "Property is not nullable for class GameGameDTO.");
-
             if (gameConfig.IsSet && gameConfig.Value == null)
                 throw new ArgumentNullException(nameof(gameConfig), "Property is not nullable for class GameGameDTO.");
 
             if (id.IsSet && id.Value == null)
                 throw new ArgumentNullException(nameof(id), "Property is not nullable for class GameGameDTO.");
-
-            if (startedAt.IsSet && startedAt.Value == null)
-                throw new ArgumentNullException(nameof(startedAt), "Property is not nullable for class GameGameDTO.");
 
             if (table.IsSet && table.Value == null)
                 throw new ArgumentNullException(nameof(table), "Property is not nullable for class GameGameDTO.");
@@ -263,23 +257,20 @@ namespace JustPoker.OpenApi.Model
         /// <exception cref="NotImplementedException"></exception>
         public void WriteProperties(Utf8JsonWriter writer, GameGameDTO gameGameDTO, JsonSerializerOptions jsonSerializerOptions)
         {
-            if (gameGameDTO.EndedAtOption.IsSet && gameGameDTO.EndedAt == null)
-                throw new ArgumentNullException(nameof(gameGameDTO.EndedAt), "Property is required for class GameGameDTO.");
-
             if (gameGameDTO.GameConfigOption.IsSet && gameGameDTO.GameConfig == null)
                 throw new ArgumentNullException(nameof(gameGameDTO.GameConfig), "Property is required for class GameGameDTO.");
 
             if (gameGameDTO.IdOption.IsSet && gameGameDTO.Id == null)
                 throw new ArgumentNullException(nameof(gameGameDTO.Id), "Property is required for class GameGameDTO.");
 
-            if (gameGameDTO.StartedAtOption.IsSet && gameGameDTO.StartedAt == null)
-                throw new ArgumentNullException(nameof(gameGameDTO.StartedAt), "Property is required for class GameGameDTO.");
-
             if (gameGameDTO.TableOption.IsSet && gameGameDTO.Table == null)
                 throw new ArgumentNullException(nameof(gameGameDTO.Table), "Property is required for class GameGameDTO.");
 
             if (gameGameDTO.EndedAtOption.IsSet)
-                writer.WriteString("ended_at", gameGameDTO.EndedAt);
+                if (gameGameDTO.EndedAtOption.Value != null)
+                    writer.WriteString("ended_at", gameGameDTO.EndedAt);
+                else
+                    writer.WriteNull("ended_at");
 
             if (gameGameDTO.GameConfigOption.IsSet)
             {
@@ -290,7 +281,10 @@ namespace JustPoker.OpenApi.Model
                 writer.WriteString("id", gameGameDTO.Id);
 
             if (gameGameDTO.StartedAtOption.IsSet)
-                writer.WriteString("started_at", gameGameDTO.StartedAt);
+                if (gameGameDTO.StartedAtOption.Value != null)
+                    writer.WriteString("started_at", gameGameDTO.StartedAt);
+                else
+                    writer.WriteNull("started_at");
 
             if (gameGameDTO.TableOption.IsSet)
             {

@@ -184,7 +184,7 @@ namespace JustPoker.OpenApi.Model
                     switch (localVarJsonPropertyName)
                     {
                         case "accepted_at":
-                            acceptedAt = new Option<string?>(utf8JsonReader.GetString()!);
+                            acceptedAt = new Option<string?>(utf8JsonReader.GetString());
                             break;
                         case "chips":
                             chips = new Option<Dictionary<string, int>?>(JsonSerializer.Deserialize<Dictionary<string, int>>(ref utf8JsonReader, jsonSerializerOptions)!);
@@ -200,9 +200,6 @@ namespace JustPoker.OpenApi.Model
                     }
                 }
             }
-
-            if (acceptedAt.IsSet && acceptedAt.Value == null)
-                throw new ArgumentNullException(nameof(acceptedAt), "Property is not nullable for class GamePlayerActionDTO.");
 
             if (chips.IsSet && chips.Value == null)
                 throw new ArgumentNullException(nameof(chips), "Property is not nullable for class GamePlayerActionDTO.");
@@ -240,9 +237,6 @@ namespace JustPoker.OpenApi.Model
         /// <exception cref="NotImplementedException"></exception>
         public void WriteProperties(Utf8JsonWriter writer, GamePlayerActionDTO gamePlayerActionDTO, JsonSerializerOptions jsonSerializerOptions)
         {
-            if (gamePlayerActionDTO.AcceptedAtOption.IsSet && gamePlayerActionDTO.AcceptedAt == null)
-                throw new ArgumentNullException(nameof(gamePlayerActionDTO.AcceptedAt), "Property is required for class GamePlayerActionDTO.");
-
             if (gamePlayerActionDTO.ChipsOption.IsSet && gamePlayerActionDTO.Chips == null)
                 throw new ArgumentNullException(nameof(gamePlayerActionDTO.Chips), "Property is required for class GamePlayerActionDTO.");
 
@@ -250,7 +244,10 @@ namespace JustPoker.OpenApi.Model
                 throw new ArgumentNullException(nameof(gamePlayerActionDTO.PlayerId), "Property is required for class GamePlayerActionDTO.");
 
             if (gamePlayerActionDTO.AcceptedAtOption.IsSet)
-                writer.WriteString("accepted_at", gamePlayerActionDTO.AcceptedAt);
+                if (gamePlayerActionDTO.AcceptedAtOption.Value != null)
+                    writer.WriteString("accepted_at", gamePlayerActionDTO.AcceptedAt);
+                else
+                    writer.WriteNull("accepted_at");
 
             if (gamePlayerActionDTO.ChipsOption.IsSet)
             {

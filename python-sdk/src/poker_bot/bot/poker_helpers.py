@@ -10,7 +10,6 @@ from openapi_client import (
     GameCardDTO,
     GameGameDTO,
     GameNewGameConfigDTO,
-    GamePostRequest,
     JustErrorDTO,
     JustResponseMessageJustErrorDTO,
     UserApi,
@@ -58,7 +57,7 @@ def create_connection(base_url: str, token: str = "") -> ApiClient:
 async def create_game_from_config(*, base_url: str, token: str, config: GameNewGameConfigDTO) -> str | None:
     conn = create_connection(base_url, token)
     api = GameApi(conn)
-    resp = await api.game_post(GamePostRequest(config))
+    resp = await api.game_post(config)
     return resp.data
 
 

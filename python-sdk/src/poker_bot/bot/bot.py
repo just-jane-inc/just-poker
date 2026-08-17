@@ -5,6 +5,7 @@ import openapi_client as api
 import poker_bot.bot.poker_exceptions as ex
 import poker_bot.bot.poker_helpers as help
 import poker_bot.bot.websocket_events as ws
+from openapi_client import GamePlayerIntent, JustResponseMessageAny
 from poker_bot.bot.event_hub import (
     EventHub,
     EventSubscriber,
@@ -151,8 +152,7 @@ class PokerBot:
         give_stack = {str(s.denomination): s.count for s in give}
         receive_stack = {str(s.denomination): s.count for s in receive}
         dto = api.GameChipExchangeDTO(give=give_stack, receive=receive_stack)
-        req = api.GameGameIdChipExchangePostRequest(dto)
-        resp = await self._game_api.game_game_id_chip_exchange_post(self._game_id, req)
+        resp = await self._game_api.game_game_id_chip_exchange_post(self._game_id, dto)
         if resp.type == "error":
             raise ex.CustomException("error in chip exchange: %s", resp.data.error)
 
@@ -251,7 +251,7 @@ class PokerBot:
         if not self.is_my_turn():
             return False
 
-        await self.send_action(api.GamePlayerIntent.PlayerIntentAllIn, {})
+        return await self.send_action(api.GamePlayerIntent.PlayerIntentAllIn, {})
 
     async def raise_bet(self, raise_to: int):
         """sends action to raise bet after waiting for the bots turn
@@ -275,7 +275,7 @@ class PokerBot:
         await self.try_cover_bet(raise_to, bet)
         stack = help.convert_chips(bet)
 
-        await self.send_action(api.GamePlayerIntent.PlayerIntentRaise, stack)
+        return await self.send_action(api.GamePlayerIntent.PlayerIntentRaise, stack)
 
     async def ante(self):
         """sends action to raise bet after waiting for the bots turn
@@ -299,7 +299,7 @@ class PokerBot:
         await self.try_cover_bet(amount, bet)
         stack = help.convert_chips(bet)
 
-        await self.send_action(api.GamePlayerIntent.PlayerIntentAnte, stack)
+        return await self.send_action(api.GamePlayerIntent.PlayerIntentAnte, stack)
 
     async def call(self):
         """sends action to call after waiting for the bots turn
@@ -326,7 +326,7 @@ class PokerBot:
         await self.try_cover_bet(amount, bet)
         stack = help.convert_chips(bet)
 
-        await self.send_action(api.GamePlayerIntent.PlayerIntentCall, stack)
+        return await self.send_action(api.GamePlayerIntent.PlayerIntentCall, stack)
 
     async def fold(self):
         """sends action to call after waiting for the bots turn
@@ -342,9 +342,9 @@ class PokerBot:
         if not self.is_my_turn():
             return False
 
-        await self.send_action(api.GamePlayerIntent.PlayerIntentFold)
+        return await self.send_action(api.GamePlayerIntent.PlayerIntentFold)
 
-    async def send_action(self, intent: str, bet: dict[str, int] | None = None):
+    async def send_action(self, intent: GamePlayerIntent | str, bet: dict[str, int] | None = None):
         """send an action to the joined game
 
         Gee, I sure can't wait for bots to hop in my pool! - ty999999
@@ -358,10 +358,17 @@ class PokerBot:
         if bet is None:
             bet = {}
 
-        dto = api.GamePlayerActionDTO(chips=bet, intent=intent)
-        req = api.GameGameIdActionPostRequest(dto)
+        player_intent : GamePlayerIntent | None = GamePlayerIntent.PlayerIntentUnset
+        if isinstance(intent, str):
+            try:
+                player_intent = GamePlayerIntent(intent)
+            except:
+                pass
+
+        dto = api.GamePlayerActionDTO(chips=bet, intent=player_intent)
         # TODO return if this is successful, bubble up to return all helpers too
-        await self._game_api.game_game_id_action_post(self._game_id, req)
+        response: JustResponseMessageAny = await self._game_api.game_game_id_action_post(self._game_id, dto)
+        return response.type != "error"
 
     async def wait_for_my_turn(self):
         """blocks until a game state is injected that signals it is this players turn

@@ -35,11 +35,13 @@ namespace JustPoker.OpenApi.Model
         /// </summary>
         /// <param name="give">an optional mapping of chips that is required by some action types.</param>
         /// <param name="receive">an optional mapping of chips that is required by some action types.</param>
+        /// <param name="userId">the stack to give during the exchange</param>
         [JsonConstructor]
-        public GameChipExchangeDTO(Option<Dictionary<string, int>?> give = default, Option<Dictionary<string, int>?> receive = default)
+        public GameChipExchangeDTO(Option<Dictionary<string, int>?> give = default, Option<Dictionary<string, int>?> receive = default, Option<string?> userId = default)
         {
             GiveOption = give;
             ReceiveOption = receive;
+            UserIdOption = userId;
             OnCreated();
         }
 
@@ -74,6 +76,20 @@ namespace JustPoker.OpenApi.Model
         public Dictionary<string, int>? Receive { get { return this.ReceiveOption.Value; } set { this.ReceiveOption = new(value); } }
 
         /// <summary>
+        /// Used to track the state of UserId
+        /// </summary>
+        [JsonIgnore]
+        [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
+        public Option<string?> UserIdOption { get; private set; }
+
+        /// <summary>
+        /// the stack to give during the exchange
+        /// </summary>
+        /// <value>the stack to give during the exchange</value>
+        [JsonPropertyName("user_id")]
+        public string? UserId { get { return this.UserIdOption.Value; } set { this.UserIdOption = new(value); } }
+
+        /// <summary>
         /// Returns the string presentation of the object
         /// </summary>
         /// <returns>String presentation of the object</returns>
@@ -83,6 +99,7 @@ namespace JustPoker.OpenApi.Model
             sb.Append("class GameChipExchangeDTO {\n");
             sb.Append("  Give: ").Append(Give).Append("\n");
             sb.Append("  Receive: ").Append(Receive).Append("\n");
+            sb.Append("  UserId: ").Append(UserId).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
         }
@@ -132,6 +149,7 @@ namespace JustPoker.OpenApi.Model
 
             Option<Dictionary<string, int>?> give = default;
             Option<Dictionary<string, int>?> receive = default;
+            Option<string?> userId = default;
 
             while (utf8JsonReader.Read())
             {
@@ -154,6 +172,9 @@ namespace JustPoker.OpenApi.Model
                         case "receive":
                             receive = new Option<Dictionary<string, int>?>(JsonSerializer.Deserialize<Dictionary<string, int>>(ref utf8JsonReader, jsonSerializerOptions)!);
                             break;
+                        case "user_id":
+                            userId = new Option<string?>(utf8JsonReader.GetString()!);
+                            break;
                         default:
                             break;
                     }
@@ -166,7 +187,10 @@ namespace JustPoker.OpenApi.Model
             if (receive.IsSet && receive.Value == null)
                 throw new ArgumentNullException(nameof(receive), "Property is not nullable for class GameChipExchangeDTO.");
 
-            return new GameChipExchangeDTO(give, receive);
+            if (userId.IsSet && userId.Value == null)
+                throw new ArgumentNullException(nameof(userId), "Property is not nullable for class GameChipExchangeDTO.");
+
+            return new GameChipExchangeDTO(give, receive, userId);
         }
 
         /// <summary>
@@ -199,6 +223,9 @@ namespace JustPoker.OpenApi.Model
             if (gameChipExchangeDTO.ReceiveOption.IsSet && gameChipExchangeDTO.Receive == null)
                 throw new ArgumentNullException(nameof(gameChipExchangeDTO.Receive), "Property is required for class GameChipExchangeDTO.");
 
+            if (gameChipExchangeDTO.UserIdOption.IsSet && gameChipExchangeDTO.UserId == null)
+                throw new ArgumentNullException(nameof(gameChipExchangeDTO.UserId), "Property is required for class GameChipExchangeDTO.");
+
             if (gameChipExchangeDTO.GiveOption.IsSet)
             {
                 writer.WritePropertyName("give");
@@ -209,6 +236,8 @@ namespace JustPoker.OpenApi.Model
                 writer.WritePropertyName("receive");
                 JsonSerializer.Serialize(writer, gameChipExchangeDTO.Receive, jsonSerializerOptions);
             }
+            if (gameChipExchangeDTO.UserIdOption.IsSet)
+                writer.WriteString("user_id", gameChipExchangeDTO.UserId);
         }
     }
 }
