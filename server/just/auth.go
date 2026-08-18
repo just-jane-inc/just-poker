@@ -20,7 +20,7 @@ type UserType string
 
 func (ut UserType) IsValid() bool {
 	switch ut {
-	case UserTypeBot, UserTypeHuman, UserTypeAdmin, UserTypeGameMaster:
+	case UserTypeBot, UserTypeHuman, UserTypeAdmin, UserTypeDealer, UserTypeGameMaster:
 		return true
 	}
 
@@ -29,8 +29,9 @@ func (ut UserType) IsValid() bool {
 
 const (
 	UserTypeBot        UserType = "bot"
-	UserTypeHuman      UserType = "normal"
+	UserTypeHuman      UserType = "human"
 	UserTypeAdmin      UserType = "admin"
+	UserTypeDealer     UserType = "dealer"
 	UserTypeGameMaster UserType = "game_master"
 )
 
