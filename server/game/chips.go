@@ -7,6 +7,7 @@ import (
 	"github.com/just-jane-inc/just-poker/server/just"
 )
 
+// AsDto converts the stack model to the DTO representation
 func (s stack) AsDto() ChipStackDTO {
 	dto := make(ChipStackDTO)
 	for d, c := range s {
@@ -16,6 +17,11 @@ func (s stack) AsDto() ChipStackDTO {
 	return dto
 }
 
+// validate ensures that a stack of chips is valid
+//
+// - all denominations parse as an integer
+// - all denominations are positive
+// - all counts greater then or equal to zero
 func (s ChipStackDTO) validate() *just.PokerError {
 	for d, c := range s {
 		denomination, err := strconv.Atoi(d)
@@ -35,6 +41,7 @@ func (s ChipStackDTO) validate() *just.PokerError {
 	return nil
 }
 
+// asStack converts a ChipStackDTO to the model representation of a stack of chips
 func (s ChipStackDTO) asStack() stack {
 	createStack := make(map[int]int)
 	for d, c := range s {
@@ -49,6 +56,7 @@ func (s ChipStackDTO) asStack() stack {
 	return createStack
 }
 
+// Contains checks if a stack (that) is a subset of another stack (s)
 func (s stack) Contains(that stack) bool {
 	for d, c := range that {
 		// get the number of chips with the provided denomination
@@ -68,8 +76,7 @@ func (s stack) Contains(that stack) bool {
 	return true
 }
 
-// mergeWith returns a stack that is the combination of
-// two stacks, it does not modify either stack
+// mergeWith returns a stack that is the union of two stacks without modifying either
 func (s stack) mergeWith(other stack) stack {
 	result := make(stack)
 	for d, c := range other {
@@ -83,7 +90,22 @@ func (s stack) mergeWith(other stack) stack {
 	return result
 }
 
-func (g *game) ExchangeChips(playerID string, exchange ChipExchangeDTO) error {
+// ExchangeChips preforms an exchange of chips for a specific player
+//
+// if the exchange is valid this will alter the player stack. in order for an exchange
+// to be valid it must:
+//
+// - have a valid Give and Receive stack - see [ChipStackDTO.validate]
+// - have all denominations in the Give and Receive stack exist in [game.config.denominations]
+// - the Give and Receive stacks must have an equal sum
+// - the player doing the exchange must have all chips in the Give stack
+//
+// TODO: this function creates a race condition with coverBet and should be managed.
+// TODO: chip exchanges must be sent over the wire as an event
+func (g *game) ExchangeChips(exchange ChipExchangeDTO) *just.PokerError {
+	g.gameStateLock.Lock()
+	defer g.gameStateLock.Unlock()
+
 	if err := exchange.Give.validate(); err != nil {
 		return err
 	}
@@ -116,9 +138,9 @@ func (g *game) ExchangeChips(playerID string, exchange ChipExchangeDTO) error {
 	}
 
 	var p *player
-	if p = g.table.GetPlayerWithID(playerID); p == nil {
+	if p = g.table.GetPlayerWithID(exchange.UserID); p == nil {
 		return &just.PokerError{
-			Message: fmt.Sprintf("player [%s] not found at table", playerID),
+			Message: fmt.Sprintf("player [%s] not found at table", exchange.UserID),
 			Code:    just.UserNotFound,
 		}
 	}
@@ -133,6 +155,7 @@ func (g *game) ExchangeChips(playerID string, exchange ChipExchangeDTO) error {
 	for d, c := range exchange.Give {
 		denomination, err := strconv.Atoi(d)
 		if err != nil {
+			just.Logger.Errorf("chip exchange determined to be valid encountered error parsing denomination: %v", err)
 			continue
 		}
 
@@ -142,11 +165,13 @@ func (g *game) ExchangeChips(playerID string, exchange ChipExchangeDTO) error {
 	for d, c := range exchange.Receive {
 		denomination, err := strconv.Atoi(d)
 		if err != nil {
+			just.Logger.Errorf("chip exchange determined to be valid encountered error parsing denomination: %v", err)
 			continue
 		}
 
 		p.chips[denomination] += c
 	}
 
+	g.table.sendMessageToConnections("player_chip_exchange", exchange)
 	return nil
 }

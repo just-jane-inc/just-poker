@@ -4,8 +4,8 @@ import os
 
 from dotenv import load_dotenv
 
-from poker_bot.bot.bot import PokerBot
-from poker_bot.tools.tui.setup_tui_example import get_test_users
+from just.users import get_test_users
+from poker_bot.bot import PokerBot
 
 load_dotenv("config/.env")
 base_url = os.getenv("BASE_URL")

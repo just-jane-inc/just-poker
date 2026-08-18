@@ -5,10 +5,10 @@ from datetime import datetime
 
 import aiofiles
 from dotenv import load_dotenv
+from users.users import get_test_user
 
-from poker_bot.bot.bot import *
-from poker_bot.bot.bot import PokerBot
-from poker_bot.tools.tui.setup_tui_example import get_test_user
+from poker_bot.bot import *
+from poker_bot.bot import PokerBot
 
 load_dotenv("config/.env")
 base_url = os.getenv("BASE_URL")

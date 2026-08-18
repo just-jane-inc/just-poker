@@ -2,17 +2,17 @@ import asyncio
 import logging
 
 import openapi_client as api
-import poker_bot.bot.poker_exceptions as ex
-import poker_bot.bot.poker_helpers as help
-import poker_bot.bot.websocket_events as ws
+import poker_bot.poker_exceptions as ex
+import poker_bot.poker_helpers as help
+import poker_bot.websocket_events as ws
 from openapi_client import GamePlayerIntent, JustResponseMessageAny
-from poker_bot.bot.event_hub import (
+from poker_bot.event_hub import (
     EventHub,
     EventSubscriber,
     EventType,
     websocket_event_hub,
 )
-from poker_bot.bot.websocket_events import (
+from poker_bot.websocket_events import (
     WebSocketEvent,
 )
 
@@ -358,7 +358,7 @@ class PokerBot:
         if bet is None:
             bet = {}
 
-        player_intent : GamePlayerIntent | None = GamePlayerIntent.PlayerIntentUnset
+        player_intent: GamePlayerIntent | None = GamePlayerIntent.PlayerIntentUnset
         if isinstance(intent, str):
             try:
                 player_intent = GamePlayerIntent(intent)

@@ -7,17 +7,17 @@ name = "poker-bot-sdk"
 version = "0.1.0"
 
 [project.scripts]
-poker-tui = "poker_bot.tools.tui.__main__:main"
-new-game = "poker_bot.tools.create_game.__main__:main"
-join-game = "poker_bot.tools.join_game.__main__:main"
-listen-game = "poker_bot.tools.listen_game.__main__:main"
-start-game = "poker_bot.tools.start_game.__main__:main"
-get-game = "poker_bot.tools.game_state.__main__:main"
+poker-tui = "just.tui.__main__:main"
+new-game = "just.create_game.__main__:main"
+join-game = "just.join_game.__main__:main"
+listen-game = "just.listen_game.__main__:main"
+start-game = "just.start_game.__main__:main"
+get-game = "just.game_state.__main__:main"
 jamble-bot = "examples.jambler.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src", "examples"]
-include = ["poker_bot*", "openapi_client*"]
+include = ["poker_bot*", "openapi_client*", "just*"]
 
 [tool.pyright]
 typeCheckingMode = "off"

@@ -77,7 +77,7 @@ func OnDeleteGame(w http.ResponseWriter, r *http.Request) {
 	g.endedAt = &t
 
 	go handleUpdates(g, g.AsDTO(), "game_delete")
-	just.OK("success", struct{}{})
+	just.OK("success", struct{}{}).WriteJSONResponse(w)
 }
 
 // OnJoinGameRequest godoc
@@ -108,9 +108,9 @@ func OnJoinGameRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	g.joinGameLock.Lock()
+	g.gameStateLock.Lock()
 	err = g.TryJoinGame(username, userid)
-	g.joinGameLock.Unlock()
+	g.gameStateLock.Unlock()
 
 	if err != nil {
 		var pokerErr *just.PokerError
@@ -286,7 +286,6 @@ func OnStartGameFromState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go g.ProccessPlayerActions(make(chan any))
 	g.table = table.AsTable()
 	g.table.deck = &deck{}
 	g.table.deck.Reset()
@@ -335,15 +334,14 @@ func OnExchangeChips(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var exchange ChipExchangeDTO
-	exchange.UserID = userID
 	if err := json.NewDecoder(r.Body).Decode(&exchange); err != nil {
 		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
 		return
 	}
 
-	err = g.ExchangeChips(userID, exchange)
-	if err != nil {
-		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
+	exchange.UserID = userID
+	if err := g.ExchangeChips(exchange); err != nil {
+		just.BadRequest(err.Message, err.Code).WriteJSONResponse(w)
 		return
 	}
 
@@ -377,9 +375,10 @@ func OnStartGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	g.joinGameLock.Lock()
+	g.gameStateLock.Lock()
 	err = g.TryStartGame()
-	g.joinGameLock.Unlock()
+	g.gameStateLock.Unlock()
+
 	if err != nil {
 		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
 		return
@@ -387,7 +386,6 @@ func OnStartGame(w http.ResponseWriter, r *http.Request) {
 
 	handleUpdates(g, g.AsDTO(), "starting_game")
 	handleUpdates(g, g.AsDTO(), "game_state_update")
-	go g.ProccessPlayerActions(make(chan any))
 
 	just.OK("game_started", struct{}{}).WriteJSONResponse(w)
 	just.Logger.Debugf("started game with id [%s]", g.id)
@@ -438,9 +436,7 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 	}
 
 	just.Logger.Debugf("trying player action...")
-	err = g.TryPlayerAction(playerAction)
-	just.Logger.Debugf("player action completed")
-	if err != nil {
+	if err := g.handlePlayerAction(playerAction); err != nil {
 		just.Logger.Debugf("error in player action")
 		var pokerError *just.PokerError
 		if errors.As(err, &pokerError) {

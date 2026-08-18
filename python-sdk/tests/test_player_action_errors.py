@@ -8,9 +8,9 @@ from helpers import (
 )
 
 import openapi_client as api
-import poker_bot.bot.poker_helpers as help
+import poker_bot.poker_helpers as help
 from openapi_client.api.game_api import GameApi
-from poker_bot.bot import bot
+from poker_bot import bot
 
 make_tests_work_for_fricking_windows()
 

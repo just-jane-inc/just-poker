@@ -2,10 +2,11 @@ import pytest
 from helpers import base_url, get_test_users, make_tests_work_for_fricking_windows
 
 import openapi_client as api
-import poker_bot.bot.poker_helpers as help
-from poker_bot.bot import bot
+import poker_bot.poker_helpers as help
+from poker_bot import bot
 
 make_tests_work_for_fricking_windows()
+
 
 @pytest.mark.asyncio
 async def test_turn_order_violation():
@@ -60,9 +61,7 @@ async def test_game_one():
     await bots[0].call()
 
     state = await bots[0].get_game_state()
-    assert (
-        state.table.current_round.current_round_type == api.GameRoundType.RoundTypeFlop
-    )
+    assert state.table.current_round.current_round_type == api.GameRoundType.RoundTypeFlop
 
     # flop
     await bots[3].check()
@@ -140,9 +139,7 @@ async def test_checking_game_one():
 
     state = await bots[0].get_game_state()
     assert state is not None
-    assert (
-        state.table.current_round.current_round_type == api.GameRoundType.RoundTypeFlop
-    )
+    assert state.table.current_round.current_round_type == api.GameRoundType.RoundTypeFlop
 
     # flop
     await bots[2].send_action("check", {})
@@ -152,9 +149,7 @@ async def test_checking_game_one():
 
     state = await bots[0].get_game_state()
     assert state is not None
-    assert (
-        state.table.current_round.current_round_type == api.GameRoundType.RoundTypeTurn
-    )
+    assert state.table.current_round.current_round_type == api.GameRoundType.RoundTypeTurn
 
     # turn
     await bots[2].send_action("check", {})
@@ -164,9 +159,7 @@ async def test_checking_game_one():
 
     state = await bots[0].get_game_state()
     assert state is not None
-    assert (
-        state.table.current_round.current_round_type == api.GameRoundType.RoundTypeRiver
-    )
+    assert state.table.current_round.current_round_type == api.GameRoundType.RoundTypeRiver
 
     # river
     await bots[2].send_action("check", {})

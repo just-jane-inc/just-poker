@@ -10,7 +10,7 @@ from urllib.parse import urlsplit, urlunsplit
 
 import websockets
 
-import poker_bot.bot.poker_exceptions as ex
+import poker_bot.poker_exceptions as ex
 from openapi_client import GameGameDTO, GamePlayerActionDTO, GamePlayerDTO, GameRoundDTO
 
 logger = logging.getLogger("websocket")
@@ -91,9 +91,7 @@ class WebSocketEventType(Enum):
         return self.obj_type
 
     @classmethod
-    def from_str(
-        cls, event_type: str
-    ) -> "WebSocketEventType | UnknownWebSocketEventType":
+    def from_str(cls, event_type: str) -> "WebSocketEventType | UnknownWebSocketEventType":
         try:
             return cls(event_type)
         except ValueError:
@@ -173,9 +171,7 @@ def parse_event(message: str | bytes) -> WebSocketEvent:
     else:
         raise ex.CustomException(f"unexpected data received: {payload}")
 
-    if event_type == WebSocketEventType.UNKNOWN or isinstance(
-        event_type, UnknownWebSocketEventType
-    ):
+    if event_type == WebSocketEventType.UNKNOWN or isinstance(event_type, UnknownWebSocketEventType):
         logger.debug(f"unknown event type from websocket: {_event_type}")
 
     state = None
@@ -233,9 +229,7 @@ class WebSocketStream:
             return self
 
         self._closed = False
-        self._conn = await websockets.connect(
-            self._url, additional_headers={"Authorization": f"Bearer {self._token}"}
-        )
+        self._conn = await websockets.connect(self._url, additional_headers={"Authorization": f"Bearer {self._token}"})
 
         logger.debug(f"connected to game state feed for game {self._game_id}")
         return self
@@ -305,17 +299,12 @@ class WebSocketStream:
                         except asyncio.CancelledError:
                             raise
                         except Exception as e:
-                            logger.error(
-                                f"error in on_game_state hook: {e}", exc_info=True
-                            )
+                            logger.error(f"error in on_game_state hook: {e}", exc_info=True)
 
                     if event is not None:
                         yield event
 
-                    if (
-                        event is not None
-                        and event.event_type == WebSocketEventType.GAME_OVER
-                    ):
+                    if event is not None and event.event_type == WebSocketEventType.GAME_OVER:
                         # We do not get a 404 on connect retry attempts on ended games, so we have to
                         self._reconnect = False
                         await asyncio.sleep(0.5)
@@ -323,9 +312,7 @@ class WebSocketStream:
                         return  # Closes generator
 
                 if self._conn is not None:
-                    await self._fire_close_event(
-                        code=self._conn.close_code, reason=self._conn.close_reason or ""
-                    )
+                    await self._fire_close_event(code=self._conn.close_code, reason=self._conn.close_reason or "")
 
             except asyncio.CancelledError:
                 raise
@@ -371,13 +358,9 @@ class WebSocketStream:
 
             attempts += 1
             if self._max_retries and attempts > self._max_retries:
-                raise ex.CustomException(
-                    f"game state feed gave up after {self._max_retries} retries"
-                )
+                raise ex.CustomException(f"game state feed gave up after {self._max_retries} retries")
 
-            delay = min(
-                self._retry_backoff * (2 ** (attempts - 1)), self._max_retry_backoff
-            )
+            delay = min(self._retry_backoff * (2 ** (attempts - 1)), self._max_retry_backoff)
             await asyncio.sleep(delay)
 
     async def states(self) -> AsyncGenerator[WebSocketEvent, None]:
@@ -424,9 +407,7 @@ class WebSocketListener:
         self._game_state_handlers.append(callback)
         return callback
 
-    def on_event(
-        self, *event_types: "WebSocketEventType | str"
-    ) -> Callable[[EventCallback], EventCallback]:
+    def on_event(self, *event_types: "WebSocketEventType | str") -> Callable[[EventCallback], EventCallback]:
         """Register this handler for one or more event types.
 
         Ex.
@@ -495,9 +476,7 @@ class WebSocketListener:
                 except asyncio.CancelledError:
                     raise
                 except Exception as e:
-                    logger.error(
-                        f"error in update handler {handler!r}: {e}", exc_info=True
-                    )
+                    logger.error(f"error in update handler {handler!r}: {e}", exc_info=True)
 
 
 async def _call(callback, arg):

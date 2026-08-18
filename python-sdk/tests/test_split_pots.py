@@ -7,11 +7,10 @@ from helpers import (
 )
 
 import openapi_client as api
-import poker_bot.bot.poker_helpers as help
+import poker_bot.poker_helpers as help
 from openapi_client.models.game_card_dto import GameCardDTO
-
 from openapi_client.models.game_new_hand_dto import GameNewHandDTO
-from poker_bot.bot import bot
+from poker_bot import bot
 
 make_tests_work_for_fricking_windows()
 
@@ -23,9 +22,7 @@ async def test_post_new_hand_with_deck():
 
     api_client = help.create_connection(base_url, jill.token)
 
-    game_id = await help.create_game(
-        base_url, jill.token, player_count=4, auto_start_hands=False
-    )
+    game_id = await help.create_game(base_url, jill.token, player_count=4, auto_start_hands=False)
     assert game_id
 
     wolf = get_test_user("wolf")
@@ -67,9 +64,7 @@ async def test_post_new_hand_with_deck():
         ]
     )
 
-    resp = await game_api.game_game_id_hand_post(
-        game_id, GameNewHandDTO(deck=deck)
-    )
+    resp = await game_api.game_game_id_hand_post(game_id, GameNewHandDTO(deck=deck))
 
     assert resp
 
@@ -108,9 +103,7 @@ async def test_post_new_hand_with_deck():
         ]
     )
 
-    resp = await game_api.game_game_id_hand_post(
-        game_id, GameNewHandDTO(deck=deck)
-    )
+    resp = await game_api.game_game_id_hand_post(game_id, GameNewHandDTO(deck=deck))
 
     assert resp
 

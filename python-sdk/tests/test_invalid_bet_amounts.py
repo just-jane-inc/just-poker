@@ -2,10 +2,11 @@ import pytest
 from helpers import base_url, get_test_users, make_tests_work_for_fricking_windows
 
 import openapi_client as api
-import poker_bot.bot.poker_helpers as help
-from poker_bot.bot import bot
+import poker_bot.poker_helpers as help
+from poker_bot import bot
 
 make_tests_work_for_fricking_windows()
+
 
 @pytest.mark.asyncio
 async def test_tried_third_ante():

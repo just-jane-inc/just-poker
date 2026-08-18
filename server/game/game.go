@@ -19,13 +19,14 @@ import (
 var CurrentGames = CreateCurrentGamesCache()
 
 type game struct {
-	startedAt           *time.Time
-	endedAt             *time.Time
-	id                  string
-	joinGameLock        sync.Mutex
-	isPaused            bool
-	config              NewGameConfigDTO
-	table               *table
+	startedAt     *time.Time
+	endedAt       *time.Time
+	id            string
+	isPaused      bool
+	config        NewGameConfigDTO
+	table         *table
+	gameStateLock sync.Mutex
+	// TODO: is this dead code?
 	pauseGameSemaphor   chan any
 	playerActionChannel chan *playerAction
 	denominations       map[int]any
@@ -200,7 +201,7 @@ func createGameFromConfig(config NewGameConfigDTO) (*game, *just.PokerError) {
 	}
 
 	g := &game{
-		joinGameLock:        sync.Mutex{},
+		gameStateLock:       sync.Mutex{},
 		config:              config,
 		table:               &table{},
 		pauseGameSemaphor:   make(chan any),
@@ -281,6 +282,19 @@ func (g *game) TryJoinGame(username, userID string) error {
 
 	g.table.players = append(g.table.players, p)
 	return nil
+}
+
+func (g *game) IsGameOver() bool {
+	playersRemaining := 0
+	for _, p := range g.table.players {
+		if p.state == PlayerStateOut {
+			continue
+		}
+
+		playersRemaining += 1
+	}
+
+	return playersRemaining <= 1
 }
 
 func (g *game) TryStartGame() error {

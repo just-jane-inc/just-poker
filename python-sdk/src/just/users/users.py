@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-import poker_bot.bot.poker_helpers as help
-from poker_bot.bot.bot import PokerBot
+import poker_bot.poker_helpers as help
+from poker_bot.bot import PokerBot
 
 
 @dataclass

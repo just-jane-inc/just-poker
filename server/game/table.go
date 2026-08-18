@@ -106,6 +106,8 @@ func (t table) GetPlayerWithID(playerID string) *player {
 	return nil
 }
 
+// NextPlayer gets the next at the table from a given positional offset
+// this _only_ excludes playes whose [player.state] is [PlayerStateOut]
 func (t *table) NextPlayer(offset int) *player {
 	for i := range len(t.players) {
 		idx := (offset + i + 1) % len(t.players)
@@ -144,9 +146,12 @@ func (t *table) nextRound() {
 	// ensure that all players are in a nominal state when we start the next round
 	for _, p := range t.players {
 		if p.state == PlayerStateActive {
+			just.Logger.Warnf("a player was marked as active when progressing to the next round of play player=[%s] game=[%s]", p.DisplayName, t.gameID)
 			p.state = PlayerStateInactive
 		}
 
+		// the setup (ante) round is a kind of partial round - we do not
+		// adjust the current bet in this transition
 		if t.currentRound.currentRoundType != RoundTypeAnte {
 			p.potContribution += p.currentBet.Sum()
 			p.currentBet = make(stack)
@@ -154,7 +159,7 @@ func (t *table) nextRound() {
 	}
 
 	switch t.currentRound.currentRoundType {
-	case RoundTypeUnset: // GOTO setup
+	case RoundTypeUnset: // GOTO ante
 		t.currentRound.currentRoundType = RoundTypeAnte
 		t.currentRound.currentAggressor = t.NextInactivePlayer(t.bigBlindPosition).position
 		p := t.players[t.smallBlindPosition]
@@ -192,10 +197,6 @@ func (t *table) nextRound() {
 		}
 
 	case RoundTypePreFlop: // GOTO flop
-		for _, p := range t.players {
-			p.currentBet = make(stack)
-		}
-
 		t.currentRound.currentRoundType = RoundTypeFlop
 		t.currentRound.bet = 0
 
@@ -403,6 +404,7 @@ func (t *table) nextHandWithDeck(deck []CardDTO, bb int, sb int) *just.PokerErro
 	return nil
 }
 
+// TODO: this should return a PokerError probably
 func (t *table) nextHand(bb int, sb int) error {
 	just.Logger.Debugf("attempting to start hand [%d]", t.currentHand.ID+1)
 

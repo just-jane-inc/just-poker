@@ -11,10 +11,10 @@ from helpers import (
 )
 
 import openapi_client as api
-import poker_bot.bot.poker_helpers as help
+import poker_bot.poker_helpers as help
 from openapi_client.models.game_card_dto import GameCardDTO
 from openapi_client.models.game_new_hand_dto import GameNewHandDTO
-from poker_bot.bot import bot
+from poker_bot import bot
 
 make_tests_work_for_fricking_windows()
 
@@ -60,7 +60,8 @@ async def test_post_new_hand_with_deck():
 
     game_api = api.GameApi(api_client)
     _ = await game_api.game_game_id_hand_post(
-        game_id, GameNewHandDTO(deck=deck),
+        game_id,
+        GameNewHandDTO(deck=deck),
     )
 
     await bots[2].ante()
@@ -99,9 +100,7 @@ async def test_post_new_hand_with_deck_error():
 
     await help.start_game(api_client, game_id)
     game_api = api.GameApi(api_client)
-    resp = await game_api.game_game_id_hand_post(
-        game_id, GameNewHandDTO(deck=get_deck(42))
-    )
+    resp = await game_api.game_game_id_hand_post(game_id, GameNewHandDTO(deck=get_deck(42)))
 
     print(json.dumps(resp, indent=2))
 
@@ -109,9 +108,7 @@ async def test_post_new_hand_with_deck_error():
     await bots[3].ante()
 
     try:
-        _ = await game_api.game_game_id_hand_post(
-            game_id, GameNewHandDTO(deck=get_deck(42))
-        )
+        _ = await game_api.game_game_id_hand_post(game_id, GameNewHandDTO(deck=get_deck(42)))
 
     except api.ApiException as e:
         poker_error = api.JustResponseMessageJustErrorDTO.from_json(e.body)

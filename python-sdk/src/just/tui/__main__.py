@@ -13,12 +13,12 @@ from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widgets import Button, Footer, Input, Label, Static
 
+import just.users.users as just_users
 import openapi_client as api
-import poker_bot.bot.poker_helpers as help
+import poker_bot.poker_helpers as help
 from openapi_client.models import GameGameDTO, GamePlayerDTO, GameTableDTO
-from poker_bot.bot.bot import PokerBot
-from poker_bot.bot.event_hub import Event, EventHub, EventType
-from poker_bot.tools.tui.setup_tui_example import get_test_user, setup
+from poker_bot.bot import PokerBot
+from poker_bot.event_hub import Event, EventHub, EventType
 
 load_dotenv("config/.env")
 base_url = os.getenv("BASE_URL")
@@ -46,7 +46,7 @@ if os.name == "nt":
 def main():
     args = parser.parse_args()
     if args.setup:
-        asyncio.run(setup(base_url, args.setup))
+        asyncio.run(just_users.setup(base_url, args.setup))
     else:
         PokerApp(ansi_color=True).run()
 
@@ -217,7 +217,7 @@ class PokerApp(App):
     async def on_mount(self) -> None:
         args = parser.parse_args()
         self.game_state = None
-        user = get_test_user(args.user)
+        user = just_users.get_test_user(args.user)
 
         me = PokerBot(base_url, user.token, user.user_id, args.game_id, timeout=5)
         self.query_one(Players).me = me

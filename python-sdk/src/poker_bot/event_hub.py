@@ -9,8 +9,8 @@ from collections.abc import (
 )
 from typing import Any, Protocol, Union, runtime_checkable
 
-import poker_bot.bot.poker_exceptions as ex
-from poker_bot.bot.websocket_events import (
+import poker_bot.poker_exceptions as ex
+from poker_bot.websocket_events import (
     CloseInfo,
     WebSocketEvent,
     WebSocketEventType,

@@ -4,7 +4,7 @@ import os
 
 from dotenv import load_dotenv
 
-import poker_bot.bot.poker_helpers as help
+import poker_bot.poker_helpers as help
 
 load_dotenv("config/.env")
 base_url = os.getenv("BASE_URL")

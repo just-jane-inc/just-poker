@@ -14,7 +14,7 @@ from openapi_client import (
     JustResponseMessageJustErrorDTO,
     UserApi,
 )
-from poker_bot.bot.poker_exceptions import CustomException
+from poker_bot.poker_exceptions import CustomException
 
 logger = logging.getLogger("helper")
 

@@ -1,24 +1,19 @@
 import asyncio
 
+import helpers as test_helpers
 import pytest
-from helpers import (
-    base_url,
-    fill_deck_remainder,
-    get_test_user,
-    make_tests_work_for_fricking_windows,
-)
 
 import openapi_client as api
-import poker_bot.bot.poker_helpers as help
+import poker_bot.poker_helpers as help
 from openapi_client.api.game_api import GameApi
 from openapi_client.models.game_card_dto import GameCardDTO
-from poker_bot.bot import Event, EventType, bot
+from poker_bot import Event, EventType, bot
 
-make_tests_work_for_fricking_windows()
+test_helpers.make_tests_work_for_fricking_windows()
 
 
 async def start_hand(game_id: str, user):
-    deck = fill_deck_remainder(
+    deck = test_helpers.fill_deck_remainder(
         [
             GameCardDTO(rank=help.CardRank.ACE.value, suit=help.CardSuit.HEART.value),
             GameCardDTO(rank=help.CardRank.TWO.value, suit=help.CardSuit.HEART.value),
@@ -31,22 +26,22 @@ async def start_hand(game_id: str, user):
         ]
     )
 
-    game_api = GameApi(help.create_connection(base_url, user.token))
+    game_api = GameApi(help.create_connection(test_helpers.base_url, user.token))
     assert await game_api.game_game_id_hand_post(game_id, api.GameNewHandDTO(deck=deck))
 
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(30)
 async def test_receive_game_over():
-    jane = get_test_user("jane")
-    red = get_test_user("red")
+    jane = test_helpers.get_test_user("jane")
+    red = test_helpers.get_test_user("red")
 
-    game_id = await help.create_game(base_url, str(jane.token), auto_start_hands=False)
+    game_id = await help.create_game(test_helpers.base_url, str(jane.token), auto_start_hands=False)
     assert game_id
     print(game_id)
 
-    jane_bot = bot.PokerBot(base_url, jane.token, jane.user_id, game_id)
-    red_bot = bot.PokerBot(base_url, red.token, red.user_id, game_id)
+    jane_bot = bot.PokerBot(test_helpers.base_url, jane.token, jane.user_id, game_id)
+    red_bot = bot.PokerBot(test_helpers.base_url, red.token, red.user_id, game_id)
 
     await jane_bot.join_game()
     await red_bot.join_game()
@@ -94,14 +89,14 @@ async def test_receive_game_over():
 @pytest.mark.asyncio
 @pytest.mark.timeout(30)
 async def test_receive_game_over_via_subscribe():
-    jane = get_test_user("jane")
-    red = get_test_user("red")
+    jane = test_helpers.get_test_user("jane")
+    red = test_helpers.get_test_user("red")
 
-    game_id = await help.create_game(base_url, str(jane.token), auto_start_hands=False)
+    game_id = await help.create_game(test_helpers.base_url, str(jane.token), auto_start_hands=False)
     assert game_id
 
-    jane_bot = bot.PokerBot(base_url, jane.token, jane.user_id, game_id)
-    red_bot = bot.PokerBot(base_url, red.token, red.user_id, game_id)
+    jane_bot = bot.PokerBot(test_helpers.base_url, jane.token, jane.user_id, game_id)
+    red_bot = bot.PokerBot(test_helpers.base_url, red.token, red.user_id, game_id)
 
     await jane_bot.join_game()
     await red_bot.join_game()
@@ -162,14 +157,14 @@ async def test_receive_game_over_via_subscribe():
 @pytest.mark.asyncio
 @pytest.mark.timeout(30)
 async def test_receive_game_over_via_subscribe_and_unhook():
-    jane = get_test_user("jane")
-    red = get_test_user("red")
+    jane = test_helpers.get_test_user("jane")
+    red = test_helpers.get_test_user("red")
 
-    game_id = await help.create_game(base_url, str(jane.token), auto_start_hands=False)
+    game_id = await help.create_game(test_helpers.base_url, str(jane.token), auto_start_hands=False)
     assert game_id
 
-    jane_bot = bot.PokerBot(base_url, jane.token, jane.user_id, game_id)
-    red_bot = bot.PokerBot(base_url, red.token, red.user_id, game_id)
+    jane_bot = bot.PokerBot(test_helpers.base_url, jane.token, jane.user_id, game_id)
+    red_bot = bot.PokerBot(test_helpers.base_url, red.token, red.user_id, game_id)
 
     await jane_bot.join_game()
     await red_bot.join_game()
@@ -214,14 +209,14 @@ async def test_receive_game_over_via_subscribe_and_unhook():
 @pytest.mark.asyncio
 @pytest.mark.timeout(30)
 async def test_receive_game_over_better_closure():
-    jane = get_test_user("jane")
-    red = get_test_user("red")
+    jane = test_helpers.get_test_user("jane")
+    red = test_helpers.get_test_user("red")
 
-    game_id = await help.create_game(base_url, str(jane.token), auto_start_hands=False)
+    game_id = await help.create_game(test_helpers.base_url, str(jane.token), auto_start_hands=False)
     assert game_id
 
-    jane_bot = bot.PokerBot(base_url, jane.token, jane.user_id, game_id)
-    red_bot = bot.PokerBot(base_url, red.token, red.user_id, game_id)
+    jane_bot = bot.PokerBot(test_helpers.base_url, jane.token, jane.user_id, game_id)
+    red_bot = bot.PokerBot(test_helpers.base_url, red.token, red.user_id, game_id)
     await jane_bot.join_game()
     await red_bot.join_game()
 

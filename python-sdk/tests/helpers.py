@@ -3,7 +3,7 @@ import random
 
 from dotenv import load_dotenv
 
-import poker_bot.tools.tui.setup_tui_example as examples
+import just.users.users as just_users
 from openapi_client.models.game_card_dto import GameCardDTO
 
 load_dotenv("config/.env")
@@ -49,8 +49,8 @@ def fill_deck_remainder(deck: list[GameCardDTO]) -> list[GameCardDTO]:
     return new_deck
 
 
-def get_test_users() -> list[examples.TestUser]:
-    test_users = examples.get_test_users()
+def get_test_users() -> list[just_users.TestUser]:
+    test_users = just_users.get_test_users()
     users = []
     for user in test_users:
         if user.username == "jill" or user.username == "a":
@@ -60,8 +60,8 @@ def get_test_users() -> list[examples.TestUser]:
     return users
 
 
-def get_test_user(username: str) -> examples.TestUser | None:
-    users = examples.get_test_users()
+def get_test_user(username: str) -> just_users.TestUser | None:
+    users = just_users.get_test_users()
     for user in users:
         if user.username == username:
             return user

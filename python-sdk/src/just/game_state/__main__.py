@@ -6,7 +6,7 @@ import aiofiles
 from dotenv import load_dotenv
 from httpx import ConnectError
 
-import poker_bot.bot.poker_helpers as help
+import poker_bot.poker_helpers as help
 from openapi_client import ApiException
 
 parser = argparse.ArgumentParser(
@@ -48,9 +48,7 @@ async def get_state(game_id: str, token_file: str, base_url: str):
     except ApiException as e:
         print(f"encountered exception when getting game state: {e}")
     except ConnectError:
-        print(
-            f"connection could not be established - is the server at {base_url} online?"
-        )
+        print(f"connection could not be established - is the server at {base_url} online?")
 
 
 def main():

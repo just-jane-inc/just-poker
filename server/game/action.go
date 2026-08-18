@@ -1,112 +1,5 @@
 package game
 
-import (
-	"fmt"
-	"time"
-
-	"github.com/just-jane-inc/just-poker/server/just"
-)
-
-type playerAction struct {
-	action    PlayerActionDTO
-	onError   chan error
-	onSuccess chan any
-	onMessage chan just.WebsocketMessage[any]
-}
-
-func (a PlayerActionDTO) ToString() string {
-	return fmt.Sprintf("chips: %#v intent: %s", a.Bet, a.Intent)
-}
-
-func (g *game) TryPlayerAction(action PlayerActionDTO) error {
-	errorChannel := make(chan error)
-	successChannel := make(chan any)
-	playerAction := playerAction{
-		action:    action,
-		onError:   errorChannel,
-		onSuccess: successChannel,
-	}
-
-	g.playerActionChannel <- &playerAction
-
-	select {
-	case <-successChannel:
-		return nil
-	case err := <-errorChannel:
-		return err
-	}
-}
-
-func (g *game) ProccessPlayerActions(exit chan any) {
-	for {
-		select {
-		case <-exit:
-			just.Logger.Debug("exit signal received while processing player actions")
-			return
-		case action := <-g.playerActionChannel:
-			err := g.handlePlayerAction(action.action)
-			if err != nil {
-				action.onError <- err
-			} else {
-				action.onSuccess <- struct{}{}
-			}
-		}
-	}
-}
-
-func (g *game) coverBet(p *player, chips ChipStackDTO) *just.PokerError {
-	// first we go through and ensure that the player can cover
-	// every chip they want to bet, we do this before changing any chips
-	// in case there is an error (we dont want to unwind)
-	stack := chips.asStack()
-	for d, c := range stack {
-		if c < 0 {
-			return &just.PokerError{
-				Message: "received negative chip amount",
-				Code:    just.InvalidBetAmount,
-			}
-		}
-
-		if c == 0 {
-			continue
-		}
-
-		chipCount, ok := p.chips[d]
-		if !ok {
-			return &just.PokerError{
-				Message: fmt.Sprintf("player has no chips with %d denomination", d),
-				Code:    just.NotEnoughChips,
-			}
-		}
-
-		if chipCount < c {
-			return &just.PokerError{
-				Message: fmt.Sprintf(
-					"player cannot cover %d of %d chips with their current count of %d",
-					c,
-					d,
-					chipCount,
-				),
-				Code: just.NotEnoughChips,
-			}
-		}
-	}
-
-	// now that we have determined the chips can be covered we actually move them
-	// from the player to the pot
-	for denomination, count := range stack {
-		p.chips[denomination] -= count
-
-		if _, exists := g.table.pot[denomination]; !exists {
-			g.table.pot[denomination] = 0
-		}
-
-		g.table.pot[denomination] += count
-	}
-
-	return nil
-}
-
 /*
 Texas Hold’em Rules: Flow of a Hand
 At the beginning of the first hand of play, one player will be assigned the dealer button (in home games,
@@ -147,7 +40,114 @@ best hand according to the hand rankings above will win the pot. If two or more 
 same hand, the pot is split evenly between them. After each hand, the button moves one seat to the
 left, as do the responsibilities of posting the small and big blinds.
 */
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/just-jane-inc/just-poker/server/just"
+)
+
+// playerAction represents tracks an action that is actively being processed
+//
+// an action being processed must send a message exactly once to either onError
+// or to onSuccess
+type playerAction struct {
+	// the action to apply to the game state
+	action PlayerActionDTO
+
+	// a channel that can receive an error encountered when applying the game state
+	onError chan *just.PokerError
+
+	// a channel to signal if the action applies succesfully
+	onSuccess chan any
+
+	// a channel that can be used to send websocket messages to game state listeners
+	onMessage chan just.WebsocketMessage[any]
+}
+
+// ToString converts a PlayerActionDTO to a string for logging
+func (a PlayerActionDTO) ToString() string {
+	return fmt.Sprintf("chips: %#v intent: %s", a.Bet, a.Intent)
+}
+
+func (p *player) canCoverBet(stack stack) *just.PokerError {
+	// first we go through and ensure that the player can cover
+	// every chip they want to bet, we do this before changing any chips
+	// in case there is an error (we dont want to unwind)
+	for d, c := range stack {
+		if c < 0 {
+			return &just.PokerError{
+				Message: "received negative chip amount",
+				Code:    just.InvalidBetAmount,
+			}
+		}
+
+		if c == 0 {
+			continue
+		}
+
+		chipCount, ok := p.chips[d]
+		if !ok {
+			return &just.PokerError{
+				Message: fmt.Sprintf("player has no chips with %d denomination", d),
+				Code:    just.NotEnoughChips,
+			}
+		}
+
+		if chipCount < c {
+			return &just.PokerError{
+				Message: fmt.Sprintf(
+					"player cannot cover %d of %d chips with their current count of %d",
+					c,
+					d,
+					chipCount,
+				),
+				Code: just.NotEnoughChips,
+			}
+		}
+	}
+
+	return nil
+}
+
+// coverBet validates that a ChipStackDTO can be produced by a player then removes it from p.chips
+//
+// this is a destructive action - altering the game state and can error. coverBet produces errors
+// if the chip stack itself is invalid or the player is missing required chips.
+//
+// TODO: we should likely have a way to lock the player stack while this is executing
+func (g *game) coverBet(p *player, chips ChipStackDTO) *just.PokerError {
+	// we first ensure that the player can cover the propsed bet
+	stack := chips.asStack()
+	if err := p.canCoverBet(stack); err != nil {
+		return err
+	}
+
+	// now that we have determined the chips can be covered we actually move them
+	// from the player to the pot
+	for denomination, count := range stack {
+		p.chips[denomination] -= count
+
+		if _, exists := g.table.pot[denomination]; !exists {
+			g.table.pot[denomination] = 0
+		}
+
+		g.table.pot[denomination] += count
+	}
+
+	return nil
+}
+
+// handlePlayerAction applies the provided PlayerActionDTO to the game state or returns a *just.PokerError
+//
+// processes actions according to the action intent and the current round. this is the entry point for all
+// game state updates. it is assumed that the caller manages synchronization and will call this method
+// sequentially.
 func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
+	g.gameStateLock.Lock()
+	defer g.gameStateLock.Unlock()
+
 	just.Logger.Debugf(
 		"process action [%s] from [%s] in game [%s] - current round type [%s]",
 		action.ToString(),
@@ -184,8 +184,12 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 		}
 	}
 
-	// the ante 'round' has unique logic and should not mix
-	// with the other round types
+	// the ante 'round' has unique logic and should not mix with handling other rounds at all.
+	// this is handled seperately from the action intent switch primarily because an ante can
+	// come over the wire as either an ante intent or an all in.
+	//
+	// if this method returns succesfully it will have altered the game state - the rest
+	// of the method is designed in such a way to be okay with that.
 	if g.table.currentRound.currentRoundType == RoundTypeAnte {
 		if err := g.handleAnte(action, p); err != nil {
 			return err
@@ -263,6 +267,7 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 		g.table.currentRound.currentAggressor = p.position
 
 	case PlayerIntentAllIn:
+		// TODO: make this more clean regarding the ante round - it is weird that this "just works"
 		p.currentBet = p.currentBet.mergeWith(p.chips)
 		g.table.currentRound.bet += p.chips.Sum()
 
@@ -286,25 +291,17 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 		return just.NewPokerError("unknown intent encountered - please read documentation", just.SkillIssue)
 	}
 
+	/**************************************************************
+	*                                                             *
+	* by this point the game state has already been altered, we   *
+	* can no longer return an error it is assumed that the action *
+	* is valid and we are progressing the game.                   *
+	*                                                             *
+	* *************************************************************/
 	just.Logger.Debugf("accepted action [%s] for player with id [%s]", action.Intent, action.PlayerID)
-
-	// the signal to websocket listeners for a player action
-	// if any errors are encountered after this happens we are
-	// in big touble
 	g.table.sendMessageToConnections("player_action", action)
 
-	// if everyone but one has folded we are like done now, we dont even need to keep showing cards just like end it
-
-	// after we get to this state we know that the player action
-	// has been accepted and we need to compute what to do next
-	nextPlayer := g.table.NextPlayer(g.table.currentRound.currentPlayerPosition)
-	for nextPlayer.state != PlayerStateInactive && nextPlayer.position != g.table.currentRound.currentAggressor {
-		nextPlayer = g.table.NextInactivePlayer(nextPlayer.position)
-		if nextPlayer == nil {
-			nextPlayer = g.table.players[g.table.currentRound.currentAggressor]
-		}
-	}
-
+	nextPlayer := g.table.NextPlayer(p.position)
 	remainingPlayers := 0
 	for _, p := range g.table.players {
 		if p.state == PlayerStateFolded {
@@ -318,7 +315,25 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 		remainingPlayers += 1
 	}
 
-	just.Logger.Debugf("next inactive player received: [%d] -> [%d]", p.position, nextPlayer.position)
+	// if we have only one remaining player at this point the hand is completed,
+	// this implies that the current action intent is fold and that only one player
+	// is still in the hand.
+	if remainingPlayers == 1 {
+		g.table.currentRound.currentRoundType = RoundTypeRiver
+		g.table.nextRound()
+	} else {
+		// if there are still players remaining in the game we need to figure out who is next
+		// this loop terminates either when we find an inactive player or we find the current
+		// agressor.
+		for nextPlayer.state != PlayerStateInactive && nextPlayer.position != g.table.currentRound.currentAggressor {
+			nextPlayer = g.table.NextInactivePlayer(nextPlayer.position)
+			if nextPlayer == nil {
+				nextPlayer = g.table.players[g.table.currentRound.currentAggressor]
+			}
+		}
+	}
+
+	just.Logger.Debugf("next player: [%d] -> [%d]", p.position, nextPlayer.position)
 
 	// detects when the round should end - when the next player to act
 	// would be the current aggressor. The current aggressor is the last
@@ -326,10 +341,7 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 	//
 	// hundreds of tests, yet this bug was not found... We need more tests
 	// - Red_Epicness
-	if remainingPlayers == 1 {
-		g.table.currentRound.currentRoundType = RoundTypeRiver
-		g.table.nextRound()
-	} else if g.table.currentRound.currentAggressor == nextPlayer.position {
+	if g.table.currentRound.currentAggressor == nextPlayer.position {
 		// before shifting to the next round we need to figure out whose turn it is
 		// in general we need to ensure that:
 		// - the player is not all-in or folded
@@ -373,14 +385,6 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 		p.state = PlayerStateInactive
 	}
 
-	// it is possible for p == nextPlayer, we need to ensure that
-	// this happens after setting p state to inactive.
-	if nextPlayer != nil {
-		g.table.currentRound.currentPlayerPosition = nextPlayer.position
-		nextPlayer.state = PlayerStateActive
-		just.Logger.Debugf("[%s] [%d] -> [%d]", g.table.currentRound.currentRoundType, p.position, nextPlayer.position)
-	}
-
 	g.table.currentTurn.StartedAt = time.Now()
 	g.table.currentTurn.ID += 1
 
@@ -390,22 +394,19 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 				p.state = PlayerStateOut
 			}
 		}
+	} else {
+		if nextPlayer == nil {
+			err, errID := just.NewCriticalInternalError()
+			just.Logger.Errorf("the round is not completed but no next player was computed, critical error gameID=[%s] errID=[%s]", g.id, errID)
+			return err
+		}
+
+		g.table.currentRound.currentPlayerPosition = nextPlayer.position
+		nextPlayer.state = PlayerStateActive
+		just.Logger.Debugf("[%s] [%d] -> [%d]", g.table.currentRound.currentRoundType, p.position, nextPlayer.position)
 	}
 
 	return nil
-}
-
-func (g *game) IsGameOver() bool {
-	playersRemaining := 0
-	for _, p := range g.table.players {
-		if p.state == PlayerStateOut {
-			continue
-		}
-
-		playersRemaining += 1
-	}
-
-	return playersRemaining <= 1
 }
 
 // handleAnte handles provided player action for the setup round type

@@ -3,17 +3,18 @@ from collections.abc import AsyncGenerator
 
 import pytest
 
-from poker_bot.bot.event_hub import (
+from poker_bot.event_hub import (
     ALL_EVENTS,
     Event,
     EventHub,
     EventType,
 )
-from poker_bot.bot.websocket_events import WebSocketEvent
+from poker_bot.websocket_events import WebSocketEvent
 
 """
 Test behaviours of the eventhub
 """
+
 
 def make_event(event_type: EventType, data: dict | None = None) -> Event:
     return WebSocketEvent(event_type=event_type, _data=data or {})
@@ -41,6 +42,7 @@ class FakeTransport:
         while self._hold_open:
             await asyncio.sleep(0.01)
 
+
 @pytest.mark.asyncio
 async def test_subscriber_receives_matching_events():
     received: list[Event] = []
@@ -60,6 +62,7 @@ async def test_subscriber_receives_matching_events():
 
     assert len(received) == 1
     assert received[0].data == {"pot": 100}
+
 
 @pytest.mark.asyncio
 async def test_subscribe_accepts_multiple():
@@ -87,9 +90,7 @@ async def test_subscribe_accepts_multiple():
 @pytest.mark.asyncio
 async def test_wildcard_subscription():
     received: list[Event] = []
-    hub = EventHub(
-        FakeTransport([make_event(EventType.WELCOME), make_event(EventType.ROUND_START)])
-    )
+    hub = EventHub(FakeTransport([make_event(EventType.WELCOME), make_event(EventType.ROUND_START)]))
 
     hub.subscribe(ALL_EVENTS, received.append)
 
@@ -136,12 +137,20 @@ async def test_multi_unsubscribe():
 async def test_wait_for_event_then_unsub():
     hub = EventHub(
         FakeTransport(
-            [make_event(EventType.WELCOME), make_event(EventType.PLAYER_ACTION), make_event(EventType.GAME_STATE_UPDATE),
-             make_event(EventType.PLAYER_ACTION), make_event(EventType.GAME_STATE_UPDATE),
-             make_event(EventType.PLAYER_ACTION), make_event(EventType.GAME_STATE_UPDATE),
-             make_event(EventType.PLAYER_ACTION), make_event(EventType.GAME_STATE_UPDATE),
-             make_event(EventType.PLAYER_ACTION), make_event(EventType.GAME_STATE_UPDATE),
-             make_event(EventType.PAYOUT, {"pot": 50})],
+            [
+                make_event(EventType.WELCOME),
+                make_event(EventType.PLAYER_ACTION),
+                make_event(EventType.GAME_STATE_UPDATE),
+                make_event(EventType.PLAYER_ACTION),
+                make_event(EventType.GAME_STATE_UPDATE),
+                make_event(EventType.PLAYER_ACTION),
+                make_event(EventType.GAME_STATE_UPDATE),
+                make_event(EventType.PLAYER_ACTION),
+                make_event(EventType.GAME_STATE_UPDATE),
+                make_event(EventType.PLAYER_ACTION),
+                make_event(EventType.GAME_STATE_UPDATE),
+                make_event(EventType.PAYOUT, {"pot": 50}),
+            ],
             hold_open=True,
         )
     )
@@ -174,7 +183,7 @@ async def test_wait_for_fancy_predicate():
             [
                 make_event(EventType.PAYOUT, {"pot": 10}),
                 make_event(EventType.PAYOUT, {"pot": 990}),
-                make_event(EventType.PAYOUT, {"pot": 67}), # Is this considered a bribe
+                make_event(EventType.PAYOUT, {"pot": 67}),  # Is this considered a bribe
                 make_event(EventType.PAYOUT, {"pot": 42}),
                 make_event(EventType.PAYOUT, {"pot": 99}),
             ],
@@ -183,9 +192,7 @@ async def test_wait_for_fancy_predicate():
     )
 
     try:
-        event = await hub.wait_for(
-            EventType.PAYOUT, timeout=5, predicate=lambda e: e.data["pot"] == 99
-        )
+        event = await hub.wait_for(EventType.PAYOUT, timeout=5, predicate=lambda e: e.data["pot"] == 99)
         assert event.data == {"pot": 99}
     finally:
         await hub.stop()
@@ -213,7 +220,7 @@ async def test_stream_filtering():
                 make_event(EventType.GAME_STATE_UPDATE, {}),
                 make_event(EventType.PLAYER_ACTION),
                 make_event(EventType.PAYOUT, {"pot": 20}),
-                make_event(EventType.GAME_STATE_UPDATE, {})
+                make_event(EventType.GAME_STATE_UPDATE, {}),
             ]
         )
     )
@@ -225,9 +232,7 @@ async def test_stream_filtering():
 
 @pytest.mark.asyncio
 async def test_stream_queued_events():
-    hub = EventHub(
-        FakeTransport([make_event(EventType.PAYOUT, {"pot": n}) for n in range(5)])
-    )
+    hub = EventHub(FakeTransport([make_event(EventType.PAYOUT, {"pot": n}) for n in range(5)]))
 
     received = []
     async for e in hub.stream():
