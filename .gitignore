@@ -7,3 +7,5 @@ python-sdk/lib
 **/.ipynb_checkpoints/*
 *.log
 
+node_modules/
+openapitools.json

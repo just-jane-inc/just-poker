@@ -53,7 +53,7 @@ def get_test_users() -> list[examples.TestUser]:
     test_users = examples.get_test_users()
     users = []
     for user in test_users:
-        if user.username == "jill":
+        if user.username == "jill" or user.username == "a":
             continue
         users.append(user)
 

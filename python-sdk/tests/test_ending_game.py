@@ -10,10 +10,7 @@ from helpers import (
 
 import openapi_client as api
 import poker_bot.bot.poker_helpers as help
-from openapi_client.api.game_api import (
-    GameApi,
-    GameGameIdHandPostRequest,
-)
+from openapi_client.api.game_api import GameApi
 from openapi_client.models.game_card_dto import GameCardDTO
 from poker_bot.bot import Event, EventType, bot
 
@@ -35,7 +32,7 @@ async def start_hand(game_id: str, user):
     )
 
     game_api = GameApi(help.create_connection(base_url, user.token))
-    assert await game_api.game_game_id_hand_post(game_id, GameGameIdHandPostRequest(api.GameNewHandDTO(deck=deck)))
+    assert await game_api.game_game_id_hand_post(game_id, api.GameNewHandDTO(deck=deck))
 
 
 @pytest.mark.asyncio

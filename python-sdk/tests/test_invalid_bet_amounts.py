@@ -8,7 +8,7 @@ from poker_bot.bot import bot
 make_tests_work_for_fricking_windows()
 
 @pytest.mark.asyncio
-async def test_raise_does_not_equal_all_in():
+async def test_tried_third_ante():
     users = get_test_users()
     assert len(users) == 4
 
@@ -26,12 +26,12 @@ async def test_raise_does_not_equal_all_in():
     await bots[3].send_action("ante", {"10": 10})
 
     try:
-        _ = await bots[0].raise_bet(2000)
+        _ = await bots[0].ante()
         assert False
     except api.exceptions.ApiException as ex:
         body = api.JustResponseMessageJustErrorDTO.from_json(ex.body)
         assert body.type == "error"
-        assert body.data.error_code == 2003
+        assert body.data.error_code == 2001
 
 
 @pytest.mark.asyncio

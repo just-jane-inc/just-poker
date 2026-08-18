@@ -1,0 +1,1223 @@
+openapi: 3.1.0
+info:
+  description: |+
+    # Error Format & Meaning
+
+    All response messages are in the format of:
+    ```json
+    {
+      "message_type": "string",
+      "data": {}
+    }
+    ```
+
+    All errors use the "error" message_type and have the data format of:
+    ```json
+    {
+      "error_code": int,
+      "error": "string"
+    }
+    ```
+
+
+    The "error" field is intended only as a human readable message and should not be depended on for branching or parsing in code.
+    This field should be considered volatile within the api.
+    The error_code field is stable and intended for client code to use within recovery operations.
+    The error codes and their meanings are enumerated in the table below
+
+
+    |   Code | Name                  | Meaning                                       |
+    | -----: | --------------------- | --------------------------------------------- |
+    | `1000` | `Unknown` | A novel error...congrats.                |
+    | `1001` | `TurnOrderViolation`     | Player action received for a player out of turn. |
+    | `1002` | `InvalidActionType`   | Player action received with an intent that is not valid for the game state.                        |
+    | `1003` | `NotEnoughChips`   | Player action received with a chip amount that cannot be covered by the players stack            |
+    | `1004` | `InvalidBetAmount`    | Player action received with a bet amount that violates requirements i.e. incorrect amount for a blind, call, or a raise which is too low.                 |
+
+
+  termsOfService: http://swagger.io
+  title: BAHMS Poker Tournament
+  version: "1.0"
+externalDocs:
+  description: ""
+  url: ""
+servers:
+- description: "production api idk whatever you want to have the description here......yeaaaaaaah,\
+    \ exactly umm and now the game"
+  url: https://game.bahms.org/api/poker
+paths:
+  /admin/game/{game_id}/status:
+    post:
+      description: "Changes the status of an active game, for use by admins"
+      parameters:
+      - description: ID of the Game to update status of
+        explode: false
+        in: path
+        name: game_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: "#/components/schemas/admin.GameStatusDTO"
+              description: the status of the game to set
+              summary: status
+        description: the status of the game to set
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: OK
+        "400":
+          description: Bad Request
+      security:
+      - BearerAuth: []
+      summary: Update Game Status
+      tags:
+      - Admin
+  /admin/game/{game_id}/table:
+    post:
+      description: Changes the state of an active game
+      parameters:
+      - description: ID of the Game to update status of
+        explode: false
+        in: path
+        name: game_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: "#/components/schemas/game.TableDTO"
+              description: the table struct to apply
+              summary: status
+        description: the table struct to apply
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: OK
+        "400":
+          description: Bad Request
+      security:
+      - BearerAuth: []
+      summary: Change Game Table
+      tags:
+      - Admin
+  /game:
+    get:
+      description: gets all games that are currently being played
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/game.ActiveGameDTO"
+                type: array
+                default: null
+          description: OK
+      summary: Gets Active Games
+      tags:
+      - Game
+    post:
+      description: creates a new game from a configuration file
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: "#/components/schemas/game.NewGameConfigDTO"
+              description: an object defining configuration information for the new
+                game
+              summary: request
+        description: an object defining configuration information for the new game
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-string"
+          description: game created - game id as string
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+          description: Bad Request
+      security:
+      - BearerAuth: []
+      summary: Create Game
+      tags:
+      - Game
+  /game/{game_id}:
+    delete:
+      description: Delete a game
+      parameters:
+      - description: ID of the Game to delete
+        explode: false
+        in: path
+        name: game_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-any"
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+          description: Bad Request
+      security:
+      - BearerAuth: []
+      summary: Delete a Game
+      tags:
+      - Game
+  /game/{game_id}/action:
+    post:
+      description: post the action preformed by a player
+      parameters:
+      - description: the id of the game
+        explode: false
+        in: path
+        name: game_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: "#/components/schemas/game.PlayerActionDTO"
+              description: the action the player is preforming
+              summary: request
+        description: the action the player is preforming
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-any"
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+          description: Bad Request
+      security:
+      - BearerAuth: []
+      summary: Player Action
+      tags:
+      - Game
+  /game/{game_id}/chip/exchange:
+    post:
+      description: exchange chips in the players stack with the tables rack
+      parameters:
+      - description: ID of the Game exchange chips in
+        explode: false
+        in: path
+        name: game_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: "#/components/schemas/game.ChipExchangeDTO"
+              description: a specification for the chips to exchange
+              summary: request
+        description: a specification for the chips to exchange
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-any"
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+          description: Bad Request
+      security:
+      - BearerAuth: []
+      summary: Exchange Chips
+      tags:
+      - Game
+  /game/{game_id}/hand:
+    post:
+      description: Starts the next poker hand
+      parameters:
+      - description: ID of the Game to join
+        explode: false
+        in: path
+        name: game_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: "#/components/schemas/game.NewHandDTO"
+              description: a dto containing new hand information
+              summary: new_hand
+        description: a dto containing new hand information
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+          description: Bad Request
+      security:
+      - BearerAuth: []
+      summary: Start Next Hand
+      tags:
+      - Game
+  /game/{game_id}/player:
+    post:
+      description: Join an open game
+      parameters:
+      - description: ID of the Game to join
+        explode: false
+        in: path
+        name: game_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-any"
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+          description: Bad Request
+      security:
+      - BearerAuth: []
+      summary: Join a Game
+      tags:
+      - Game
+  /game/{game_id}/started:
+    post:
+      description: "starts a game from a created game lobby, closing it to joins and\
+        \ starting play"
+      parameters:
+      - description: the id of the game to start
+        explode: false
+        in: path
+        name: game_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-any"
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+          description: Bad Request
+      security:
+      - BearerAuth: []
+      summary: Start Game
+      tags:
+      - Game
+  /game/{game_id}/state:
+    get:
+      description: gets the current state of the game from the perspective of the
+        requesting user
+      parameters:
+      - description: ID of the Game to get the state of
+        explode: false
+        in: path
+        name: game_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-game_GameDTO"
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+          description: Bad Request
+      security:
+      - BearerAuth: []
+      summary: Game State
+      tags:
+      - Game
+    post:
+      description: starts a game from a specific state
+      parameters:
+      - description: the id of the game to start
+        explode: false
+        in: path
+        name: game_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: "#/components/schemas/game.TableDTO"
+              description: the game state object to start game from
+              summary: request
+        description: the game state object to start game from
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-string"
+          description: game created - game id as string
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+          description: Bad Request
+      security:
+      - BearerAuth: []
+      summary: start game from state
+      tags:
+      - Game
+  /game/{game_id}/state/listen:
+    get:
+      description: creates a listener that will begin buffering game events that can
+        be queried from an endpoint
+      parameters:
+      - description: ID of the Game to get events from
+        explode: false
+        in: path
+        name: game_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/game.GameDTO"
+          description: OK
+      summary: Get Listener
+      tags:
+      - Game
+    post:
+      description: creates a listener that will begin buffering game events that can
+        be queried from an endpoint
+      parameters:
+      - description: ID of the Game to listen to
+        explode: false
+        in: path
+        name: game_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: OK
+      summary: Register Listener
+      tags:
+      - Game
+  /game/{game_id}/state/ws:
+    get:
+      description: gets all game updates
+      parameters:
+      - description: ID of the Game to get events from
+        explode: false
+        in: path
+        name: game_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: OK
+      summary: Connect Updates
+      tags:
+      - Game
+  /hand-evaluator/evaluate/:
+    post:
+      description: Evaluator? I hardly...
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                $ref: "#/components/schemas/game.CardDTO"
+              title: hand
+              type: array
+              default: null
+        description: "hand to evaluate, either 5 or 7 cards"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.HandEvaluationDTO"
+          description: OK
+      summary: Evaluate a Hand
+      tags:
+      - Game
+  /user/me:
+    delete:
+      description: deletes the user associated to the token used to authenticate this
+        request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-any"
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: delete requesting user
+      tags:
+      - User
+components:
+  schemas:
+    admin.GameStatus:
+      enum:
+      - paused
+      - normal
+      type: string
+      x-enum-varnames:
+      - GameStatusPaused
+      - GameStatusNormal
+    admin.GameStatusDTO:
+      properties:
+        status:
+          $ref: "#/components/schemas/admin.GameStatus"
+    game.ActiveGameDTO:
+      example:
+        id: id
+        player_ids:
+        - player_ids
+        - player_ids
+      properties:
+        id:
+          type: string
+        player_ids:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+          default: null
+    game.CardDTO:
+      example:
+        rank: 1
+        suit: 6
+      properties:
+        rank:
+          description: the rank of a card as a rune - int32 ASCII encoding
+          type: integer
+        suit:
+          description: the suit of a card as a rune - int32 ASCII encoding
+          type: integer
+    game.ChipExchangeDTO:
+      properties:
+        give:
+          additionalProperties:
+            type: integer
+          description: an optional mapping of chips that is required by some action
+            types.
+        receive:
+          additionalProperties:
+            type: integer
+          description: an optional mapping of chips that is required by some action
+            types.
+        user_id:
+          description: the stack to give during the exchange
+          type: string
+    game.ChipStackDTO:
+      additionalProperties:
+        type: integer
+      description: an optional mapping of chips that is required by some action types.
+    game.GameDTO:
+      example:
+        ended_at: ended_at
+        game_config:
+          auto_starts_hands: true
+          big_blind: 0
+          chip_denominations:
+          - 6
+          - 6
+          player_count: 1
+          small_blind: 5
+          starting_chips:
+            key: 5
+        id: id
+        started_at: started_at
+        table:
+          big_blind_position: 2
+          button_position: 7
+          current_hand:
+            big_blind: 9
+            id: 3
+            small_blind: 2
+            started_at: started_at
+          current_round:
+            bet: 4
+            current_aggressor: 7
+            current_player_position: 1
+            current_round_type: unset
+          players:
+          - current_bet:
+              key: 1
+            display_name: display_name
+            hole:
+            - rank: 1
+              suit: 6
+            - rank: 1
+              suit: 6
+            position: 7
+            pot_contribution: 1
+            stack:
+              key: 4
+            state: state
+            user_id: user_id
+            user_type: bot
+          - current_bet:
+              key: 1
+            display_name: display_name
+            hole:
+            - rank: 1
+              suit: 6
+            - rank: 1
+              suit: 6
+            position: 7
+            pot_contribution: 1
+            stack:
+              key: 4
+            state: state
+            user_id: user_id
+            user_type: bot
+          pot:
+            key: 5
+          small_blind_position: 9
+          street:
+          - rank: 1
+            suit: 6
+          - rank: 1
+            suit: 6
+      properties:
+        ended_at:
+          description: the time that the game ended
+          type: string
+          x-nullable: true
+        game_config:
+          $ref: "#/components/schemas/game.NewGameConfigDTO"
+        id:
+          description: the id of the game
+          type: string
+        started_at:
+          description: the time that the game started originally
+          type: string
+          x-nullable: true
+        table:
+          $ref: "#/components/schemas/game.TableDTO"
+    game.HandDTO:
+      description: the current hand
+      example:
+        big_blind: 9
+        id: 3
+        small_blind: 2
+        started_at: started_at
+      properties:
+        big_blind:
+          description: the amount of chips for the big blind in this hand
+          type: integer
+        id:
+          description: the (non decreasing) hand counter
+          type: integer
+        small_blind:
+          description: the amount of chips for the small blind in this hand
+          type: integer
+        started_at:
+          description: the time that this hand started
+          type: string
+    game.NewGameConfigDTO:
+      description: the configuration used to setup the game
+      example:
+        auto_starts_hands: true
+        big_blind: 0
+        chip_denominations:
+        - 6
+        - 6
+        player_count: 1
+        small_blind: 5
+        starting_chips:
+          key: 5
+      properties:
+        auto_starts_hands:
+          description: |-
+            a flag which indicates true if the game server should wait
+            for a signal to start hands or if it should do so automatically
+          type: boolean
+        big_blind:
+          description: the big blind
+          type: integer
+        chip_denominations:
+          description: a collection of denominations that are available for chips
+            at the table
+          items:
+            type: integer
+          type: array
+          uniqueItems: false
+          default: null
+        player_count:
+          description: the number of players (max) the game supports
+          type: integer
+        small_blind:
+          description: the small blind
+          type: integer
+        starting_chips:
+          additionalProperties:
+            type: integer
+          description: an optional mapping of chips that is required by some action
+            types.
+    game.NewHandDTO:
+      properties:
+        deck:
+          description: |-
+            the deck, optionally provided to determine trhe order of cards
+            if not provided the cards will be ordered randomly by the server
+          items:
+            $ref: "#/components/schemas/game.CardDTO"
+          type: array
+          uniqueItems: false
+          default: null
+    game.PlayerActionDTO:
+      properties:
+        accepted_at:
+          description: a timestamp capturing when a succesful action was accepted
+            by the game
+          type: string
+          x-nullable: true
+        chips:
+          additionalProperties:
+            type: integer
+          description: an optional mapping of chips that is required by some action
+            types.
+        intent:
+          $ref: "#/components/schemas/game.PlayerIntent"
+        player_id:
+          description: the id of the player preforming the action
+          type: string
+    game.PlayerDTO:
+      example:
+        current_bet:
+          key: 1
+        display_name: display_name
+        hole:
+        - rank: 1
+          suit: 6
+        - rank: 1
+          suit: 6
+        position: 7
+        pot_contribution: 1
+        stack:
+          key: 4
+        state: state
+        user_id: user_id
+        user_type: bot
+      properties:
+        current_bet:
+          additionalProperties:
+            type: integer
+          description: an optional mapping of chips that is required by some action
+            types.
+        display_name:
+          description: the users display name
+          type: string
+        hole:
+          description: |-
+            the cards current held by this player - only visible for authorized users
+            during a game.
+          items:
+            $ref: "#/components/schemas/game.CardDTO"
+          type: array
+          uniqueItems: false
+          default: null
+        position:
+          description: |-
+            the players position at the table, starting with 0 being the
+            first player sitting clockwise from the dealer
+          type: integer
+        pot_contribution:
+          description: |-
+            the sum total the player has contributed to the pot, note that this
+            does not include chips currently in CurrentBet
+          type: integer
+        stack:
+          additionalProperties:
+            type: integer
+          description: an optional mapping of chips that is required by some action
+            types.
+        state:
+          description: the players state
+          type: string
+        user_id:
+          description: the id of the user
+          type: string
+        user_type:
+          $ref: "#/components/schemas/just.UserType"
+    game.PlayerIntent:
+      description: the type of action a player intended to preform
+      enum:
+      - unset
+      - ante
+      - check
+      - call
+      - raise
+      - all_in
+      - fold
+      type: string
+      x-enum-varnames:
+      - PlayerIntentUnset
+      - PlayerIntentAnte
+      - PlayerIntentCheck
+      - PlayerIntentCall
+      - PlayerIntentRaise
+      - PlayerIntentAllIn
+      - PlayerIntentFold
+    game.RoundDTO:
+      description: the current round
+      example:
+        bet: 4
+        current_aggressor: 7
+        current_player_position: 1
+        current_round_type: unset
+      properties:
+        bet:
+          description: the amount of chips required to call (how does this work with
+            split pots?)
+          type: integer
+        current_aggressor:
+          description: the player who currently ends the round? the last raise?
+          type: integer
+        current_player_position:
+          description: the index into the play array for the player whose turn it
+            currently is
+          type: integer
+        current_round_type:
+          $ref: "#/components/schemas/game.RoundType"
+    game.RoundType:
+      description: the type of round
+      enum:
+      - unset
+      - setup
+      - pre_flop
+      - flop
+      - turn
+      - river
+      - completed
+      type: string
+      x-enum-varnames:
+      - RoundTypeUnset
+      - RoundTypeAnte
+      - RoundTypePreFlop
+      - RoundTypeFlop
+      - RoundTypeTurn
+      - RoundTypeRiver
+      - RoundTypeCompleted
+    game.TableDTO:
+      description: the table
+      example:
+        big_blind_position: 2
+        button_position: 7
+        current_hand:
+          big_blind: 9
+          id: 3
+          small_blind: 2
+          started_at: started_at
+        current_round:
+          bet: 4
+          current_aggressor: 7
+          current_player_position: 1
+          current_round_type: unset
+        players:
+        - current_bet:
+            key: 1
+          display_name: display_name
+          hole:
+          - rank: 1
+            suit: 6
+          - rank: 1
+            suit: 6
+          position: 7
+          pot_contribution: 1
+          stack:
+            key: 4
+          state: state
+          user_id: user_id
+          user_type: bot
+        - current_bet:
+            key: 1
+          display_name: display_name
+          hole:
+          - rank: 1
+            suit: 6
+          - rank: 1
+            suit: 6
+          position: 7
+          pot_contribution: 1
+          stack:
+            key: 4
+          state: state
+          user_id: user_id
+          user_type: bot
+        pot:
+          key: 5
+        small_blind_position: 9
+        street:
+        - rank: 1
+          suit: 6
+        - rank: 1
+          suit: 6
+      properties:
+        big_blind_position:
+          description: the position of the big blind
+          type: integer
+        button_position:
+          description: the position of the button
+          type: integer
+        current_hand:
+          $ref: "#/components/schemas/game.HandDTO"
+        current_round:
+          $ref: "#/components/schemas/game.RoundDTO"
+        players:
+          description: An array of players at the table
+          items:
+            $ref: "#/components/schemas/game.PlayerDTO"
+          type: array
+          uniqueItems: false
+          default: null
+        pot:
+          additionalProperties:
+            type: integer
+          description: an optional mapping of chips that is required by some action
+            types.
+        small_blind_position:
+          description: the position of the small blind
+          type: integer
+        street:
+          description: the cards that are on the street (community cards)
+          items:
+            $ref: "#/components/schemas/game.CardDTO"
+          type: array
+          uniqueItems: false
+          default: null
+    just.ErrorCode:
+      enum:
+      - 67
+      - 1000
+      - 1001
+      - 1002
+      - 1003
+      - 1004
+      - 2000
+      - 2001
+      - 2002
+      - 2003
+      - 2004
+      - 2005
+      - 2020
+      - 2021
+      - 2022
+      - 2023
+      - 2024
+      - 2025
+      - 2026
+      - 2027
+      type: integer
+      x-enum-varnames:
+      - SkillIssue
+      - Unknown
+      - UserNotFound
+      - GameNotFound
+      - TokenMissing
+      - MalformedRequestBody
+      - TurnOrderViolation
+      - InvalidActionType
+      - NotEnoughChips
+      - InvalidBetAmount
+      - InvalidChipExchange
+      - ExpectedAnteAction
+      - GameAlreadyStarted
+      - GameIsFull
+      - PlayerAlreadyJoined
+      - GameIsPaused
+      - InvalidGameConfiguration
+      - HandAlreadyInProgress
+      - InvalidChipDenomination
+      - InvalidChipCount
+    just.ErrorDTO:
+      example:
+        error: error
+        error_code: 0
+      properties:
+        error:
+          type: string
+        error_code:
+          $ref: "#/components/schemas/just.ErrorCode"
+    just.HandEvaluationDTO:
+      example:
+        error: error
+        evaluation: 0
+      properties:
+        error:
+          type: string
+        evaluation:
+          type: integer
+    just.ResponseMessage-any:
+      example:
+        data: ""
+        type: user.created
+      properties:
+        data: {}
+        type:
+          example: user.created
+          type: string
+    just.ResponseMessage-game_GameDTO:
+      example:
+        data:
+          ended_at: ended_at
+          game_config:
+            auto_starts_hands: true
+            big_blind: 0
+            chip_denominations:
+            - 6
+            - 6
+            player_count: 1
+            small_blind: 5
+            starting_chips:
+              key: 5
+          id: id
+          started_at: started_at
+          table:
+            big_blind_position: 2
+            button_position: 7
+            current_hand:
+              big_blind: 9
+              id: 3
+              small_blind: 2
+              started_at: started_at
+            current_round:
+              bet: 4
+              current_aggressor: 7
+              current_player_position: 1
+              current_round_type: unset
+            players:
+            - current_bet:
+                key: 1
+              display_name: display_name
+              hole:
+              - rank: 1
+                suit: 6
+              - rank: 1
+                suit: 6
+              position: 7
+              pot_contribution: 1
+              stack:
+                key: 4
+              state: state
+              user_id: user_id
+              user_type: bot
+            - current_bet:
+                key: 1
+              display_name: display_name
+              hole:
+              - rank: 1
+                suit: 6
+              - rank: 1
+                suit: 6
+              position: 7
+              pot_contribution: 1
+              stack:
+                key: 4
+              state: state
+              user_id: user_id
+              user_type: bot
+            pot:
+              key: 5
+            small_blind_position: 9
+            street:
+            - rank: 1
+              suit: 6
+            - rank: 1
+              suit: 6
+        type: user.created
+      properties:
+        data:
+          $ref: "#/components/schemas/game.GameDTO"
+        type:
+          example: user.created
+          type: string
+    just.ResponseMessage-just_ErrorDTO:
+      example:
+        data:
+          error: error
+          error_code: 0
+        type: user.created
+      properties:
+        data:
+          $ref: "#/components/schemas/just.ErrorDTO"
+        type:
+          example: user.created
+          type: string
+    just.ResponseMessage-string:
+      example:
+        data: data
+        type: user.created
+      properties:
+        data:
+          type: string
+        type:
+          example: user.created
+          type: string
+    just.UserType:
+      description: the type of user
+      enum:
+      - bot
+      - normal
+      - admin
+      - game_master
+      type: string
+      x-enum-varnames:
+      - UserTypeBot
+      - UserTypeHuman
+      - UserTypeAdmin
+      - UserTypeGameMaster
+  securitySchemes:
+    BearerAuth:
+      description: Type "Bearer" followed by a space and your token (e.g. "Bearer
+        your_token_here").
+      scheme: bearer
+      type: http
+

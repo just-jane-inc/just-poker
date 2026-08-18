@@ -1,5 +1,10 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/sh
+set -eu
+
+# The docker's alpine img doesn't have bash, so using sh
+# and modified syntax lower for it
+
+cd "$(dirname "$0")/.."
 
 # YAML
 awk '
@@ -35,7 +40,7 @@ function drop_trailing_comma() {
     if (n > 0) sub(/,[[:space:]]*$/, "", out[n])
 }
 {
-    if ($0 ~ /"oneOf"[[:space:]]*:[[:space:]]*\[/) {
+    if ($0 ~ /"oneOf"[[:space:]]*:[[:space:]]*[[]/) {
         in_oneof = 1
         oneof_indent = match($0, /[^ ]/) - 1
         out[++n] = $0
@@ -45,13 +50,13 @@ function drop_trailing_comma() {
     if (in_oneof) {
         indent = match($0, /[^ ]/) - 1
 
-        if (indent <= oneof_indent && $0 ~ /^[[:space:]]*\]/) {
+        if (indent <= oneof_indent && $0 ~ /^[[:space:]]*[]]/) {
             in_oneof = 0
             out[++n] = $0
             next
         }
 
-        if ($0 ~ /^[[:space:]]*\{[[:space:]]*$/) {
+        if ($0 ~ /^[[:space:]]*[{][[:space:]]*$/) {
             open = $0
             if ((getline second) <= 0) { out[++n] = open; next }
 
@@ -61,7 +66,7 @@ function drop_trailing_comma() {
 
             if ((getline close_line) <= 0) { out[++n] = open; out[++n] = second; next }
 
-            if (close_line !~ /^[[:space:]]*\}[[:space:]]*,?[[:space:]]*$/) {
+            if (close_line !~ /^[[:space:]]*[}][[:space:]]*,?[[:space:]]*$/) {
                 out[++n] = open; out[++n] = second; out[++n] = close_line; next
             }
 

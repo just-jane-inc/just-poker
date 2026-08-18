@@ -47,7 +47,7 @@ async def test_action_errors():
     game_api = GameApi(api_client)
     _ = await game_api.game_game_id_hand_post(
         game_id,
-        api.GameGameIdHandPostRequest(api.GameNewHandDTO(deck=get_deck(42))),
+        api.GameNewHandDTO(deck=get_deck(42)),
     )
 
     # it is currently bot [2] turn, the bot 3 action here is a violation
