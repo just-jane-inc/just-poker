@@ -428,7 +428,9 @@ func (g *game) handleAnte(action PlayerActionDTO, p *player) *just.PokerError {
 		return err
 	}
 
-	if action.Intent != PlayerIntentAnte {
+	if action.Intent == PlayerIntentAllIn {
+		action.Bet = p.chips.AsDto()
+	} else if action.Intent != PlayerIntentAnte {
 		return &just.PokerError{
 			Message: "during this phase only ante actions can be accepted",
 			Code:    just.InvalidActionType,
@@ -436,23 +438,13 @@ func (g *game) handleAnte(action PlayerActionDTO, p *player) *just.PokerError {
 	}
 
 	betAmount := action.Bet.Sum()
+	stackSum := p.chips.Sum()
+	required := 0
 	switch p.position {
 	case g.table.smallBlindPosition:
-		if betAmount != g.table.currentHand.SmallBlind {
-			return &just.PokerError{
-				Message: fmt.Sprintf("small blind requires exactly %d chips", g.table.currentHand.SmallBlind),
-				Code:    just.InvalidBetAmount,
-			}
-		}
-
+		required = g.table.currentHand.SmallBlind
 	case g.table.bigBlindPosition:
-		if betAmount != g.table.currentHand.BigBlind {
-			return &just.PokerError{
-				Message: fmt.Sprintf("big blind requires exactly %d chips", g.table.currentHand.BigBlind),
-				Code:    just.InvalidBetAmount,
-			}
-		}
-
+		required = g.table.currentHand.BigBlind
 	default:
 		err, id := just.NewCriticalInternalError()
 		just.Logger.Errorf(
@@ -464,6 +456,24 @@ func (g *game) handleAnte(action PlayerActionDTO, p *player) *just.PokerError {
 		)
 
 		return err
+	}
+
+	// it is never okay for a user to bet more then the ante required amount
+	if betAmount > required {
+		return &just.PokerError{
+			Message: fmt.Sprintf("ante requires exactly %d chips", required),
+			Code:    just.InvalidBetAmount,
+		}
+	}
+
+	// if your bet amount is less then the required amount you _must_ be all in
+	if betAmount < required {
+		if stackSum != betAmount {
+			return &just.PokerError{
+				Message: fmt.Sprintf("ante requires exactly %d chips", required),
+				Code:    just.InvalidBetAmount,
+			}
+		}
 	}
 
 	if err := g.coverBet(p, action.Bet); err != nil {

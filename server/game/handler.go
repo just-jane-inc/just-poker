@@ -286,7 +286,10 @@ func OnStartGameFromState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	go g.ProccessPlayerActions(make(chan any))
 	g.table = table.AsTable()
+	g.table.deck = &deck{}
+	g.table.deck.Reset()
 	just.OK("game_started", g.id).WriteJSONResponse(w)
 }
 
@@ -434,8 +437,11 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	just.Logger.Debugf("trying player action...")
 	err = g.TryPlayerAction(playerAction)
+	just.Logger.Debugf("player action completed")
 	if err != nil {
+		just.Logger.Debugf("error in player action")
 		var pokerError *just.PokerError
 		if errors.As(err, &pokerError) {
 			just.BadRequest(pokerError.Message, pokerError.Code).WriteJSONResponse(w)
@@ -445,6 +451,8 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 		just.BadRequest(err.Error(), just.Unknown).WriteJSONResponse(w)
 		return
 	}
+
+	just.Logger.Debugf("player action success")
 
 	// we send the update here to snapshot the state how it is in this moment, further checks will alter the tate
 	// and would require a new update afterwards.
