@@ -1,4 +1,5 @@
 import asyncio
+from functools import lru_cache
 import logging
 
 import openapi_client as api
@@ -17,6 +18,8 @@ from poker_bot.websocket_events import (
 )
 
 logger = logging.getLogger("bot")
+
+MAX_CHIP_DOWNS = 16
 
 
 class PokerBot:
@@ -170,62 +173,156 @@ class PokerBot:
 
         - will preform exchanges of chips as it tries to compute an amount needed
         - will return the entire stack if the amount needed exceeds available chips (all in)
+
+        Raises:
+            CustomException: if the amount cannot be made from the denominations
+                this game allows, so no exchange ever satisfies it
         """
         logger.debug(f"try cover bet for [{amount_needed}] current bet: [{bet}] stack: {self._current_stack}")
 
         if self._current_state is None:
             raise ex.CustomException("try_cover_bet invoked before a state received")
 
-        denominations = self._current_state.game_config.chip_denominations
+        denominations = sorted(self._current_state.game_config.chip_denominations)
+        if not denominations:
+            raise ex.CustomException("game config has no chip denominations")
+
         if sum(s.denomination * s.count for s in self._current_stack) <= amount_needed:
             bet.extend(self._current_stack)
             return  # all in
 
-        denominations = sorted(denominations)
-        for s in self._current_stack:
-            if s.count == 0:
-                continue
+        if not self._is_reachable(amount_needed, denominations):
+            raise ex.CustomException(f"{amount_needed} cannot be made from the denominations {denominations}")
 
-            # we take the a number of chips from this denomination
-            # that does not exceed our count and reduces the amount
-            # of chips needed for the bet
-            take = min(s.count, amount_needed // s.denomination)
-            if take == 0:
-                continue
-
-            logger.debug(f"taking {take}x{s.denomination} from stack for bet")
-            s.count -= take
-            bet.append(help.Chips(s.denomination, take))
-            amount_needed -= take * s.denomination
-
-            if amount_needed == 0:
+        for _ in range(MAX_CHIP_DOWNS + 1):
+            chosen = self._select_chips(amount_needed)
+            if chosen is not None:
+                for denomination, count in chosen.items():
+                    self._take_from_stack(denomination, count)
+                    self._add_to_bet(bet, denomination, count)
                 return
 
-        if amount_needed == 0:
-            return
-
-        # if we fail to make a bet that satisfies the provided amount_needed
-        # the code below attempts to break down our remaining chips to make
-        # the thing work
-        sort_method = lambda q: q.denomination
-        for s in sorted(self._current_stack, key=sort_method, reverse=True):
-            if s.count <= 0:
-                continue
-
-            if s.denomination <= amount_needed:
+            if not await self._chip_down(amount_needed, denominations):
                 break
 
-            logger.debug(f"exchanging 1x{s.denomination} for smaller chips")
-            broken = self._break_chip(s.denomination, denominations)
-            await self.exchange_chips(give=[help.Chips(s.denomination, 1)], receive=broken)
-            s.count -= 1
+        raise ex.CustomException("could not construct a valid bet for provided amount")
 
+    def _held(self) -> dict[int, int]:
+        held: dict[int, int] = {}
+        for s in self._current_stack:
+            held[s.denomination] = held.get(s.denomination, 0) + s.count
+        return held
+
+    def _select_chips(self, amount: int) -> dict[int, int] | None:
+        """ chips from the stack worth exactly amount, or None"""
+        if amount <= 0:
+            return {}
+
+        counts = self._held()
+        denominations = sorted(counts, reverse=True)
+
+        @lru_cache(maxsize=None)
+        def _search(index: int, remaining: int):
+            if remaining == 0:
+                return ()
+            if index >= len(denominations):
+                return None
+            denomination = denominations[index]
+            for take in range(min(counts[denomination], remaining // denomination), -1, -1):
+                rest = _search(index + 1, remaining - take * denomination)
+                if rest is not None:
+                    return ((denomination, take),) + rest if take else rest
+            return None
+
+        chosen = _search(0, amount)
+        _search.cache_clear()
+        return None if chosen is None else dict(chosen)
+
+    @staticmethod
+    def _is_reachable(amount: int, denominations: list[int]) -> bool:
+        """does any combination of these denominations sum to amount"""
+        if amount <= 0:
+            return True
+        reachable = [False] * (amount + 1)
+        reachable[0] = True
+        for value in range(1, amount + 1):
+            for denom in denominations:
+                if denom <= value and reachable[value - denom]:
+                    reachable[value] = True
+                    break
+        return reachable[amount]
+
+    def _take_from_stack(self, denomination: int, count: int) -> None:
+        for s in self._current_stack:
+            if s.denomination == denomination:
+                s.count -= count
+                return
+        raise ex.CustomException(f"no {denomination} chips in the stack to take")
+
+    @staticmethod
+    def _add_to_bet(bet: list[help.Chips], denomination: int, count: int) -> None:
+        for chips in bet:
+            if chips.denomination == denomination:
+                chips.count += count
+                return
+        bet.append(help.Chips(denomination, count))
+
+    async def _chip_down(self, amount_needed: int, denominations: list[int]) -> bool:
+        """break one chip into smaller ones; True if anything changed"""
+        step = denominations[0]
+        held = self._held()
+        off_denoms = [d for d in denominations if d % step]
+
+        need_off_denom = (bool(amount_needed % step) and not any(held.get(d, 0) for d in off_denoms))
+
+        candidates = [d for d in denominations if d > step and held.get(d, 0) > 0]
+        if not need_off_denom:
+            candidates.sort(key=lambda d: (bool(d % step), d))
+        else:
+            candidates.sort()
+
+        for target in candidates:
+            try:
+                broken = self._break_chip(target, denominations, need_off_denom)
+            except ex.CustomException:
+                continue
+            if not broken:
+                continue
+            logger.debug(f"exchanging 1x{target} for {broken}")
+            await self.exchange_chips(give=[help.Chips(target, 1)], receive=broken)
+            self._take_from_stack(target, 1)
             for b in broken:
                 self.merge_stack(b)
+            return True
 
-            return await self.try_cover_bet(amount_needed, bet)
+        return await self._combine_off_denom(denominations)
 
-        raise ValueError("could not construct a valid bet for provided amount")
+    async def _combine_off_denom(self, denominations: list[int]) -> bool:
+        """trade several off-denom chips; True if anything changed"""
+        step = denominations[0]
+        held = self._held()
+
+        for denomination in (d for d in denominations if d % step):
+            have = held.get(denomination, 0)
+            for count in range(2, have + 1):
+                value = denomination * count
+                if value % step:
+                    continue
+                try:
+                    receive = self._break_chip(value, denominations, need_off_denom=False)
+                except ex.CustomException:
+                    break
+                if not receive:
+                    break
+
+                logger.debug(f"exchanging {count}x{denomination} for {receive}")
+                await self.exchange_chips(give=[help.Chips(denomination, count)], receive=receive)
+                self._take_from_stack(denomination, count)
+
+                for r in receive:
+                    self.merge_stack(r)
+                return True
+        return False
 
     async def check(self) -> bool:
         """sends the check action after waiting for the bots turn
@@ -401,24 +498,22 @@ class PokerBot:
 
         return current_player_position == self._player.position
 
-    def _break_chip(self, value: int, denominations: list[int]) -> list[help.Chips]:
-        result: list[help.Chips] = []
+    def _break_chip(self, value: int, denominations: list[int], need_off_denom: bool = True) -> list[help.Chips]:
+        # off_denom affects if we break into necessary and unnecessary chips
+        pool = [d for d in sorted(denominations, reverse=True) if d < value]
+        if not need_off_denom:
+            step = min(denominations)
+            on_denom = [d for d in pool if not d % step]
+            pool = on_denom or pool
 
-        # the running value of chips left to breakdown
+        result: list[help.Chips] = []
         remaining = value
 
-        # we want to break down chips from the largest denomination down
-        # reversed returns a sorted list in decending order
-        for denom in reversed(denominations):
-            if denom >= value:
-                continue
-
-            count = remaining // denom
-            remaining = remaining % denom
-
+        for denomination in pool:
+            count = remaining // denomination
             if count > 0:
-                result.append(help.Chips(denom, count))
-
+                result.append(help.Chips(denomination, count))
+                remaining -= count * denomination
             if remaining == 0:
                 break
 

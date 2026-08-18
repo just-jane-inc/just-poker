@@ -8,6 +8,15 @@ from dotenv import load_dotenv
 import openapi_client as api
 import poker_bot.poker_helpers as help
 
+if os.name == "nt":
+    # For windows only tool usage, fix for cert stuff
+    try:
+        import truststore
+
+        truststore.inject_into_ssl()
+    finally:
+        pass
+
 load_dotenv("config/.env")
 base_url = os.getenv("BASE_URL")
 
@@ -64,11 +73,11 @@ def main():
     else:
         config = api.GameNewGameConfigDTO(
             auto_starts_hands=True,
-            big_blind=args.big_blind,
-            small_blind=args.small_blind,
-            chip_denominations=[10, 25, 50, 100, 500],
-            player_count=args.player_count,
-            starting_chips={"10": 10, "25": 5, "50": 5, "100": 5, "500": 1},
+            big_blind=args.bb,
+            small_blind=args.sb,
+            chip_denominations=[10, 50, 100, 500, 1000],
+            player_count=args.players,
+            starting_chips={"10": 20, "50": 6, "100": 5, "500": 1, "1000": 0},
         )
 
     asyncio.run(new_game(config, token))
