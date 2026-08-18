@@ -5,7 +5,7 @@ from datetime import datetime
 
 import aiofiles
 from dotenv import load_dotenv
-from users.users import get_test_user
+from just.users.users import get_test_user
 
 from poker_bot.bot import *
 from poker_bot.bot import PokerBot

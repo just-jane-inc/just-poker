@@ -4,7 +4,7 @@ import os
 
 from dotenv import load_dotenv
 
-from just.users import get_test_users
+from just.users.users import get_test_users
 from poker_bot.bot import PokerBot
 
 load_dotenv("config/.env")
