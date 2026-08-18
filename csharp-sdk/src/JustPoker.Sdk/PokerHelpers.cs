@@ -23,7 +23,12 @@ public static class PokerHelpers {
     }
 
     public static Dictionary<string, int> ConvertChips(IEnumerable<Chips> chips) {
-        return chips.ToDictionary(c => c.Denomination.ToString(), c => c.Count);
+        var stack = new Dictionary<string, int>();
+        foreach (var c in chips) {
+            var key = c.Denomination.ToString();
+            stack[key] = stack.GetValueOrDefault(key, 0) + c.Count;
+        }
+        return stack;
     }
 
     public static ServiceProvider CreateApiProvider(string baseUrl, string token = "") {
