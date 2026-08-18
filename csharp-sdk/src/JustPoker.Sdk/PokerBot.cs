@@ -319,8 +319,6 @@ public sealed class PokerBot : IAsyncDisposable {
         }
         catch (PokerException e) {
             _logger.LogError(e.Message);
-            // TODO @Jane Game ID 1879, "Wolf" had 1x50 left, and was failing big blind requires 100 chips with the above.
-            // Happend in python SDK as well. This is a server problem again I think
             throw;
         }
     }
