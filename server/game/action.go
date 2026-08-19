@@ -386,6 +386,11 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 		p.state = PlayerStateInactive
 	}
 
+	// this is to catch any previous oversights - it hides potential bugs
+	if p.chips.Sum() == 0 {
+		p.state = PlayerStateAllIn
+	}
+
 	g.table.currentTurn.StartedAt = time.Now()
 	g.table.currentTurn.ID += 1
 
@@ -432,6 +437,7 @@ func (g *game) handleAnte(action PlayerActionDTO, p *player) *just.PokerError {
 
 	if action.Intent == PlayerIntentAllIn {
 		action.Bet = p.chips.AsDto()
+		action.Intent = PlayerIntentAnte
 	} else if action.Intent != PlayerIntentAnte {
 		return &just.PokerError{
 			Message: "during this phase only ante actions can be accepted",

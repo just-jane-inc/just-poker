@@ -247,22 +247,60 @@ func (t *table) nextRound() {
 			currentPlayer := t.players[position]
 			e := PayoutEventDTO{PlayerID: currentPlayer.UserID}
 			chips := make(stack)
+
 			for _, denomination := range t.denominations {
 				if payout >= denomination {
 					available, ok := t.pot[denomination]
-					if !ok {
+					if !ok { // TODO: if we hit this could we just break chips from higher?
 						continue
 					}
 
 					take := min(available, payout/denomination)
 					t.pot[denomination] -= take
-					chips[denomination] = take
+					chips[denomination] += take
 					payout -= (take * denomination)
 				}
 
 				if payout == 0 {
 					break
 				}
+			}
+
+			if payout > 0 {
+				lowestDenomination := slices.Min(t.denominations)
+				for _, denomination := range t.denominations {
+					available, ok := t.pot[denomination]
+					if !ok {
+						continue
+					}
+
+					if available <= 0 {
+						continue
+					}
+
+					for range available {
+						t.pot[denomination] -= 1
+						t.pot[lowestDenomination] += denomination / lowestDenomination
+
+						count := t.pot[lowestDenomination]
+						take := min(count, payout/lowestDenomination)
+						t.pot[lowestDenomination] -= take
+						chips[lowestDenomination] += take
+						payout -= (take * lowestDenomination)
+
+						if payout <= 0 {
+							break
+						}
+					}
+
+					if payout <= 0 {
+						break
+					}
+				}
+			}
+
+			if payout < 0 {
+				just.Logger.Errorf("payout has been brought under 0 - chips have been stolen! [%s] [%d] [%d]", t.gameID, t.currentHand.ID, t.currentTurn.ID)
 			}
 
 			e.Chips = chips.AsDto()
@@ -545,10 +583,7 @@ func (t *table) getSplitPots() map[int]pot {
 // it requires a map of position -> eval and a map of position -> payout as arguments.
 // when the function terminates the values in winnings will hold the amount from the pot
 // that each position should be awarded.
-func (t *table) handlePayout(
-	handEvaluations map[int]int,
-	pot pot,
-) (winnings map[int]int, err error) {
+func (t *table) handlePayout(handEvaluations map[int]int, pot pot) (winnings map[int]int, err error) {
 	winners := make([]int, 0)
 	bestHandEval := math.MaxInt
 	for position, eval := range handEvaluations {

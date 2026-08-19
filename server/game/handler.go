@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/just-jane-inc/just-poker/server/just"
@@ -286,9 +287,11 @@ func OnStartGameFromState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	denominations := g.table.denominations
 	g.table = table.AsTable()
 	g.table.deck = &deck{}
 	g.table.deck.Reset()
+	g.table.denominations = denominations
 	just.OK("game_started", g.id).WriteJSONResponse(w)
 }
 
@@ -344,6 +347,15 @@ func OnExchangeChips(w http.ResponseWriter, r *http.Request) {
 		just.BadRequest(err.Message, err.Code).WriteJSONResponse(w)
 		return
 	}
+
+	g.table.denominations = make([]int, 0)
+	for denomination := range g.denominations {
+		g.table.denominations = append(g.table.denominations, denomination)
+	}
+
+	sort.Slice(g.table.denominations, func(i, j int) bool {
+		return g.table.denominations[i] > g.table.denominations[j]
+	})
 
 	g.table.sendMessageToConnections("chip_exchange", exchange)
 	just.OK("chips_exchanged", struct{}{}).WriteJSONResponse(w)
