@@ -30,20 +30,26 @@ Once the extension is loaded, go to `File > Preferences > Settings`, navigate to
 
 ## Using TabltopSimulator-Lua-VSCode
 
+Rolandostar's has a website that provides in-depth documentation for this extension. Reference it to get familiar with how to use this extension. 
+
 [Documentation](https://tts-vscode.rolandostar.com/) - [Github](https://github.com/rolandostar/tabletopsimulator-lua-vscode)
 
 First, copy the `TS_Save_2.*` files to your Tabletop simulator save directory:
 - Windows: `~\Documents\My Games\Tabletop Simulator\Saves`
 - Linux: `~/.local/share/Tabletop Simulator/Saves`
 
-Open Tabletop Simulator and load your save file. Go to VSCode and press Ctrl+Shift+L. It will prompt you if you want to load files from Tabletop Simulator--say yes.
+Open Tabletop Simulator and load your save file.
 
-Warning: The accuracy of these next statements depends on if you are using the correct version of the extension.
+Open VSCode to the `just-poker/tts` directory and press `Ctrl+Shift+L`. It will prompt you if you want to load files from Tabletop Simulator--say yes.
+
+**Note:** The reason I specify the `tts` directory is that the `require(...)` statements used to import the source code to the Tabltop Simulator scripts is indexed that way on my machine. These `require` statements are a feature of the extension. If you want to have VSCode open elsewhere, you will need to add the absolute path to the `just-poker/tts` directory to the `Include Paths` for this extension in your settings.
+
+**Warning:** The accuracy of these next statements depends on if you are using the correct version of the extension.
 
 You'll get a new section in your Explorer for `Tabletop Simulator Files` containing directories for the "objects" in the scene and files for the scripts. From what I can tell, you can't edit the properties (position, description, etc.) of objects here--that still must be done in game. The scripts you can edit and the changes will be reflected in game upon pressing Ctrl+Shift+S.
 
 ## Workflow
-When you make changes to a script, you must reload the scene to see your changes in effect by pressing Ctrl+Shift+S.
+When you make changes to a script, you must reload the scene to see your changes in effect by pressing `Ctrl+Shift+S`.
 
 These changes are not saved to the TS save file by doing this. To save these changes to the file, you must create/overwrite a save in Tabletop Simulator in the "Games" menu.
 
