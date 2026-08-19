@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"slices"
 	"sort"
 	"strconv"
 	"sync"
@@ -35,6 +36,7 @@ type game struct {
 	createdBy string
 }
 
+// GetCurrentGames provides an array of the [ActiveGameDTO] for currently active games
 func (c *CurrentGamesCache) GetCurrentGames() []ActiveGameDTO {
 	c.currentGameMutex.RLock()
 	defer c.currentGameMutex.RUnlock()
@@ -60,6 +62,7 @@ func (c *CurrentGamesCache) GetCurrentGames() []ActiveGameDTO {
 	return activeGameDTOs
 }
 
+// InsertGame adds a game into the map of games
 func (c *CurrentGamesCache) InsertGame(g *game) error {
 	// TODO: is Lock/Unlock taking the write lock?
 	c.currentGameMutex.Lock()
@@ -74,6 +77,7 @@ func (c *CurrentGamesCache) InsertGame(g *game) error {
 	return nil
 }
 
+// RemoveGame removes a game by id from the cache of current games
 func (c *CurrentGamesCache) RemoveGame(id string) (*game, error) {
 	c.currentGameMutex.Lock()
 	defer c.currentGameMutex.Unlock()
@@ -87,6 +91,7 @@ func (c *CurrentGamesCache) RemoveGame(id string) (*game, error) {
 	return g, nil
 }
 
+// GetGame gets a game from the cache and returns it
 func (c *CurrentGamesCache) GetGame(id string) (*game, bool) {
 	c.currentGameMutex.RLock()
 	defer c.currentGameMutex.RUnlock()
@@ -95,27 +100,23 @@ func (c *CurrentGamesCache) GetGame(id string) (*game, bool) {
 	return g, ok
 }
 
+// CreateCurrentGamesCache creates the cache
 func CreateCurrentGamesCache() *CurrentGamesCache {
 	return &CurrentGamesCache{
 		games: make(map[string]*game),
 	}
 }
 
+// CurrentGamesCache contains a map from string to game as well as a mutex used
+// to synchronize access to the cache
 type CurrentGamesCache struct {
 	games            map[string]*game
 	currentGameMutex sync.RWMutex
 }
 
-func (g *game) LogGameState(msg string) {
-	s, err := json.Marshal(g.AsDTO())
-	if err != nil {
-		just.Logger.Errorf("encountered error marshaling game: %v", err)
-		return
-	}
-
-	just.Logger.Debugf("%s \n %s", msg, s)
-}
-
+// MaskCards alters a dto so that cards are masked for users that should not see them
+//
+// TODO: should this return the modified copy rather then modify in place?
 func (g *GameDTO) MaskCards(userID string) {
 	for _, p := range g.Table.Players {
 		if len(p.Hole) == 2 && p.UserID != userID {
@@ -125,6 +126,7 @@ func (g *GameDTO) MaskCards(userID string) {
 	}
 }
 
+// DeepCopy creates a copy of a game DTO
 func (g *GameDTO) DeepCopy() GameDTO {
 	serialized, _ := json.Marshal(g)
 	var dto GameDTO
@@ -132,6 +134,7 @@ func (g *GameDTO) DeepCopy() GameDTO {
 	return dto
 }
 
+// AsDTO gets the [GameDTO] representation of the game model
 func (g *game) AsDTO() GameDTO {
 	return GameDTO{
 		StartedAt: g.startedAt,
@@ -142,6 +145,7 @@ func (g *game) AsDTO() GameDTO {
 	}
 }
 
+// OverWriteTable overrides the table in a game
 func (g *game) OverWriteTable(dto TableDTO) error {
 	select {
 	case g.pauseGameSemaphor <- struct{}{}:
@@ -153,6 +157,7 @@ func (g *game) OverWriteTable(dto TableDTO) error {
 	return nil
 }
 
+// createGameFromConfig creates a game object from a configuration file
 func createGameFromConfig(config NewGameConfigDTO) (*game, *just.PokerError) {
 	just.Logger.Debugf("%v", config)
 	if config.PlayerCount < 2 {
@@ -181,6 +186,30 @@ func createGameFromConfig(config NewGameConfigDTO) (*game, *just.PokerError) {
 
 	if len(config.ChipDenominations) == 0 {
 		return nil, just.NewPokerError("no denominations made available for chips", just.InvalidGameConfiguration)
+	}
+
+	// this is the canosa validation algorithm
+	var values []int
+	copy(values, config.ChipDenominations)
+	slices.Sort(values)
+
+	candidateHighestCommonDenominator := config.ChipDenominations[0]
+	if candidateHighestCommonDenominator <= 0 {
+		return nil, just.NewPokerError("the lowest value denomination in collection must be greater then zero", just.InvalidGameConfiguration)
+	}
+
+	for _, denomination := range config.ChipDenominations {
+		if denomination%candidateHighestCommonDenominator != 0 {
+			return nil, just.NewPokerError("The lowest value chip in the set of denominations is not the highest common denominator of the set. i don't know what that value is, i will leave it as an excercise for canosa", just.InvalidGameConfiguration)
+		}
+	}
+
+	if config.SmallBlind%candidateHighestCommonDenominator != 0 {
+		return nil, just.NewPokerError("the small blind must be evenly divisible by the lowest chip in the denomination set", just.InvalidGameConfiguration)
+	}
+
+	if config.BigBlind%candidateHighestCommonDenominator != 0 {
+		return nil, just.NewPokerError("the big blind must be evenly divisible by the lowest chip in the denomination set", just.InvalidGameConfiguration)
 	}
 
 	denominations := make(map[int]any)

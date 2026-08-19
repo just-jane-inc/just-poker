@@ -6,19 +6,23 @@ import (
 	"github.com/just-jane-inc/just-poker/server/just"
 )
 
+// deck contains an array of [card]
 type deck struct {
 	cards []card
 }
 
+// card encodes an individual playing card using rank and suit runes
 type card struct {
 	rank rune
 	suit rune
 }
 
+// AsDTO converts the [card] model to the [CardDTO] type
 func (c card) AsDTO() CardDTO {
 	return CardDTO{Rank: c.rank, Suit: c.suit}
 }
 
+// Burn removes a [card] from the deck without returning it
 func (d *deck) Burn() {
 	if len(d.cards) == 0 {
 		return
@@ -27,6 +31,7 @@ func (d *deck) Burn() {
 	d.cards = d.cards[1:]
 }
 
+// Reset remakes and shuffles the deck
 func (d *deck) Reset() {
 	deck := make([]card, 0)
 	for _, suit := range cardSuits {
@@ -42,12 +47,12 @@ func (d *deck) Reset() {
 	d.cards = deck
 }
 
-func (d *deck) Set(cards []card) {
-	d.cards = cards
-}
-
+// Draw removes the top card from the top and returns it
 func (d *deck) Draw() *card {
 	if len(d.cards) == 0 {
+		// TODO: this should never happen, but if it does we should not be
+		// returning nil, this can lead to a panic. just make the return
+		// not a pointer and return a default joker or something in this case
 		return nil
 	}
 
@@ -61,14 +66,17 @@ func (d *deck) Draw() *card {
 	return &drawnCard
 }
 
+// ToString converts a [card] to a string
 func (c *card) ToString() string {
 	return (string(c.rank) + string(c.suit))
 }
 
+// Hand encodes an arbitrary collection of cards
 type Hand struct {
 	Cards []*card
 }
 
+// GetHandStrings returns an array of [card.ToString] for each card in a [Hand]
 func (h Hand) GetHandStrings() []string {
 	thisHand := make([]string, len(h.Cards))
 	for i, card := range h.Cards {

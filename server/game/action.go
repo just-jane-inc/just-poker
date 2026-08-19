@@ -71,6 +71,7 @@ func (a PlayerActionDTO) ToString() string {
 	return fmt.Sprintf("chips: %#v intent: %s", a.Bet, a.Intent)
 }
 
+// canCoverBet validates whether a stack can be produced by a player
 func (p *player) canCoverBet(stack stack) *just.PokerError {
 	// first we go through and ensure that the player can cover
 	// every chip they want to bet, we do this before changing any chips

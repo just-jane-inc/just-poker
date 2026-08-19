@@ -7,11 +7,15 @@ import (
 	"github.com/just-jane-inc/just-poker/server/just"
 )
 
+// ActiveGameDTO encodes an active game
+//
+// TODO: what is this for?
 type ActiveGameDTO struct {
 	ID      string   `json:"id"`
 	Players []string `json:"player_ids"`
 }
 
+// HandEvaluationDTO holds the result of a hand evalution
 type HandEvaluationDTO struct {
 	Error      string `json:"error"`
 	Evaluation int    `json:"evaluation"`
@@ -218,6 +222,7 @@ type CardDTO struct {
 	Suit rune `json:"suit"`
 }
 
+// Sum gets the integer sum of all chips in a stack
 func (s ChipStackDTO) Sum() int {
 	total := 0
 	for d, count := range s {
@@ -232,6 +237,7 @@ func (s ChipStackDTO) Sum() int {
 	return total
 }
 
+// AsDTO converts a player model to its [PlayerDTO] representation
 func (p player) AsDTO() PlayerDTO {
 	dto := PlayerDTO{
 		UserID:          p.UserID,
