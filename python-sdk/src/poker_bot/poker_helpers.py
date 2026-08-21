@@ -151,7 +151,7 @@ def convert_stack(stack) -> list[Chips]:
 def convert_chips(chips: list[Chips]) -> dict[str, int]:
     stack: dict[str, int] = {}
     for chip in chips:
-        stack[str(chip.denomination)] = chip.count
+        stack[str(chip.denomination)] = stack.get(str(chip.denomination), 0) + chip.count
 
     return stack
 

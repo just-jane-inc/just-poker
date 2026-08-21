@@ -11,6 +11,8 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace JustPoker.Sdk;
 
 public sealed class PokerBot : IAsyncDisposable {
+    private const int MaxChipDowns = 16;
+
     private readonly string _baseUrl;
     private readonly ILogger _logger;
 
@@ -209,6 +211,8 @@ public sealed class PokerBot : IAsyncDisposable {
         if (denominations is null || denominations.Count == 0)
             throw new PokerException("try cover bet invoked before a state was received");
 
+        var denoms = denominations.OrderBy(d => d).ToList();
+
         if (ChipTotal() <= amountNeeded) {
             foreach (var chips in _currentStack.Where(chips => chips.Count > 0)) {
                 AddToBet(bet, chips.Denomination, chips.Count);
@@ -218,35 +222,156 @@ public sealed class PokerBot : IAsyncDisposable {
             return bet;
         }
 
-        foreach (var chips in _currentStack.OrderByDescending(chips => chips.Denomination)) {
-            if (chips.Count == 0) continue;
+        if (!IsReachable(amountNeeded, denoms))
+            throw new PokerException(
+                $"{amountNeeded} cannot be made from the denominations in this game " +
+                $"([{string.Join(", ", denoms)}])");
 
-            var take = Math.Min(chips.Count, amountNeeded / chips.Denomination);
-            if (take == 0) continue;
+        for (var attempt = 0; attempt <= MaxChipDowns; attempt++) {
+            var chosen = SelectChips(amountNeeded);
+            if (chosen is not null) {
+                foreach (var (denomination, count) in chosen) {
+                    TakeFromStack(denomination, count);
+                    AddToBet(bet, denomination, count);
+                }
 
-            _logger.LogDebug("taking {Take}x{Denomination} from stack for bet", take, chips.Denomination);
-            chips.Count -= take;
-            AddToBet(bet, chips.Denomination, take);
-            amountNeeded -= take * chips.Denomination;
+                return bet;
+            }
 
-            if (amountNeeded == 0) return bet;
-        }
-
-        foreach (var chips in _currentStack.OrderByDescending(chips => chips.Denomination)) {
-            if (chips.Count <= 0) continue;
-            if (chips.Denomination <= amountNeeded) break;
-
-            _logger.LogDebug("exchanging 1x{Denomination} for smaller chips", chips.Denomination);
-            var broken = BreakChip(chips.Denomination, denominations);
-            await ExchangeChipsAsync([new Chips(chips.Denomination, 1)], broken);
-            chips.Count -= 1;
-
-            foreach (var brokenChips in broken) MergeStack(brokenChips);
-            return await TryCoverBetAsync(amountNeeded, bet);
+            if (!await ChipDownAsync(amountNeeded, denoms)) break;
         }
 
         throw new InvalidBetException(
             $"could not construct a bet covering {amountNeeded} from [{string.Join(" ", _currentStack)}]");
+    }
+
+    private Dictionary<int, int> Held() {
+        var held = new Dictionary<int, int>();
+        foreach (var chips in _currentStack)
+            held[chips.Denomination] = held.GetValueOrDefault(chips.Denomination, 0) + chips.Count;
+        return held;
+    }
+
+    private Dictionary<int, int>? SelectChips(int amount) {
+        if (amount <= 0) return new Dictionary<int, int>();
+
+        var counts = Held();
+        var denoms = counts.Keys.OrderByDescending(d => d).ToList();
+        // yeah, this is exactly what you think it is
+        var memo = new Dictionary<(int, int), Dictionary<int, int>?>();
+
+        Dictionary<int, int>? Search(int index, int remaining) {
+            if (remaining == 0) return new Dictionary<int, int>();
+            if (index >= denoms.Count) return null;
+            if (memo.TryGetValue((index, remaining), out var cached)) return cached;
+
+            Dictionary<int, int>? found = null;
+            var denomination = denoms[index];
+            for (var take = Math.Min(counts[denomination], remaining / denomination); take >= 0; take--) {
+                var rest = Search(index + 1, remaining - take * denomination);
+                if (rest is null) continue;
+
+                found = new Dictionary<int, int>(rest);
+                if (take > 0) found[denomination] = take;
+                break;
+            }
+
+            memo[(index, remaining)] = found;
+            return found;
+        }
+
+        return Search(0, amount);
+    }
+
+    private static bool IsReachable(int amount, IList<int> denominations) {
+        if (amount <= 0) return true;
+
+        var reachable = new bool[amount + 1];
+        reachable[0] = true;
+        for (var value = 1; value <= amount; value++)
+            foreach (var denomination in denominations)
+                if (denomination <= value && reachable[value - denomination]) {
+                    reachable[value] = true;
+                    break;
+                }
+
+        return reachable[amount];
+    }
+
+    private void TakeFromStack(int denomination, int count) {
+        foreach (var chips in _currentStack)
+            if (chips.Denomination == denomination) {
+                chips.Count -= count;
+                return;
+            }
+
+        throw new InvalidBetException($"no {denomination} chips in the stack to take");
+    }
+
+    private async Task<bool> ChipDownAsync(int amountNeeded, IList<int> denominations) {
+        var step = denominations[0];
+        var held = Held();
+        var offDenom = denominations.Where(d => d % step != 0).ToList();
+        var needOffDenom = amountNeeded % step != 0 &&
+                           !offDenom.Any(d => held.GetValueOrDefault(d) > 0);
+
+        var candidates = denominations
+            .Where(d => d > step && held.GetValueOrDefault(d) > 0)
+            .OrderBy(d => needOffDenom ? 0 : d % step == 0 ? 0 : 1)
+            .ThenBy(d => d)
+            .ToList();
+
+        foreach (var target in candidates) {
+            List<Chips> broken;
+            try {
+                broken = BreakChip(target, denominations, needOffDenom);
+            }
+            catch (PokerException) {
+                continue;
+            }
+
+            if (broken.Count == 0) continue;
+
+            _logger.LogDebug("exchanging 1x{Denomination} for smaller chips", target);
+            await ExchangeChipsAsync([new Chips(target, 1)], broken);
+            TakeFromStack(target, 1);
+            foreach (var brokenChips in broken) MergeStack(brokenChips);
+            return true;
+        }
+
+        return await CombineOffDenomAsync(denominations);
+    }
+
+    private async Task<bool> CombineOffDenomAsync(IList<int> denominations) {
+        var step = denominations[0];
+        var held = Held();
+
+        foreach (var denomination in denominations.Where(d => d % step != 0)) {
+            var have = held.GetValueOrDefault(denomination);
+            for (var count = 2; count <= have; count++) {
+                var value = denomination * count;
+                if (value % step != 0) continue;
+
+                List<Chips> receive;
+                try {
+                    receive = BreakChip(value, denominations, false);
+                }
+                catch (PokerException) {
+                    break;
+                }
+
+                if (receive.Count == 0) break;
+
+                _logger.LogDebug("exchanging {Count}x{Denomination} for smaller chips",
+                    count, denomination);
+                await ExchangeChipsAsync([new Chips(denomination, count)], receive);
+                TakeFromStack(denomination, count);
+                foreach (var chips in receive) MergeStack(chips);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void AddToBet(List<Chips> bet, int denomination, int count) {
@@ -406,21 +531,25 @@ public sealed class PokerBot : IAsyncDisposable {
         return Player?.Position == CurrentPlayerPosition();
     }
 
-    private List<Chips> BreakChip(int value, IList<int> denominations) {
+    private List<Chips> BreakChip(int value, IList<int> denominations, bool needOffDenom = true) {
         List<Chips> result = [];
         var remaining = value;
 
-        foreach (var denomination in denominations.OrderDescending()) {
-            if (denomination >= value)
-                continue;
+        var pool = denominations.Where(d => d < value).OrderByDescending(d => d).ToList();
+        if (!needOffDenom) {
+            var step = denominations.Min();
+            var onDenom = pool.Where(d => d % step == 0).ToList();
+            if (onDenom.Count > 0) pool = onDenom;
+        }
 
+        foreach (var denomination in pool) {
             var count = remaining / denomination;
-            remaining %= denomination;
-
-            if (count > 0)
+            if (count > 0) {
                 result.Add(new Chips(denomination, count));
-            if (remaining == 0)
-                break;
+                remaining %= denomination;
+            }
+
+            if (remaining == 0) break;
         }
 
         if (remaining != 0) {
