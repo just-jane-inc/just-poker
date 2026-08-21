@@ -218,12 +218,7 @@ func createGameFromConfig(config NewGameConfigDTO) (*game, *just.PokerError) {
 	}
 
 	for d := range config.StartingChips {
-		denomination, err := strconv.Atoi(d)
-		if err != nil {
-			return nil, just.NewPokerError("provided denomination [%s] from StartingChips does not parse to an integer", just.InvalidGameConfiguration)
-		}
-
-		_, ok := denominations[denomination]
+		_, ok := denominations[d]
 		if !ok {
 			return nil, just.NewPokerError("provided starting chip denomination [%s] from StartingChips is not available in ChipDenominations", just.InvalidGameConfiguration)
 		}
