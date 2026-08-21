@@ -33,13 +33,13 @@ type APIKey struct {
 // @Security BearerAuth
 // @Router       /user/me [delete]
 func OnDeleteMe(w http.ResponseWriter, r *http.Request) {
-	userIDStr, _, err := just.GetAuthorizedUser(r)
-	if err != nil {
-		just.MissingToken().WriteJSONResponse(w)
+	user, _ := just.GetAuthorizedUser(r)
+	if user == nil {
+		just.Unauthorized().WriteJSONResponse(w)
 		return
 	}
 
-	just.DeleteUser(userIDStr, w)
+	just.DeleteUser(user.Id, w)
 }
 
 // OnCreateUser Create a user

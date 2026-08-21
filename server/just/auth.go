@@ -6,9 +6,9 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -35,6 +35,20 @@ const (
 	UserTypeGameMaster UserType = "game_master"
 )
 
+type AuthorizedUser struct {
+	Id   string
+	Name string
+	Type UserType
+}
+
+func (ut AuthorizedUser) IsType(userType ...UserType) bool {
+	return slices.Contains(userType, ut.Type)
+}
+
+func (ut AuthorizedUser) NotType(userType ...UserType) bool {
+	return !ut.IsType(userType...)
+}
+
 func getMAC(secret string, pepper []byte) []byte {
 	mac := hmac.New(sha256.New, pepper)
 	mac.Write([]byte(secret))
@@ -47,48 +61,23 @@ func randomString(count int) string {
 	return base64.RawURLEncoding.EncodeToString(val)
 }
 
-func GetUserType(userID string) (UserType, error) {
-	ctx := context.Background()
-	conn, err := DBConnPool.Acquire(ctx)
-	if err != nil {
-		return "", err
-	}
-	defer conn.Release()
-
-	stmt := `select user_type from poker_users where id=$1`
-	var userType string
-	err = conn.QueryRow(ctx, stmt, userID).Scan(&userType)
-	if err != nil {
-		Logger.Debugf("userID not found when querying poker_users for user_type: %s", userID)
-		return "", err
-	}
-
-	utype := UserType(userType)
-	if !utype.IsValid() {
-		Logger.Errorf("encountered unknown usertype [%s] for user with id [%s]", utype, userID)
-		return "", errors.New("unknown user type encountered")
-	}
-
-	return utype, nil
-}
-
-func GetAuthorizedUser(r *http.Request) (string, string, error) {
+func GetAuthorizedUser(r *http.Request) (*AuthorizedUser, error) {
 	token := r.Header.Get("Authorization")
 	splitToken := strings.Split(token, "Bearer ")
 
 	if len(splitToken) != 2 {
-		return "", "", NewPokerError("invalid token format", Unknown)
+		return nil, NewPokerError("invalid token format", Unknown)
 	}
 
 	token = splitToken[1]
 	parts := strings.Split(token, ".")
 
 	if len(parts) != 3 || parts[0] != "bahms" {
-		return "", "", fmt.Errorf("invalid format")
+		return nil, fmt.Errorf("invalid format")
 	}
 
 	if parts[1] == "" || parts[2] == "" {
-		return "", "", fmt.Errorf("invalid format")
+		return nil, fmt.Errorf("invalid format")
 	}
 
 	keyID, secret := parts[1], parts[2]
@@ -96,28 +85,33 @@ func GetAuthorizedUser(r *http.Request) (string, string, error) {
 	ctx := context.Background()
 	conn, err := DBConnPool.Acquire(ctx)
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 	defer conn.Release()
 
-	stmt := `select user_id, username, mac from poker_api_keys where key_id=$1 and revoked_at is null`
+	stmt := `select user_id, pu.username, pu.user_type, mac from (poker_api_keys right join poker_users pu on pu.id = poker_api_keys.user_id) where key_id=$1 and revoked_at is null`
 
 	var userID string
 	var username string
+	var userType UserType
 	var mac []byte
-	err = conn.QueryRow(ctx, stmt, keyID).Scan(&userID, &username, &mac)
+	err = conn.QueryRow(ctx, stmt, keyID).Scan(&userID, &username, &userType, &mac)
 	if err != nil {
 		Logger.Infof("error getting user %v", err)
-		return "", "", err
+		return nil, err
 	}
 
 	m := getMAC(secret, Env.Pepper)
 	if !hmac.Equal(m, mac) {
 		Logger.Debugf("mac error - not authenticated")
-		return "", "", err
+		return nil, err
 	}
 
-	return userID, username, nil
+	return &AuthorizedUser{
+		Id:   userID,
+		Name: username,
+		Type: userType,
+	}, nil
 }
 
 func DeleteAPIKey(conn *pgxpool.Conn, ctx context.Context, userID string) error {
