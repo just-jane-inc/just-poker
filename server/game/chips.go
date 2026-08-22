@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/just-jane-inc/just-poker/server/just"
 )
@@ -11,7 +10,7 @@ import (
 func (s stack) AsDto() ChipStackDTO {
 	dto := make(ChipStackDTO)
 	for d, c := range s {
-		dto[strconv.Itoa(d)] = c
+		dto[d] = c
 	}
 
 	return dto
@@ -24,13 +23,9 @@ func (s stack) AsDto() ChipStackDTO {
 // - all counts greater then or equal to zero
 func (s ChipStackDTO) validate() *just.PokerError {
 	for d, c := range s {
-		denomination, err := strconv.Atoi(d)
-		if err != nil {
-			return just.NewPokerError(d+" in stack does not parse as an integer", just.InvalidChipDenomination)
-		}
 
-		if denomination <= 0 {
-			return just.NewPokerError(d+" provided denomination is invalid", just.InvalidChipDenomination)
+		if d <= 0 {
+			return just.NewPokerError("provided a denomination less then 0", just.InvalidChipDenomination)
 		}
 
 		if c < 0 {
@@ -45,12 +40,7 @@ func (s ChipStackDTO) validate() *just.PokerError {
 func (s ChipStackDTO) asStack() stack {
 	createStack := make(map[int]int)
 	for d, c := range s {
-		denomination, err := strconv.Atoi(d)
-		if err != nil {
-			continue
-		}
-
-		createStack[denomination] += c
+		createStack[d] += c
 	}
 
 	return createStack
@@ -115,18 +105,16 @@ func (g *game) ExchangeChips(exchange ChipExchangeDTO) *just.PokerError {
 	}
 
 	for d := range exchange.Give {
-		denomination, _ := strconv.Atoi(d)
-		_, ok := g.denominations[denomination]
+		_, ok := g.denominations[d]
 		if !ok {
-			return just.NewPokerError(fmt.Sprintf("%s is not available for exchange", d), just.InvalidChipDenomination)
+			return just.NewPokerError(fmt.Sprintf("%d is not available for exchange", d), just.InvalidChipDenomination)
 		}
 	}
 
 	for d := range exchange.Receive {
-		denomination, _ := strconv.Atoi(d)
-		_, ok := g.denominations[denomination]
+		_, ok := g.denominations[d]
 		if !ok {
-			return just.NewPokerError(fmt.Sprintf("%s is not available for exchange", d), just.InvalidChipDenomination)
+			return just.NewPokerError(fmt.Sprintf("%d is not available for exchange", d), just.InvalidChipDenomination)
 		}
 	}
 
@@ -153,23 +141,11 @@ func (g *game) ExchangeChips(exchange ChipExchangeDTO) *just.PokerError {
 	}
 
 	for d, c := range exchange.Give {
-		denomination, err := strconv.Atoi(d)
-		if err != nil {
-			just.Logger.Errorf("chip exchange determined to be valid encountered error parsing denomination: %v", err)
-			continue
-		}
-
-		p.chips[denomination] -= c
+		p.chips[d] -= c
 	}
 
 	for d, c := range exchange.Receive {
-		denomination, err := strconv.Atoi(d)
-		if err != nil {
-			just.Logger.Errorf("chip exchange determined to be valid encountered error parsing denomination: %v", err)
-			continue
-		}
-
-		p.chips[denomination] += c
+		p.chips[d] += c
 	}
 
 	g.sendMessageToConnections("player_chip_exchange", exchange)

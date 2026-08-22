@@ -217,12 +217,7 @@ func createGameFromConfig(config NewGameConfigDTO) (*game, *just.PokerError) {
 	}
 
 	for d := range config.StartingChips {
-		denomination, err := strconv.Atoi(d)
-		if err != nil {
-			return nil, just.NewPokerError("provided denomination [%s] from StartingChips does not parse to an integer", just.InvalidGameConfiguration)
-		}
-
-		_, ok := denominations[denomination]
+		_, ok := denominations[d]
 		if !ok {
 			return nil, just.NewPokerError("provided starting chip denomination [%s] from StartingChips is not available in ChipDenominations", just.InvalidGameConfiguration)
 		}
@@ -272,8 +267,8 @@ func createGameFromConfig(config NewGameConfigDTO) (*game, *just.PokerError) {
 
 // TODO: should this just be called and return error? do I need
 // a response channel really?
-func (g *game) TryJoinGame(username, userID string) error {
-	just.Logger.Debugf("%s trying to join game %s", username, g.id)
+func (g *game) TryJoinGame(user *just.AuthorizedUser) error {
+	just.Logger.Debugf("%s trying to join game %s", user.Name, g.id)
 
 	if g.startedAt != nil {
 		return just.NewPokerError("game already started", just.GameAlreadyStarted)
@@ -289,20 +284,15 @@ func (g *game) TryJoinGame(username, userID string) error {
 
 	// check for duplicate player
 	for _, p := range g.table.players {
-		if p.UserID == userID {
+		if p.UserID == user.Id {
 			return just.NewPokerError("player already joined table", just.PlayerAlreadyJoined)
 		}
 	}
 
-	usertype, err := just.GetUserType(userID)
-	if err != nil {
-		return just.NewPokerError("could not fetch user type", just.Unknown)
-	}
-
 	p := &player{
-		UserID:      userID,
-		UserType:    usertype,
-		DisplayName: username,
+		UserID:      user.Id,
+		UserType:    user.Type,
+		DisplayName: user.Name,
 	}
 
 	p.chips = make(stack)
