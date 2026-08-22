@@ -1,7 +1,6 @@
 package game
 
 import (
-	"strconv"
 	"time"
 
 	"github.com/just-jane-inc/just-poker/server/just"
@@ -50,9 +49,8 @@ type ChipCountDTO struct {
 	Count int `json:"count"`
 }
 
-// ChipStackDTO a dto that aliases a map[string]int mapping string
-// denominations onto integer counts
-type ChipStackDTO map[string]int
+// ChipStackDTO a dto that maps denominations to counts
+type ChipStackDTO map[int]int
 
 // RoundDTO a dto describing information about the current round of play
 type RoundDTO struct {
@@ -226,12 +224,7 @@ type CardDTO struct {
 func (s ChipStackDTO) Sum() int {
 	total := 0
 	for d, count := range s {
-		denomination, err := strconv.Atoi(d)
-		if err != nil {
-			continue
-		}
-
-		total += denomination * count
+		total += d * count
 	}
 
 	return total
