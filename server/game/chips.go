@@ -172,6 +172,75 @@ func (g *game) ExchangeChips(exchange ChipExchangeDTO) *just.PokerError {
 		p.chips[denomination] += c
 	}
 
-	g.table.sendMessageToConnections("player_chip_exchange", exchange)
+	g.sendMessageToConnections("player_chip_exchange", exchange)
+	return nil
+}
+
+// canCoverBet validates whether a stack can be produced by a player
+func (p *player) canCoverBet(stack stack) *just.PokerError {
+	// first we go through and ensure that the player can cover
+	// every chip they want to bet, we do this before changing any chips
+	// in case there is an error (we dont want to unwind)
+	for d, c := range stack {
+		if c < 0 {
+			return &just.PokerError{
+				Message: "received negative chip amount",
+				Code:    just.InvalidBetAmount,
+			}
+		}
+
+		if c == 0 {
+			continue
+		}
+
+		chipCount, ok := p.chips[d]
+		if !ok {
+			return &just.PokerError{
+				Message: fmt.Sprintf("player has no chips with %d denomination", d),
+				Code:    just.NotEnoughChips,
+			}
+		}
+
+		if chipCount < c {
+			return &just.PokerError{
+				Message: fmt.Sprintf(
+					"player cannot cover %d of %d chips with their current count of %d",
+					c,
+					d,
+					chipCount,
+				),
+				Code: just.NotEnoughChips,
+			}
+		}
+	}
+
+	return nil
+}
+
+// coverBet validates that a ChipStackDTO can be produced by a player then removes it from p.chips
+//
+// this is a destructive action - altering the game state and can error. coverBet produces errors
+// if the chip stack itself is invalid or the player is missing required chips.
+//
+// TODO: we should likely have a way to lock the player stack while this is executing
+func (g *game) coverBet(p *player, chips ChipStackDTO) *just.PokerError {
+	// we first ensure that the player can cover the propsed bet
+	stack := chips.asStack()
+	if err := p.canCoverBet(stack); err != nil {
+		return err
+	}
+
+	// now that we have determined the chips can be covered we actually move them
+	// from the player to the pot
+	for denomination, count := range stack {
+		p.chips[denomination] -= count
+
+		if _, exists := g.table.pot[denomination]; !exists {
+			g.table.pot[denomination] = 0
+		}
+
+		g.table.pot[denomination] += count
+	}
+
 	return nil
 }

@@ -1,5 +1,4 @@
-// Package game provides you know, the game stuff
-// behold, game, packaged for your pleasure
+// Package game provides access and management of games.
 package game
 
 import (
@@ -365,7 +364,7 @@ func (g *game) TryStartGame() error {
 	}
 
 	if g.config.AutoStartHands {
-		err = g.table.nextHand(g.config.BigBlind, g.config.SmallBlind)
+		err = g.nextHand(g.config.BigBlind, g.config.SmallBlind)
 		if err != nil {
 			return err
 		}

@@ -108,7 +108,8 @@ func (t table) GetPlayerWithID(playerID string) *player {
 
 // NextPlayer gets the next at the table from a given positional offset
 // this _only_ excludes playes whose [player.state] is [PlayerStateOut]
-func (t *table) NextPlayer(offset int) *player {
+func (g *game) NextPlayer(offset int) *player {
+	t := g.table
 	for i := range len(t.players) {
 		idx := (offset + i + 1) % len(t.players)
 		p := t.players[idx]
@@ -122,7 +123,8 @@ func (t *table) NextPlayer(offset int) *player {
 
 // returns the player after offset in turn order
 // whos turn it would be if offset just ended
-func (t *table) NextInactivePlayer(offset int) *player {
+func (g *game) NextInactivePlayer(offset int) *player {
+	t := g.table
 	for i := range len(t.players) {
 		idx := (offset + i + 1) % len(t.players)
 		p := t.players[idx]
@@ -142,7 +144,8 @@ func (t *table) NextInactivePlayer(offset int) *player {
 // flop     -> turn will deal the second street (turn)
 // turn     -> river will deal the final street (river)
 // river    -> completed will determine winners and give chips to each player, from here a new hand is required
-func (t *table) nextRound() {
+func (g *game) nextRound() {
+	t := g.table
 	// ensure that all players are in a nominal state when we start the next round
 	for _, p := range t.players {
 		if p.state == PlayerStateActive {
@@ -161,7 +164,7 @@ func (t *table) nextRound() {
 	switch t.currentRound.currentRoundType {
 	case RoundTypeUnset: // GOTO ante
 		t.currentRound.currentRoundType = RoundTypeAnte
-		t.currentRound.currentAggressor = t.NextInactivePlayer(t.bigBlindPosition).position
+		t.currentRound.currentAggressor = g.NextInactivePlayer(t.bigBlindPosition).position
 		p := t.players[t.smallBlindPosition]
 		t.currentRound.currentPlayerPosition = p.position
 		t.currentRound.bet = t.currentHand.SmallBlind
@@ -174,7 +177,7 @@ func (t *table) nextRound() {
 
 		// TODO: we really need to stop depending on inactive state
 		// at all times, need a different method
-		offset := t.NextInactivePlayer(t.buttonPosition).position
+		offset := g.NextInactivePlayer(t.buttonPosition).position
 		for idx := range len(t.players) {
 			p := t.players[(idx+offset)%len(t.players)]
 
@@ -222,12 +225,12 @@ func (t *table) nextRound() {
 	case RoundTypeRiver: // GOTO end
 		// He beat me... Straight up... Pay him... Pay that man his money
 		// Captain_Onosa
-		handEvaluations := t.GetHandEvaluations()
+		handEvaluations := g.GetHandEvaluations()
 		payouts := make(map[int]int)
-		pots := t.getSplitPots()
+		pots := g.getSplitPots()
 		for _, p := range pots {
 			just.Logger.Debugf("processing pot for payout: %v", p)
-			payout, err := t.handlePayout(handEvaluations, p)
+			payout, err := g.handlePayout(handEvaluations, p)
 			if err != nil {
 				just.Logger.Errorf("encountered error computing payout: %v", err)
 				continue
@@ -312,7 +315,7 @@ func (t *table) nextRound() {
 			just.Logger.Errorf("pot was not exhausted during payout %v", t.pot)
 		}
 
-		t.sendMessageToConnections("payout", payoutEvents)
+		g.sendMessageToConnections("payout", payoutEvents)
 		t.pot = make(map[int]int)
 		t.currentRound.currentRoundType = RoundTypeCompleted
 
@@ -327,16 +330,16 @@ func (t *table) nextRound() {
 		Type: t.currentRound.currentRoundType,
 	}
 
-	t.sendMessageToConnections("round_start", msg)
+	g.sendMessageToConnections("round_start", msg)
 }
 
-func (t *table) sendMessageToConnections(eventType string, data any) {
+func (g *game) sendMessageToConnections(eventType string, data any) {
 	msg := just.WebsocketMessage[any]{
 		Data:      data,
 		EventType: eventType,
 	}
 
-	for _, conn := range just.UpdateHub.GetChannelsForGame(t.gameID) {
+	for _, conn := range just.UpdateHub.GetChannelsForGame(g.id) {
 		select {
 		case conn.MessageChannel <- msg:
 		default:
@@ -350,7 +353,8 @@ func (t *table) sendMessageToConnections(eventType string, data any) {
 // and returns a mapping of [position]=evaluation
 // where the lower an evaluation is numerically the
 // better it is as a poker hand.
-func (t *table) GetHandEvaluations() map[int]int {
+func (g *game) GetHandEvaluations() map[int]int {
+	t := g.table
 	remainingPlayers := make([]*player, 0)
 	for _, p := range t.players {
 		if p.state == PlayerStateFolded {
@@ -380,7 +384,7 @@ func (t *table) GetHandEvaluations() map[int]int {
 	}
 
 	for _, p := range remainingPlayers {
-		model := t.GetHand(p.position).Cards
+		model := g.GetHand(p.position).Cards
 		cards := make([]just.Card, len(model))
 
 		for i, c := range model {
@@ -399,13 +403,14 @@ func (t *table) GetHandEvaluations() map[int]int {
 	return handEvaluations
 }
 
-func (t *table) GetHand(position int) Hand {
+func (g *game) GetHand(position int) Hand {
+	t := g.table
 	hand := slices.Concat(t.street, t.players[position].pocket)
 	return Hand{Cards: hand}
 }
 
-func (t *table) OnGameOver() {
-	g, err := CurrentGames.RemoveGame(t.gameID)
+func (g *game) OnGameOver() {
+	g, err := CurrentGames.RemoveGame(g.table.gameID)
 	if err != nil {
 		just.Logger.Errorf("encountered error removing game in OnGameOver: %v", err)
 	} else {
@@ -413,19 +418,20 @@ func (t *table) OnGameOver() {
 		g.endedAt = &now
 	}
 
-	for _, p := range t.players {
+	for _, p := range g.table.players {
 		if p.state != PlayerStateOut {
 			p.state = PlayerStateWon
 		}
 	}
 }
 
-func (t *table) nextHandWithDeck(deck []CardDTO, bb int, sb int) *just.PokerError {
+func (g *game) nextHandWithDeck(deck []CardDTO, bb int, sb int) *just.PokerError {
+	t := g.table
 	if t.currentRound.currentRoundType != RoundTypeCompleted && t.currentRound.currentRoundType != RoundTypeUnset {
 		return just.NewPokerError("a hand is already in progress - can not start a new hand", just.HandAlreadyInProgress)
 	}
 
-	err := t.nextHand(bb, sb)
+	err := g.nextHand(bb, sb)
 	if err != nil {
 		return just.NewPokerError(fmt.Sprintf("encountered error: %v", err), 2025)
 	}
@@ -443,7 +449,8 @@ func (t *table) nextHandWithDeck(deck []CardDTO, bb int, sb int) *just.PokerErro
 }
 
 // TODO: this should return a PokerError probably
-func (t *table) nextHand(bb int, sb int) error {
+func (g *game) nextHand(bb int, sb int) error {
+	t := g.table
 	just.Logger.Debugf("attempting to start hand [%d]", t.currentHand.ID+1)
 
 	pot := t.pot.Sum()
@@ -477,16 +484,16 @@ func (t *table) nextHand(bb int, sb int) error {
 	t.currentHand.SmallBlind = sb
 	t.currentHand.BigBlind = bb
 
-	t.buttonPosition = t.NextInactivePlayer(t.buttonPosition).position
+	t.buttonPosition = g.NextInactivePlayer(t.buttonPosition).position
 
 	if t.isHeadsUp {
 		// in heads up play the button posts the small blind
 		t.smallBlindPosition = t.buttonPosition
 	} else {
-		t.smallBlindPosition = t.NextInactivePlayer(t.buttonPosition).position
+		t.smallBlindPosition = g.NextInactivePlayer(t.buttonPosition).position
 	}
 
-	t.bigBlindPosition = t.NextInactivePlayer(t.smallBlindPosition).position
+	t.bigBlindPosition = g.NextInactivePlayer(t.smallBlindPosition).position
 
 	t.deck.Reset()
 	t.street = make([]*card, 0)
@@ -505,8 +512,8 @@ func (t *table) nextHand(bb int, sb int) error {
 		ButtonPosition:     t.buttonPosition,
 	}
 
-	t.sendMessageToConnections("hand_started", msg)
-	t.nextRound()
+	g.sendMessageToConnections("hand_started", msg)
+	g.nextRound()
 	return nil
 }
 
@@ -540,9 +547,9 @@ func (p pot) IsEntitled(position int) bool {
 // note that the contribution field of the pot struct is not _total_ contribution,
 // that value is encoded in the mapping key, it is strictly the amount contributed
 // to that specific pot
-func (t *table) getSplitPots() map[int]pot {
-	contributions := make([]*player, len(t.players))
-	copy(contributions, t.players)
+func (g *game) getSplitPots() map[int]pot {
+	contributions := make([]*player, len(g.table.players))
+	copy(contributions, g.table.players)
 
 	sort.Slice(contributions, func(i int, j int) bool {
 		return contributions[i].potContribution < contributions[j].potContribution
@@ -583,7 +590,7 @@ func (t *table) getSplitPots() map[int]pot {
 // it requires a map of position -> eval and a map of position -> payout as arguments.
 // when the function terminates the values in winnings will hold the amount from the pot
 // that each position should be awarded.
-func (t *table) handlePayout(handEvaluations map[int]int, pot pot) (winnings map[int]int, err error) {
+func (g *game) handlePayout(handEvaluations map[int]int, pot pot) (winnings map[int]int, err error) {
 	winners := make([]int, 0)
 	bestHandEval := math.MaxInt
 	for position, eval := range handEvaluations {

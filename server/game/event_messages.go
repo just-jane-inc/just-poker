@@ -18,4 +18,8 @@ type PayoutEventDTO struct {
 	Chips    ChipStackDTO `json:"chips"`
 }
 
-type PlayerActionEventDTO PlayerActionDTO
+type TurnStartEventDTO struct {
+	PlayerID  string    `json:"player_id"`
+	RoundType RoundType `json:"round_type"`
+	BetAmount int       `json:"bet_amount"`
+}

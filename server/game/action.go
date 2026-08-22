@@ -1,46 +1,5 @@
 package game
 
-/*
-Texas Hold’em Rules: Flow of a Hand
-At the beginning of the first hand of play, one player will be assigned the dealer button (in home games,
-this player will also traditionally act as the dealer for that hand). The player immediately to the left
-of the button must post the small blind, while the player two seats to the left of the button must
-post the big blind. The size of these blinds is typically determined by the rules of the game.
-If any ante is required – common in a tournament situation – players should also contribute it at this point.
-
-Once all blinds have been posted and antes have been paid, the dealer will deal two cards to each player.
-Each player may examine their own cards. The play begins with the player to the left of the big blind.
-That player may choose to fold, in which case they forfeit their cards and are done with play for that
-hand. The player may also choose to call the bet, placing an amount of money into the pot equal to
-the size of the big blind. Finally, the player can also choose to raise, increasing the size of the
-bet required for other players to stay in the hand.
-
-Moving around the table clockwise, each player may then choose to take any of those options: folding,
-calling the current bet, or raising the bet. A round of betting ends when all players but one have
-folded (in which case the one remaining player wins the pot), or when all remaining players have
-called the current bet. On the first round of betting, if no players raise, the big blind will also
-have the option to check, essentially passing his turn; this is because the big blind has already placed
-the current bet amount into the pot, but hasn’t yet had a chance to act.
-
-Assuming there are two or more players remaining in the hand after the first round of betting, the
-dealer will then deal out three community cards in the middle of the table. These cards are known as
-the flop. Play now begins, starting with the first player to the left of the dealer button (if every
-player is still in the hand, this will be the small blind). Players have the same options as before;
-in addition, if no bet has yet been made in the betting round, players have the option to check. A
-round of betting can also end if all players check and no bets are made, along with the other ways discussed above.
-
-If two or more players remain in the hand after the second round of betting, the dealer will place
-a fourth community card – known as the turn – on the table. Once again, a round of betting ensues,
-using the same rules outlined above. Finally, if two or more players are still around after the third
-round of betting, the dealer will place the final community card – the river – on the table. One last
-round of betting will commence.
-
-After this final round of betting, all remaining players must reveal their hands. The player with the
-best hand according to the hand rankings above will win the pot. If two or more players share the exact
-same hand, the pot is split evenly between them. After each hand, the button moves one seat to the
-left, as do the responsibilities of posting the small and big blinds.
-*/
-
 import (
 	"fmt"
 	"time"
@@ -71,84 +30,12 @@ func (a PlayerActionDTO) ToString() string {
 	return fmt.Sprintf("chips: %#v intent: %s", a.Bet, a.Intent)
 }
 
-// canCoverBet validates whether a stack can be produced by a player
-func (p *player) canCoverBet(stack stack) *just.PokerError {
-	// first we go through and ensure that the player can cover
-	// every chip they want to bet, we do this before changing any chips
-	// in case there is an error (we dont want to unwind)
-	for d, c := range stack {
-		if c < 0 {
-			return &just.PokerError{
-				Message: "received negative chip amount",
-				Code:    just.InvalidBetAmount,
-			}
-		}
-
-		if c == 0 {
-			continue
-		}
-
-		chipCount, ok := p.chips[d]
-		if !ok {
-			return &just.PokerError{
-				Message: fmt.Sprintf("player has no chips with %d denomination", d),
-				Code:    just.NotEnoughChips,
-			}
-		}
-
-		if chipCount < c {
-			return &just.PokerError{
-				Message: fmt.Sprintf(
-					"player cannot cover %d of %d chips with their current count of %d",
-					c,
-					d,
-					chipCount,
-				),
-				Code: just.NotEnoughChips,
-			}
-		}
-	}
-
-	return nil
-}
-
-// coverBet validates that a ChipStackDTO can be produced by a player then removes it from p.chips
-//
-// this is a destructive action - altering the game state and can error. coverBet produces errors
-// if the chip stack itself is invalid or the player is missing required chips.
-//
-// TODO: we should likely have a way to lock the player stack while this is executing
-func (g *game) coverBet(p *player, chips ChipStackDTO) *just.PokerError {
-	// we first ensure that the player can cover the propsed bet
-	stack := chips.asStack()
-	if err := p.canCoverBet(stack); err != nil {
-		return err
-	}
-
-	// now that we have determined the chips can be covered we actually move them
-	// from the player to the pot
-	for denomination, count := range stack {
-		p.chips[denomination] -= count
-
-		if _, exists := g.table.pot[denomination]; !exists {
-			g.table.pot[denomination] = 0
-		}
-
-		g.table.pot[denomination] += count
-	}
-
-	return nil
-}
-
 // handlePlayerAction applies the provided PlayerActionDTO to the game state or returns a *just.PokerError
 //
 // processes actions according to the action intent and the current round. this is the entry point for all
 // game state updates. it is assumed that the caller manages synchronization and will call this method
 // sequentially.
 func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
-	g.gameStateLock.Lock()
-	defer g.gameStateLock.Unlock()
-
 	just.Logger.Debugf(
 		"process action [%s] from [%s] in game [%s] - current round type [%s]",
 		action.ToString(),
@@ -300,9 +187,9 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 	*                                                             *
 	* *************************************************************/
 	just.Logger.Debugf("accepted action [%s] for player with id [%s]", action.Intent, action.PlayerID)
-	g.table.sendMessageToConnections("player_action", action)
+	g.sendMessageToConnections("player_action", action)
 
-	nextPlayer := g.table.NextPlayer(p.position)
+	nextPlayer := g.NextPlayer(p.position)
 	remainingPlayers := 0
 	for _, p := range g.table.players {
 		if p.state == PlayerStateFolded {
@@ -321,13 +208,13 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 	// is still in the hand.
 	if remainingPlayers == 1 {
 		g.table.currentRound.currentRoundType = RoundTypeRiver
-		g.table.nextRound()
+		g.nextRound()
 	} else {
 		// if there are still players remaining in the game we need to figure out who is next
 		// this loop terminates either when we find an inactive player or we find the current
 		// agressor.
 		for nextPlayer.state != PlayerStateInactive && nextPlayer.position != g.table.currentRound.currentAggressor {
-			nextPlayer = g.table.NextInactivePlayer(nextPlayer.position)
+			nextPlayer = g.NextInactivePlayer(nextPlayer.position)
 			if nextPlayer == nil {
 				nextPlayer = g.table.players[g.table.currentRound.currentAggressor]
 			}
@@ -357,11 +244,11 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 			// recording the previous round here for logging
 			prevRoundType := g.table.currentRound.currentRoundType
 
-			g.table.nextRound()
+			g.nextRound()
 			if g.table.currentRound.currentRoundType == RoundTypePreFlop {
-				nextRoundFirstPlayer = g.table.NextInactivePlayer(g.table.bigBlindPosition)
+				nextRoundFirstPlayer = g.NextInactivePlayer(g.table.bigBlindPosition)
 			} else {
-				nextRoundFirstPlayer = g.table.NextInactivePlayer(g.table.buttonPosition)
+				nextRoundFirstPlayer = g.NextInactivePlayer(g.table.buttonPosition)
 			}
 
 			just.Logger.Debugf(

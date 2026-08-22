@@ -157,6 +157,9 @@ type NewGameConfigDTO struct {
 
 	// a collection of denominations that are available for chips at the table
 	ChipDenominations []int `json:"chip_denominations"`
+
+	// the number of milliseconds that a bot has to take a turn
+	BotTurnTimeout int `json:"bot_turn_timeout"`
 }
 
 // TableDTO a dto describing the full state of a table

@@ -159,7 +159,7 @@ func OnStartNextHand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if pokerError := g.table.nextHandWithDeck(dto.Deck, g.config.BigBlind, g.config.SmallBlind); pokerError != nil {
+	if pokerError := g.nextHandWithDeck(dto.Deck, g.config.BigBlind, g.config.SmallBlind); pokerError != nil {
 		just.Logger.Errorf("encountered error setting next hand: %v", err)
 		just.BadRequest(pokerError.Message, pokerError.Code).WriteJSONResponse(w)
 		return
@@ -357,7 +357,7 @@ func OnExchangeChips(w http.ResponseWriter, r *http.Request) {
 		return g.table.denominations[i] > g.table.denominations[j]
 	})
 
-	g.table.sendMessageToConnections("chip_exchange", exchange)
+	g.sendMessageToConnections("chip_exchange", exchange)
 	just.OK("chips_exchanged", struct{}{}).WriteJSONResponse(w)
 }
 
@@ -447,6 +447,9 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	g.gameStateLock.Lock()
+	defer g.gameStateLock.Unlock()
+
 	just.Logger.Debugf("trying player action...")
 	if err := g.handlePlayerAction(playerAction); err != nil {
 		just.Logger.Debugf("error in player action")
@@ -468,13 +471,13 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 
 	if g.IsGameOver() {
 		// update the game state and send a new update
-		g.table.OnGameOver()
+		g.OnGameOver()
 		handleUpdates(g, g.AsDTO(), "game_state_update")
 	} else if g.table.currentRound.currentRoundType == RoundTypeCompleted {
 		// if the game is configured for auto-starting the next hand we do so now
 		if g.config.AutoStartHands {
 			// we need to block here until this completes, the handleUpdates snapshot should include the completed state here.
-			g.table.nextHand(g.config.BigBlind, g.config.SmallBlind)
+			g.nextHand(g.config.BigBlind, g.config.SmallBlind)
 			handleUpdates(g, g.AsDTO(), "game_state_update")
 		}
 	}
