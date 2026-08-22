@@ -34,21 +34,15 @@ type (
 // @Security BearerAuth
 // @Router       /admin/game/{game_id}/status [post]
 func OnUpdateGameStatus(w http.ResponseWriter, r *http.Request) {
-	userID, _, err := just.GetAuthorizedUser(r)
-	if err != nil {
-		just.MissingToken().WriteJSONResponse(w)
+	user, err := just.GetAuthorizedUser(r)
+	if user == nil {
+		just.Unauthorized().WriteJSONResponse(w)
 		return
 	}
 
-	userType, err := just.GetUserType(userID)
-	if err != nil {
-		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
-		return
-	}
-
-	if userType != "admin" && userType != "game_master" {
-		// TODO: forbidden and admonish people for doing this
-		just.BadRequest("invalid", 0).WriteJSONResponse(w)
+	if user.NotType(just.UserTypeAdmin, just.UserTypeGameMaster) {
+		// TODO: admonish people for doing this
+		just.Forbidden().WriteJSONResponse(w)
 		return
 	}
 
@@ -97,21 +91,15 @@ func OnUpdateGameStatus(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router       /admin/game/{game_id}/table [post]
 func OnUpdateGameTable(w http.ResponseWriter, r *http.Request) {
-	userID, _, err := just.GetAuthorizedUser(r)
-	if err != nil {
-		just.MissingToken().WriteJSONResponse(w)
+	user, err := just.GetAuthorizedUser(r)
+	if user == nil {
+		just.Unauthorized().WriteJSONResponse(w)
 		return
 	}
 
-	userType, err := just.GetUserType(userID)
-	if err != nil {
-		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
-		return
-	}
-
-	if userType != "admin" && userType != "game_master" {
-		// TODO: forbidden and admonish people for doing this
-		just.BadRequest("invalid", 0).WriteJSONResponse(w)
+	if user.NotType(just.UserTypeAdmin, just.UserTypeGameMaster) {
+		// TODO: admonish people for doing this
+		just.Forbidden().WriteJSONResponse(w)
 		return
 	}
 

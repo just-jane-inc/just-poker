@@ -60,14 +60,14 @@ func Unauthorized() HTTPResponse {
 	}
 }
 
-func MissingToken() HTTPResponse {
+func Forbidden() HTTPResponse {
 	return HTTPResponse{
-		Code: http.StatusUnauthorized,
+		Code: http.StatusForbidden,
 		Object: ResponseMessage[ErrorDTO]{
 			Type: "error",
 			Data: ErrorDTO{
-				ErrorCode: TokenMissing,
-				Error:     "access token not provided with request",
+				ErrorCode: 67,
+				Error:     "=^-^=",
 			},
 		},
 	}

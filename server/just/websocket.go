@@ -39,7 +39,7 @@ func (h *ServerUpdateHub) GetChannelsForGame(gameID string) []*PlayerUpdateConne
 	return connections
 }
 
-func (h *ServerUpdateHub) AddPlayerToHub(gameID string, playerID string) *PlayerUpdateConnection {
+func (h *ServerUpdateHub) AddPlayerToHub(gameID string, user *AuthorizedUser) *PlayerUpdateConnection {
 	h.addHubSync.Lock()
 	defer h.addHubSync.Unlock()
 
@@ -53,23 +53,21 @@ func (h *ServerUpdateHub) AddPlayerToHub(gameID string, playerID string) *Player
 		h.Games[gameID] = hub
 	}
 
-	playerConnection, ok := hub.playerConnections[playerID]
+	playerConnection, ok := hub.playerConnections[user.Id]
 	if ok {
 		playerConnection.SignalExit("connection already exists")
-		delete(hub.playerConnections, playerID)
+		delete(hub.playerConnections, user.Id)
 	}
-
-	usertype, _ := GetUserType(playerID)
 
 	p := &PlayerUpdateConnection{
 		GameID:         gameID,
-		PlayerID:       playerID,
+		PlayerID:       user.Id,
 		MessageChannel: make(chan WebsocketMessage[any], 10),
 		Exit:           make(chan any),
-		UserType:       usertype,
+		UserType:       user.Type,
 	}
 
-	hub.playerConnections[playerID] = p
+	hub.playerConnections[user.Id] = p
 	return p
 }
 
@@ -121,7 +119,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func HandleWebSocket(w http.ResponseWriter, r *http.Request, gameID string, playerID string, data any) {
+func HandleWebSocket(w http.ResponseWriter, r *http.Request, gameID string, user *AuthorizedUser, data any) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		Logger.Errorf("Failed to upgrade connection: %v", err)
@@ -131,7 +129,7 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request, gameID string, play
 
 	Logger.Infof("Client connected: %s", conn.RemoteAddr())
 
-	playerConn := UpdateHub.AddPlayerToHub(gameID, playerID)
+	playerConn := UpdateHub.AddPlayerToHub(gameID, user)
 	defer playerConn.SignalExit("defered from HandleWebSocket closure")
 	defer func() {
 		gameHub, ok := UpdateHub.Games[gameID]
@@ -141,7 +139,7 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request, gameID string, play
 
 		gameHub.connectionsLock.Lock()
 		defer gameHub.connectionsLock.Unlock()
-		delete(gameHub.playerConnections, playerID)
+		delete(gameHub.playerConnections, user.Id)
 
 		if len(gameHub.playerConnections) == 0 {
 			// we should be able to delete this hub now righht?
@@ -167,7 +165,7 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request, gameID string, play
 			break
 		}
 
-		Logger.Debugf("player %s sent message to ws on game %s", playerID, gameID)
+		Logger.Debugf("player %s sent message to ws on game %s", user.Id, gameID)
 	}
 
 	Logger.Infof("client disconnected: %s", conn.RemoteAddr())
