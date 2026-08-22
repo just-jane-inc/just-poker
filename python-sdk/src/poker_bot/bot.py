@@ -399,10 +399,17 @@ class PokerBot:
             amount: the amount we need to bet
 
         Constraints:
-            - d > 0 ∀ d in denominations
-            - k ∈ denominations ∀ k ∈ chips.keys()
-            - k % d == 0 ∀ k and d such that d < k ∈ denominations
-            - amount % d == 0 ∃ d ∈ denominations
+            - let D = self._current_state.game_config.chip_denominations
+            - let C = self._player.stack.keys()
+            - ∀d ∈ D, d > 0             (all denominations are positive integers)
+            - C ⊆ D                     (denominations appearing in players stack are strictly a subset of those in the game)
+            - ∀k,d ∈ D, d<k => d∣k      (for all k,d in denominations k less than d implies k divides d evenly)
+            - ∃d ∈ D such that d∣amount (for the provided amount to bet their exists some element of denominations which divdes it evenly)
+
+        Notes:
+            1. The constraints described above are not validated in this code and their violation represents undefined behavior
+            2. This funcion will alter the state of the game - it can preform a single chip exchange if one is required
+            3. If the provided amount is greater then the sum of all chips the player has we simply return all of their chips - "all in"
 
         Returns:
             a mapping of string to integer expressing the bet that the player
@@ -410,12 +417,17 @@ class PokerBot:
         """
         denominations = self._current_state.game_config.chip_denominations
         chips = {int(d): c for d, c in self._player.stack.items()}
-        chips_sum = sum((d * c for d, c in chips.items()))
-        if chips_sum < amount:
+
+        if sum((d * c for d, c in chips.items())) < amount:
             # we are all in here
             return {str(d): c for d, c in chips.items()}
 
+        # we want to iterate the denominations in decending order to support a greedy algorithm
         denominations = sorted(denominations, reverse=True)
+
+        # this loop terminates with a valid bet, ignoring what the player
+        # actually has available and just constructing a valid bet from the
+        # available denominations.
         valid_bet: dict[int, int] = {}
         for denomination in denominations:
             if denomination > amount:
@@ -429,9 +441,11 @@ class PokerBot:
             if amount == 0:
                 break
 
-        if valid_bet is None:
-            return None
+        if amount != 0:
+            raise ex.CustomException("no valid bet can be constructed - constraint violation likely")
 
+        # now that we have a valid bet to target we compute what we are missing
+        # from the player stack to achieve it
         missing_chips: dict[int, int] = {}
         for denomination, count in valid_bet.items():
             if denomination not in chips:
@@ -448,10 +462,11 @@ class PokerBot:
                 # otherwise we know that we can cover this denomination, just do that
                 chips[denomination] -= count
 
+        # deal with missing chips by constructing a chip exchange
+        # we iterate the missing chips in ascending order and the player
+        # stack in decending, this allows us to select exchanges in a greedy way.
         give: dict[int, int] = {d: 0 for d in denominations}
         receive: dict[int, int] = {d: 0 for d in denominations}
-        # here we just need to do any required exchanges from our remaining
-        # chips in order to ensure that we cover this bet
         for denomination, count in sorted(missing_chips.items()):
             # we need to get count of denomination, end of story.
             # this iteration of the loop cannot terminate without satisfying
@@ -459,11 +474,14 @@ class PokerBot:
             if count == 0:
                 break
 
+            # note that we _always_ give chips of value d and receive
+            # those of denomination in this section - we are trying to construct
+            # the required valid_bet.
             for d, c in sorted(chips.items(), reverse=True):
                 if count <= 0:
                     break
 
-                if c == 0:
+                if d == denomination or c == 0:
                     continue
 
                 # we are chipping down with this part of the exchange
@@ -484,9 +502,7 @@ class PokerBot:
                         receive[denomination] += 1
                         count -= 1
 
-        give_some = sum((d * c for d, c in give.items()))
-
-        if give_some > 0:
+        if sum((d * c for d, c in give.items())) > 0:
             try:
                 await self.exchange_chips(
                     [help.Chips(d, c) for d, c in give.items()],
@@ -494,17 +510,16 @@ class PokerBot:
                 )
 
             except Exception:
-                print("encountered error exchanging chips")
-                print(f"receive: {receive}")
-                print(f"give: {give}")
-                print(f"bet: {valid_bet}")
-                print(f"stack: {self._player.stack}")
+                logger.error(
+                    "encountered error exchanging chips | receive=%s | give=%s | bet=%s | stack=%s",
+                    receive,
+                    give,
+                    valid_bet,
+                    self._player.stack,
+                )
                 raise
 
         return {str(d): c for d, c in valid_bet.items()}
-
-    def _get_valid_bet(self, denominations: list[int], amount: int) -> dict[int, int] | None:
-        """gets a valid bet which satisfies amount from denominations"""
 
     def _held(self) -> dict[int, int]:
         held: dict[int, int] = {}
