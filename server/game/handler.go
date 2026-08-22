@@ -50,7 +50,7 @@ func OnEvalHand(w http.ResponseWriter, r *http.Request) {
 // @Router       /game/{game_id} [delete]
 func OnDeleteGame(w http.ResponseWriter, r *http.Request) {
 	gameID := r.PathValue("game_id")
-	user, err := just.GetAuthorizedUser(r)
+	user, _ := just.GetAuthorizedUser(r)
 	if user == nil {
 		just.Unauthorized().WriteJSONResponse(w)
 		return
@@ -86,7 +86,7 @@ func OnDeleteGame(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router       /game/{game_id}/player [post]
 func OnJoinGameRequest(w http.ResponseWriter, r *http.Request) {
-	user, err := just.GetAuthorizedUser(r)
+	user, _ := just.GetAuthorizedUser(r)
 	if user == nil {
 		just.Unauthorized().WriteJSONResponse(w)
 		return
@@ -103,7 +103,7 @@ func OnJoinGameRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	g.gameStateLock.Lock()
-	err = g.TryJoinGame(user)
+	err := g.TryJoinGame(user)
 	g.gameStateLock.Unlock()
 
 	if err != nil {
@@ -115,7 +115,7 @@ func OnJoinGameRequest(w http.ResponseWriter, r *http.Request) {
 			just.BadRequest("unknown error occurred", just.Unknown).WriteJSONResponse(w)
 		}
 	} else {
-		just.Logger.Debugf("[%s] joined game [%s]", user.Id, gameID)
+		just.Logger.Debugf("[%s] joined game [%s]", user.ID, gameID)
 		just.OK("table_joined", struct{}{}).WriteJSONResponse(w)
 	}
 }
@@ -183,7 +183,7 @@ func OnGetCurrentGameState(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if user != nil {
-		just.Logger.Debugf("getting game state for user with ID %s", user.Id)
+		just.Logger.Debugf("getting game state for user with ID %s", user.ID)
 	} else {
 		just.Logger.Debug("getting game state")
 	}
@@ -199,7 +199,7 @@ func OnGetCurrentGameState(w http.ResponseWriter, r *http.Request) {
 	if user == nil {
 		dto.MaskCards("")
 	} else if user.NotType(just.UserTypeAdmin, just.UserTypeGameMaster) {
-		dto.MaskCards(user.Id)
+		dto.MaskCards(user.ID)
 	}
 
 	just.OK("game_state", dto).WriteJSONResponse(w)
@@ -217,7 +217,7 @@ func OnGetCurrentGameState(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router       /game [post]
 func OnCreateGame(w http.ResponseWriter, r *http.Request) {
-	user, err := just.GetAuthorizedUser(r)
+	user, _ := just.GetAuthorizedUser(r)
 	if user == nil {
 		just.Unauthorized().WriteJSONResponse(w)
 		return
@@ -239,14 +239,14 @@ func OnCreateGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	g.createdBy = user.Id
-	if err = CurrentGames.InsertGame(g); err != nil {
+	g.createdBy = user.ID
+	if err := CurrentGames.InsertGame(g); err != nil {
 		just.InternalError(fmt.Sprintf("encountered error inserting game into cache: %v game could not be stored", err)).WriteJSONResponse(w)
 		return
 	}
 
 	just.OK("game_lobby_created", g.id).WriteJSONResponse(w)
-	just.Logger.Debugf("game lobby [%s] created for [%s]", g.id, user.Id)
+	just.Logger.Debugf("game lobby [%s] created for [%s]", g.id, user.ID)
 }
 
 // OnStartGameFromState godoc
@@ -283,7 +283,7 @@ func OnStartGameFromState(w http.ResponseWriter, r *http.Request) {
 		just.NotFound("game not found", just.GameNotFound).WriteJSONResponse(w)
 	}
 
-	if g.createdBy != user.Id {
+	if g.createdBy != user.ID {
 		just.Unauthorized().WriteJSONResponse(w)
 		return
 	}
@@ -342,7 +342,7 @@ func OnExchangeChips(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exchange.UserID = user.Id
+	exchange.UserID = user.ID
 	if err := g.ExchangeChips(exchange); err != nil {
 		just.BadRequest(err.Message, err.Code).WriteJSONResponse(w)
 		return
@@ -373,7 +373,7 @@ func OnExchangeChips(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router       /game/{game_id}/started [post]
 func OnStartGame(w http.ResponseWriter, r *http.Request) {
-	user, err := just.GetAuthorizedUser(r)
+	user, _ := just.GetAuthorizedUser(r)
 	if user == nil {
 		just.Unauthorized().WriteJSONResponse(w)
 		return
@@ -381,7 +381,7 @@ func OnStartGame(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: Check user.Type
 
-	just.Logger.Debugf("start game request received from [%s]", user.Id)
+	just.Logger.Debugf("start game request received from [%s]", user.ID)
 	gameID := r.PathValue("game_id")
 	g, ok := CurrentGames.GetGame(gameID)
 	if !ok {
@@ -390,10 +390,8 @@ func OnStartGame(w http.ResponseWriter, r *http.Request) {
 	}
 
 	g.gameStateLock.Lock()
-	err = g.TryStartGame()
-	g.gameStateLock.Unlock()
-
-	if err != nil {
+	defer g.gameStateLock.Unlock()
+	if err := g.TryStartGame(); err != nil {
 		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
 		return
 	}
@@ -439,9 +437,9 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	just.Logger.Debugf("player action request received from [%s] for [%s]", user.Id, gameID)
+	just.Logger.Debugf("player action request received from [%s] for [%s]", user.ID, gameID)
 
-	playerAction.PlayerID = user.Id
+	playerAction.PlayerID = user.ID
 
 	if g.isPaused {
 		just.InvalidPlayerActionGameIsPaused().WriteJSONResponse(w)
@@ -514,7 +512,7 @@ func OnRegisterListener(w http.ResponseWriter, r *http.Request) {
 	// TODO: Check user.Type
 
 	gameID := r.PathValue("game_id")
-	just.Logger.Debugf("received request to connect to game state updates from game [%s] from player [%s]", gameID, user.Id)
+	just.Logger.Debugf("received request to connect to game state updates from game [%s] from player [%s]", gameID, user.ID)
 
 	g, ok := CurrentGames.GetGame(gameID)
 	if !ok {
@@ -555,7 +553,7 @@ func OnGetNextListenerEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, ok := h.GetConnectionForPlayer(user.Id)
+	conn, ok := h.GetConnectionForPlayer(user.ID)
 	if !ok {
 		just.NotFound("no listening hub found for user", 0).WriteJSONResponse(w)
 		return
@@ -584,7 +582,7 @@ func OnCreateGameConnection(w http.ResponseWriter, r *http.Request) {
 	}
 
 	gameID := r.PathValue("game_id")
-	just.Logger.Debugf("received request to connect to game state updates from game [%s] from player [%s]", gameID, user.Id)
+	just.Logger.Debugf("received request to connect to game state updates from game [%s] from player [%s]", gameID, user.ID)
 
 	g, ok := CurrentGames.GetGame(gameID)
 	if !ok {
@@ -594,7 +592,7 @@ func OnCreateGameConnection(w http.ResponseWriter, r *http.Request) {
 
 	dto := g.AsDTO()
 	if user.NotType(just.UserTypeAdmin, just.UserTypeGameMaster) {
-		dto.MaskCards(user.Id)
+		dto.MaskCards(user.ID)
 	}
 
 	just.HandleWebSocket(w, r, gameID, user, dto)

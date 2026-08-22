@@ -53,7 +53,7 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 
 	p := g.table.players[g.table.currentRound.currentPlayerPosition]
 	var actingPlayer *player
-	if actingPlayer = g.table.GetPlayerWithID(action.PlayerID); actingPlayer == nil {
+	if actingPlayer = g.GetPlayerWithID(action.PlayerID); actingPlayer == nil {
 		return &just.PokerError{
 			Message: fmt.Sprintf("player [%s] not found in game [%s]", action.PlayerID, g.id),
 			Code:    just.UserNotFound,

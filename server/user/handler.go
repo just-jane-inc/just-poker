@@ -39,7 +39,7 @@ func OnDeleteMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	just.DeleteUser(user.Id, w)
+	just.DeleteUser(user.ID, w)
 }
 
 // OnCreateUser Create a user

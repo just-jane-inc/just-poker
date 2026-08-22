@@ -57,3 +57,45 @@ func (s stack) Sum() int {
 
 	return total
 }
+
+// GetPlayerWithID gets a player from a game by id
+func (g *game) GetPlayerWithID(playerID string) *player {
+	for _, p := range g.table.players {
+		if p.UserID == playerID {
+			return p
+		}
+	}
+
+	return nil
+}
+
+// NextPlayer gets the next at the table from a given positional offset
+// this _only_ excludes playes whose [player.state] is [PlayerStateOut]
+func (g *game) NextPlayer(offset int) *player {
+	t := g.table
+	for i := range len(t.players) {
+		idx := (offset + i + 1) % len(t.players)
+		p := t.players[idx]
+		if p.state != PlayerStateOut {
+			return p
+		}
+	}
+
+	return nil
+}
+
+// returns the player after offset in turn order
+// whos turn it would be if offset just ended
+func (g *game) NextInactivePlayer(offset int) *player {
+	t := g.table
+	for i := range len(t.players) {
+		idx := (offset + i + 1) % len(t.players)
+		p := t.players[idx]
+		if p.state == PlayerStateInactive {
+			return p
+		}
+	}
+
+	just.Logger.Debug("no inactive players")
+	return nil
+}

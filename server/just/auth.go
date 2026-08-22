@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 	"slices"
@@ -36,7 +37,7 @@ const (
 )
 
 type AuthorizedUser struct {
-	Id   string
+	ID   string
 	Name string
 	Type UserType
 }
@@ -66,18 +67,18 @@ func GetAuthorizedUser(r *http.Request) (*AuthorizedUser, error) {
 	splitToken := strings.Split(token, "Bearer ")
 
 	if len(splitToken) != 2 {
-		return nil, NewPokerError("invalid token format", Unknown)
+		return nil, errors.New("invalid format")
 	}
 
 	token = splitToken[1]
 	parts := strings.Split(token, ".")
 
 	if len(parts) != 3 || parts[0] != "bahms" {
-		return nil, fmt.Errorf("invalid format")
+		return nil, errors.New("invalid format")
 	}
 
 	if parts[1] == "" || parts[2] == "" {
-		return nil, fmt.Errorf("invalid format")
+		return nil, errors.New("invalid format")
 	}
 
 	keyID, secret := parts[1], parts[2]
@@ -108,7 +109,7 @@ func GetAuthorizedUser(r *http.Request) (*AuthorizedUser, error) {
 	}
 
 	return &AuthorizedUser{
-		Id:   userID,
+		ID:   userID,
 		Name: username,
 		Type: userType,
 	}, nil

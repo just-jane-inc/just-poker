@@ -53,21 +53,21 @@ func (h *ServerUpdateHub) AddPlayerToHub(gameID string, user *AuthorizedUser) *P
 		h.Games[gameID] = hub
 	}
 
-	playerConnection, ok := hub.playerConnections[user.Id]
+	playerConnection, ok := hub.playerConnections[user.ID]
 	if ok {
 		playerConnection.SignalExit("connection already exists")
-		delete(hub.playerConnections, user.Id)
+		delete(hub.playerConnections, user.ID)
 	}
 
 	p := &PlayerUpdateConnection{
 		GameID:         gameID,
-		PlayerID:       user.Id,
+		PlayerID:       user.ID,
 		MessageChannel: make(chan WebsocketMessage[any], 10),
 		Exit:           make(chan any),
 		UserType:       user.Type,
 	}
 
-	hub.playerConnections[user.Id] = p
+	hub.playerConnections[user.ID] = p
 	return p
 }
 
@@ -139,11 +139,7 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request, gameID string, user
 
 		gameHub.connectionsLock.Lock()
 		defer gameHub.connectionsLock.Unlock()
-		delete(gameHub.playerConnections, user.Id)
-
-		if len(gameHub.playerConnections) == 0 {
-			// we should be able to delete this hub now righht?
-		}
+		delete(gameHub.playerConnections, user.ID)
 	}()
 
 	playerConn.conn = conn
@@ -165,7 +161,7 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request, gameID string, user
 			break
 		}
 
-		Logger.Debugf("player %s sent message to ws on game %s", user.Id, gameID)
+		Logger.Debugf("player %s sent message to ws on game %s", user.ID, gameID)
 	}
 
 	Logger.Infof("client disconnected: %s", conn.RemoteAddr())

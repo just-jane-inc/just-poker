@@ -1,7 +1,6 @@
 package game
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"slices"
@@ -71,6 +70,7 @@ func (dto TableDTO) AsTable() *table {
 	return &t
 }
 
+// AsDTO converts a table model to its DTO representation
 func (t table) AsDTO() TableDTO {
 	dto := TableDTO{
 		Players:            make([]PlayerDTO, len(t.players)),
@@ -94,47 +94,6 @@ func (t table) AsDTO() TableDTO {
 	}
 
 	return dto
-}
-
-func (t table) GetPlayerWithID(playerID string) *player {
-	for _, p := range t.players {
-		if p.UserID == playerID {
-			return p
-		}
-	}
-
-	return nil
-}
-
-// NextPlayer gets the next at the table from a given positional offset
-// this _only_ excludes playes whose [player.state] is [PlayerStateOut]
-func (g *game) NextPlayer(offset int) *player {
-	t := g.table
-	for i := range len(t.players) {
-		idx := (offset + i + 1) % len(t.players)
-		p := t.players[idx]
-		if p.state != PlayerStateOut {
-			return p
-		}
-	}
-
-	return nil
-}
-
-// returns the player after offset in turn order
-// whos turn it would be if offset just ended
-func (g *game) NextInactivePlayer(offset int) *player {
-	t := g.table
-	for i := range len(t.players) {
-		idx := (offset + i + 1) % len(t.players)
-		p := t.players[idx]
-		if p.state == PlayerStateInactive {
-			return p
-		}
-	}
-
-	just.Logger.Debug("no inactive players")
-	return nil
 }
 
 // nextRound handles progressing the round in a game
@@ -333,22 +292,6 @@ func (g *game) nextRound() {
 	g.sendMessageToConnections("round_start", msg)
 }
 
-func (g *game) sendMessageToConnections(eventType string, data any) {
-	msg := just.WebsocketMessage[any]{
-		Data:      data,
-		EventType: eventType,
-	}
-
-	for _, conn := range just.UpdateHub.GetChannelsForGame(g.id) {
-		select {
-		case conn.MessageChannel <- msg:
-		default:
-			just.Logger.Infof("buffer for connection [%s]::[%s] full, exiting", conn.GameID, conn.PlayerID)
-			conn.Exit <- struct{}{}
-		}
-	}
-}
-
 // Showdown evaluates all hands at the table
 // and returns a mapping of [position]=evaluation
 // where the lower an evaluation is numerically the
@@ -449,13 +392,14 @@ func (g *game) nextHandWithDeck(deck []CardDTO, bb int, sb int) *just.PokerError
 }
 
 // TODO: this should return a PokerError probably
-func (g *game) nextHand(bb int, sb int) error {
+func (g *game) nextHand(bb int, sb int) *just.PokerError {
 	t := g.table
 	just.Logger.Debugf("attempting to start hand [%d]", t.currentHand.ID+1)
 
 	pot := t.pot.Sum()
 	if pot > 0 {
-		return errors.New("pot still has chips, cannot start new hand until the previous one is resolved")
+		just.Logger.Error("failed to clear pot before trying to start next hand")
+		return just.NewPokerError("pot was not cleared - cannot start a new hand", just.Unknown)
 	}
 
 	for _, p := range t.players {

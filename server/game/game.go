@@ -284,13 +284,13 @@ func (g *game) TryJoinGame(user *just.AuthorizedUser) error {
 
 	// check for duplicate player
 	for _, p := range g.table.players {
-		if p.UserID == user.Id {
+		if p.UserID == user.ID {
 			return just.NewPokerError("player already joined table", just.PlayerAlreadyJoined)
 		}
 	}
 
 	p := &player{
-		UserID:      user.Id,
+		UserID:      user.ID,
 		UserType:    user.Type,
 		DisplayName: user.Name,
 	}
@@ -302,6 +302,7 @@ func (g *game) TryJoinGame(user *just.AuthorizedUser) error {
 	return nil
 }
 
+// IsGameOver determines if the game is over by checking for more then one remaining player
 func (g *game) IsGameOver() bool {
 	playersRemaining := 0
 	for _, p := range g.table.players {
@@ -315,9 +316,11 @@ func (g *game) IsGameOver() bool {
 	return playersRemaining <= 1
 }
 
-func (g *game) TryStartGame() error {
+// TryStartGame attempts to start the game, returning an error if the game
+// cannot be started.
+func (g *game) TryStartGame() *just.PokerError {
 	if g.startedAt != nil {
-		return fmt.Errorf("game already started")
+		return just.NewPokerError("game already started", just.GameAlreadyStarted)
 	}
 
 	now := time.Now()
@@ -328,34 +331,35 @@ func (g *game) TryStartGame() error {
 
 	conn, err := just.DBConnPool.Acquire(ctx)
 	if err != nil {
-		return err
+		just.Logger.Errorf("encounterd error acquiring db conn when trying to start game [%s]", g.id)
+		return just.NewPokerError("internal server errror", just.Unknown)
 	}
 	defer conn.Release()
-
-	stmt := `
-	UPDATE public.just_poker_game 
-	SET player_ids = array_cat(player_ids, $1::bigint[])
-	WHERE game_id = $2`
 
 	players := make([]int, len(g.table.players))
 	for i, p := range g.table.players {
 		id, err := strconv.Atoi(p.UserID)
 		if err != nil {
-			return err
+			just.Logger.Errorf("user id [%s] failed to parse as an int", p.UserID)
+			return just.NewPokerError("internal server errror", just.Unknown)
 		}
 
 		players[i] = id
 		p.position = i
 	}
 
+	stmt := `
+	UPDATE public.just_poker_game 
+	SET player_ids = array_cat(player_ids, $1::bigint[])
+	WHERE game_id = $2`
 	_, err = conn.Exec(ctx, stmt, players, g.id)
 	if err != nil {
-		return err
+		just.Logger.Errorf("failed to update game state when trying to start game [%s]", g.id)
+		return just.NewPokerError("internal server errror", just.Unknown)
 	}
 
 	if g.config.AutoStartHands {
-		err = g.nextHand(g.config.BigBlind, g.config.SmallBlind)
-		if err != nil {
+		if err := g.nextHand(g.config.BigBlind, g.config.SmallBlind); err != nil {
 			return err
 		}
 	} else {
@@ -367,6 +371,7 @@ func (g *game) TryStartGame() error {
 	return nil
 }
 
+// PauseGameExecution prevents player actions from executing
 func (g *game) PauseGameExecution() error {
 	select {
 	case g.pauseGameSemaphor <- struct{}{}:
@@ -378,6 +383,7 @@ func (g *game) PauseGameExecution() error {
 	return nil
 }
 
+// ResumeGameExecution resumes a paused game
 func (g *game) ResumeGameExecution() error {
 	select {
 	case <-g.pauseGameSemaphor:

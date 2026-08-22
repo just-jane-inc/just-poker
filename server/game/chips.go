@@ -126,7 +126,7 @@ func (g *game) ExchangeChips(exchange ChipExchangeDTO) *just.PokerError {
 	}
 
 	var p *player
-	if p = g.table.GetPlayerWithID(exchange.UserID); p == nil {
+	if p = g.GetPlayerWithID(exchange.UserID); p == nil {
 		return &just.PokerError{
 			Message: fmt.Sprintf("player [%s] not found at table", exchange.UserID),
 			Code:    just.UserNotFound,
