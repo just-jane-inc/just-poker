@@ -92,6 +92,9 @@ components:
         big_blind:
           description: the big blind
           type: integer
+        bot_turn_timeout:
+          description: the number of milliseconds that a bot has to take a turn
+          type: integer
         chip_denominations:
           description: a collection of denominations that are available for chips
             at the table
@@ -349,14 +352,16 @@ components:
       description: the type of user
       enum:
       - bot
-      - normal
+      - human
       - admin
+      - dealer
       - game_master
       type: string
       x-enum-varnames:
       - UserTypeBot
       - UserTypeHuman
       - UserTypeAdmin
+      - UserTypeDealer
       - UserTypeGameMaster
   securitySchemes:
     BearerAuth:

@@ -187,7 +187,7 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 	*                                                             *
 	* *************************************************************/
 	just.Logger.Debugf("accepted action [%s] for player with id [%s]", action.Intent, action.PlayerID)
-	g.sendMessageToConnections("player_action", action)
+	g.OnPlayerAction(action)
 
 	nextPlayer := g.NextPlayer(p.position)
 	remainingPlayers := 0

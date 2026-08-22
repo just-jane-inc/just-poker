@@ -40,6 +40,7 @@ class TestJustResponseMessageGameGameDTO(unittest.TestCase):
                     game_config = openapi_client.models.game/new_game_config_dto.game.NewGameConfigDTO(
                         auto_starts_hands = True, 
                         big_blind = 56, 
+                        bot_turn_timeout = 56, 
                         chip_denominations = [
                             56
                             ], 

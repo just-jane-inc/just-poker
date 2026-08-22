@@ -274,7 +274,7 @@ func (g *game) nextRound() {
 			just.Logger.Errorf("pot was not exhausted during payout %v", t.pot)
 		}
 
-		g.sendMessageToConnections("payout", payoutEvents)
+		g.OnPayout(payoutEvents)
 		t.pot = make(map[int]int)
 		t.currentRound.currentRoundType = RoundTypeCompleted
 
@@ -285,11 +285,7 @@ func (g *game) nextRound() {
 		return
 	}
 
-	msg := RoundStartEventDTO{
-		Type: t.currentRound.currentRoundType,
-	}
-
-	g.sendMessageToConnections("round_start", msg)
+	g.OnRoundStarted()
 }
 
 // Showdown evaluates all hands at the table
@@ -447,16 +443,7 @@ func (g *game) nextHand(bb int, sb int) *just.PokerError {
 	t.currentHand.ID += 1
 	t.currentTurn.ID = 0
 
-	msg := HandStartEventDTO{
-		ID:                 t.currentHand.ID,
-		BigBlindCost:       t.currentHand.BigBlind,
-		BigBlindPosition:   t.bigBlindPosition,
-		SmallBlindCost:     t.currentHand.SmallBlind,
-		SmallBlindPosition: t.smallBlindPosition,
-		ButtonPosition:     t.buttonPosition,
-	}
-
-	g.sendMessageToConnections("hand_started", msg)
+	g.OnHandStarted()
 	g.nextRound()
 	return nil
 }

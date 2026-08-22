@@ -29,11 +29,12 @@ class GameNewGameConfigDTO(BaseModel):
     """ # noqa: E501
     auto_starts_hands: Optional[StrictBool] = Field(default=None, description="a flag which indicates true if the game server should wait for a signal to start hands or if it should do so automatically")
     big_blind: Optional[StrictInt] = Field(default=None, description="the big blind")
+    bot_turn_timeout: Optional[StrictInt] = Field(default=None, description="the number of milliseconds that a bot has to take a turn")
     chip_denominations: Optional[List[StrictInt]] = Field(default=None, description="a collection of denominations that are available for chips at the table")
     player_count: Optional[StrictInt] = Field(default=None, description="the number of players (max) the game supports")
     small_blind: Optional[StrictInt] = Field(default=None, description="the small blind")
     starting_chips: Optional[Dict[str, StrictInt]] = Field(default=None, description="an optional mapping of chips that is required by some action types.")
-    __properties: ClassVar[List[str]] = ["auto_starts_hands", "big_blind", "chip_denominations", "player_count", "small_blind", "starting_chips"]
+    __properties: ClassVar[List[str]] = ["auto_starts_hands", "big_blind", "bot_turn_timeout", "chip_denominations", "player_count", "small_blind", "starting_chips"]
 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -88,6 +89,7 @@ class GameNewGameConfigDTO(BaseModel):
         _obj = cls.model_validate({
             "auto_starts_hands": obj.get("auto_starts_hands"),
             "big_blind": obj.get("big_blind"),
+            "bot_turn_timeout": obj.get("bot_turn_timeout"),
             "chip_denominations": obj.get("chip_denominations"),
             "player_count": obj.get("player_count"),
             "small_blind": obj.get("small_blind"),

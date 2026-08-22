@@ -50,7 +50,7 @@ async def test_subscriber_receives_matching_events():
         [
             make_event(EventType.WELCOME),
             make_event(EventType.PAYOUT, {"pot": 100}),
-            make_event(EventType.GAME_OVER),
+            make_event(EventType.GAME_ENDING),
         ]
     )
     hub = EventHub(transport)
@@ -104,19 +104,19 @@ async def test_wildcard_subscription():
 async def test_block_unsubscribes_on_exit():
     hub = EventHub(FakeTransport([], hold_open=True))
 
-    with hub.subscribe(EventType.GAME_OVER, lambda e: None) as subscriber:
+    with hub.subscribe(EventType.GAME_ENDING, lambda e: None) as subscriber:
         assert subscriber.active
-        assert hub.subscriber_count(EventType.GAME_OVER) == 1
+        assert hub.subscriber_count(EventType.GAME_ENDING) == 1
 
     assert not subscriber.active
-    assert hub.subscriber_count(EventType.GAME_OVER) == 0
+    assert hub.subscriber_count(EventType.GAME_ENDING) == 0
 
 
 @pytest.mark.asyncio
 async def test_unsubscribe_safety():
     hub = EventHub(FakeTransport([]))
 
-    subscriber = hub.subscribe(EventType.GAME_OVER, lambda e: None)
+    subscriber = hub.subscribe(EventType.GAME_ENDING, lambda e: None)
     assert subscriber.unsubscribe() is True
     assert subscriber.unsubscribe() is False
     assert subscriber.unsubscribe() is False
@@ -169,7 +169,7 @@ async def test_wait_for_timeout():
 
     try:
         with pytest.raises(asyncio.TimeoutError):
-            await hub.wait_for(EventType.GAME_OVER, timeout=0.1)
+            await hub.wait_for(EventType.GAME_ENDING, timeout=0.1)
 
         assert hub.subscriber_count() == 0
     finally:
@@ -250,12 +250,12 @@ async def test_on_event_decorator():
             [
                 make_event(EventType.WELCOME),
                 make_event(EventType.PAYOUT),
-                make_event(EventType.GAME_OVER),
+                make_event(EventType.GAME_ENDING),
             ]
         )
     )
 
-    @hub.on_event(EventType.WELCOME, EventType.GAME_OVER)
+    @hub.on_event(EventType.WELCOME, EventType.GAME_ENDING)
     async def on_update(e: Event) -> None:
         received.append(e)
 
@@ -287,18 +287,18 @@ async def test_subscription_interface_usage():
 
     hub = EventHub(
         FakeTransport(
-            [make_event(EventType.WELCOME), make_event(EventType.GAME_OVER)],
+            [make_event(EventType.WELCOME), make_event(EventType.GAME_ENDING)],
             hold_open=True,
         )
     )
 
     try:
-        with hub.subscribe("game_over", on_game_over) as subscriber:
+        with hub.subscribe(EventType.GAME_ENDING, on_game_over) as subscriber:
             await hub.start()
             await asyncio.wait_for(game_over_called.wait(), timeout=5)
 
         assert not subscriber.active
-        assert hub.subscriber_count("game_over") == 0
+        assert hub.subscriber_count(EventType.GAME_ENDING) == 0
 
         assert subscriber.unsubscribe() is False
     finally:

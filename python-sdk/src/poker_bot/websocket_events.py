@@ -76,15 +76,28 @@ class WebSocketEventType(Enum):
         obj.obj_type = obj_type
         return obj
 
+    """
+const (
+	GameStarting      EventType = "game_starting"
+	HandStarted       EventType = "hand_started"
+	RoundStarted      EventType = "round_started"
+	HandPayouts       EventType = "hand_payouts"
+	TurnStarted       EventType = "turn_started"
+	PlayerAction      EventType = "player_action"
+	GameStatusChanged EventType = "game_status_changed"
+	GameEnding        EventType = "game_ending"
+	ChipExchange      EventType = "chip_exchange"
+)
+    """
     UNKNOWN = "", Any
     WELCOME = "welcome", GameGameDTO
-    GAME_STATE_UPDATE = "game_state_update", GameGameDTO
+    GAME_STATE_UPDATE = "game_status_changed", GameGameDTO
     PLAYER_ACTION = "player_action", GamePlayerActionDTO
-    PAYOUT = "payout", dict
-    ROUND_START = "round_start", GameRoundDTO
+    PAYOUT = "hand_payouts", dict
+    ROUND_START = "round_started", GameRoundDTO
     HAND_STARTED = "hand_started", dict
-    GAME_OVER = "game_over", list[GamePlayerDTO]
-    STARTING_GAME = "starting_game", GameGameDTO
+    GAME_ENDING = "game_ending", list[GamePlayerDTO]
+    STARTING_GAME = "game_starting", GameGameDTO
 
     @property
     def data_class(self):
@@ -304,7 +317,7 @@ class WebSocketStream:
                     if event is not None:
                         yield event
 
-                    if event is not None and event.event_type == WebSocketEventType.GAME_OVER:
+                    if event is not None and event.event_type == WebSocketEventType.GAME_ENDING:
                         # We do not get a 404 on connect retry attempts on ended games, so we have to
                         self._reconnect = False
                         await asyncio.sleep(0.5)

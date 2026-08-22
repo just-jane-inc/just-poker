@@ -1,5 +1,6 @@
 .env
 python-sdk/lib
+logs
 
 **/tmp/*
 **/__pycache__/*

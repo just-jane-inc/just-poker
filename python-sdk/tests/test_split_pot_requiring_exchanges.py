@@ -253,4 +253,5 @@ async def test_load_game_from_state():
     wolf_bot = bot.PokerBot(test_helpers.base_url, wolf.token, wolf.user_id, game_id)
     await wolf_bot.get_game_state()
     await wolf_bot.check()
+    await wolf_bot.get_game_state()
     assert wolf_bot.chip_total() == 3590

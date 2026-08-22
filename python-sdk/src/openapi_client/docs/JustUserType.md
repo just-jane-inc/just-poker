@@ -6,9 +6,11 @@ the type of user
 
 * `UserTypeBot` (value: `'bot'`)
 
-* `UserTypeHuman` (value: `'normal'`)
+* `UserTypeHuman` (value: `'human'`)
 
 * `UserTypeAdmin` (value: `'admin'`)
+
+* `UserTypeDealer` (value: `'dealer'`)
 
 * `UserTypeGameMaster` (value: `'game_master'`)
 

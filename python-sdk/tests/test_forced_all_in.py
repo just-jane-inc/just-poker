@@ -175,4 +175,5 @@ async def test_ante_success():
     await thing.game_game_id_state_post(game_id, GameTableDTO.from_json(json_str=json_str))
 
     await wolf_bot.ante()
+    await wolf_bot.get_game_state()
     assert wolf_bot._player.state == "all_in"

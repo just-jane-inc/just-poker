@@ -8,6 +8,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **auto_starts_hands** | **bool** | a flag which indicates true if the game server should wait for a signal to start hands or if it should do so automatically | [optional] 
 **big_blind** | **int** | the big blind | [optional] 
+**bot_turn_timeout** | **int** | the number of milliseconds that a bot has to take a turn | [optional] 
 **chip_denominations** | **List[int]** | a collection of denominations that are available for chips at the table | [optional] 
 **player_count** | **int** | the number of players (max) the game supports | [optional] 
 **small_blind** | **int** | the small blind | [optional] 

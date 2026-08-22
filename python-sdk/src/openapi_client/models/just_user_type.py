@@ -27,8 +27,9 @@ class JustUserType(str, Enum):
     allowed enum values
     """
     UserTypeBot = 'bot'
-    UserTypeHuman = 'normal'
+    UserTypeHuman = 'human'
     UserTypeAdmin = 'admin'
+    UserTypeDealer = 'dealer'
     UserTypeGameMaster = 'game_master'
 
     @classmethod

@@ -48,7 +48,7 @@ async def test_receive_game_over():
 
     received: list[Event] = []
 
-    @jane_bot.events.on_event(EventType.GAME_OVER)
+    @jane_bot.events.on_event(EventType.GAME_ENDING)
     async def on_game_over(e: Event):
         received.append(e)
 
@@ -73,7 +73,7 @@ async def test_receive_game_over():
     assert len(received) == 1
     e = received[0]
     assert e is not None
-    assert e.event_type == EventType.GAME_OVER
+    assert e.event_type == EventType.GAME_ENDING
     assert e.data is not None and isinstance(e.data, list) and len(e.data) > 0
 
     await jane_bot.stop_events()
@@ -83,7 +83,7 @@ async def test_receive_game_over():
     on_game_over.unsubscribe()
 
     assert jane_bot._hub is not None
-    assert jane_bot._hub.subscriber_count(EventType.GAME_OVER) == 0
+    assert jane_bot._hub.subscriber_count(EventType.GAME_ENDING) == 0
 
 
 @pytest.mark.asyncio
@@ -109,7 +109,7 @@ async def test_receive_game_over_via_subscribe():
     async def on_player_action(e: Event):
         pass
 
-    subscriber = jane_bot.events.subscribe(EventType.GAME_OVER, on_game_over)
+    subscriber = jane_bot.events.subscribe(EventType.GAME_ENDING, on_game_over)
     subscriber2 = jane_bot.events.subscribe(EventType.PLAYER_ACTION, on_player_action)
     await jane_bot.start_events()
 
@@ -136,15 +136,15 @@ async def test_receive_game_over_via_subscribe():
     assert len(received) == 1
     e = received[0]
     assert e is not None
-    assert e.event_type == EventType.GAME_OVER
+    assert e.event_type == EventType.GAME_ENDING
     assert e.data is not None and isinstance(e.data, list) and len(e.data) > 0
 
     assert jane_bot._hub is not None
-    assert jane_bot._hub.subscriber_count(EventType.GAME_OVER) == 1
+    assert jane_bot._hub.subscriber_count(EventType.GAME_ENDING) == 1
 
     subscriber.unsubscribe()
     assert jane_bot._hub is not None
-    assert jane_bot._hub.subscriber_count(EventType.GAME_OVER) == 0
+    assert jane_bot._hub.subscriber_count(EventType.GAME_ENDING) == 0
 
     # show it noops on unsubscribing already unsubbed
     subscriber2.unsubscribe()
@@ -175,7 +175,7 @@ async def test_receive_game_over_via_subscribe_and_unhook():
         received.append(e)
 
     # Do not need to unsubscribe if using with syntax
-    with jane_bot.events.subscribe(EventType.GAME_OVER, on_game_over):
+    with jane_bot.events.subscribe(EventType.GAME_ENDING, on_game_over):
         # If you subscribe, you are responsible for starting listening
         await jane_bot.start_events()
 
@@ -183,7 +183,7 @@ async def test_receive_game_over_via_subscribe_and_unhook():
         await start_hand(game_id, jane)
 
         assert jane_bot._hub is not None
-        assert jane_bot._hub.subscriber_count(EventType.GAME_OVER) == 1
+        assert jane_bot._hub.subscriber_count(EventType.GAME_ENDING) == 1
 
         await red_bot.ante()
         await jane_bot.send_action("ante", {"100": 1})
@@ -196,11 +196,11 @@ async def test_receive_game_over_via_subscribe_and_unhook():
     assert len(received) == 1
     e = received[0]
     assert e is not None
-    assert e.event_type == EventType.GAME_OVER
+    assert e.event_type == EventType.GAME_ENDING
     assert e.data is not None and isinstance(e.data, list) and len(e.data) > 0
 
     assert jane_bot._hub is not None
-    assert jane_bot._hub.subscriber_count(EventType.GAME_OVER) == 0
+    assert jane_bot._hub.subscriber_count(EventType.GAME_ENDING) == 0
 
     await jane_bot.stop_events()
     await red_bot.stop_events()
@@ -227,7 +227,7 @@ async def test_receive_game_over_better_closure():
         game_over = asyncio.Event()
         received: list[Event] = []
 
-        @jane_bot.events.on_event(EventType.GAME_OVER)
+        @jane_bot.events.on_event(EventType.GAME_ENDING)
         async def on_game_over(e: Event):
             received.append(e)
             game_over.set()
@@ -247,8 +247,8 @@ async def test_receive_game_over_better_closure():
 
     assert len(received) == 1
     e = received[0]
-    assert e.event_type == EventType.GAME_OVER
+    assert e.event_type == EventType.GAME_ENDING
     assert isinstance(e.data, list) and len(e.data) > 0
 
     assert jane_bot.events is not None
-    assert jane_bot.events.subscriber_count(EventType.GAME_OVER) == 0
+    assert jane_bot.events.subscriber_count(EventType.GAME_ENDING) == 0

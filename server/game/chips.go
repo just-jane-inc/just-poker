@@ -148,7 +148,7 @@ func (g *game) ExchangeChips(exchange ChipExchangeDTO) *just.PokerError {
 		p.chips[d] += c
 	}
 
-	g.sendMessageToConnections("player_chip_exchange", exchange)
+	g.OnChipExchange(exchange)
 	return nil
 }
 

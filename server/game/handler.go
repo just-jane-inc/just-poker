@@ -70,7 +70,6 @@ func OnDeleteGame(w http.ResponseWriter, r *http.Request) {
 	t := time.Now()
 	g.endedAt = &t
 
-	go handleUpdates(g, g.AsDTO(), "game_delete")
 	just.OK("success", struct{}{}).WriteJSONResponse(w)
 }
 
@@ -161,7 +160,7 @@ func OnStartNextHand(w http.ResponseWriter, r *http.Request) {
 	}
 
 	just.Logger.Debug("sending game state updates serially in next hand handler")
-	handleUpdates(g, g.AsDTO(), "game_state_update")
+	g.OnGameStatusChanged()
 	just.OK("hand_started", struct{}{}).WriteJSONResponse(w)
 }
 
@@ -357,7 +356,7 @@ func OnExchangeChips(w http.ResponseWriter, r *http.Request) {
 		return g.table.denominations[i] > g.table.denominations[j]
 	})
 
-	g.sendMessageToConnections("chip_exchange", exchange)
+	g.OnChipExchange(exchange)
 	just.OK("chips_exchanged", struct{}{}).WriteJSONResponse(w)
 }
 
@@ -396,9 +395,7 @@ func OnStartGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handleUpdates(g, g.AsDTO(), "starting_game")
-	handleUpdates(g, g.AsDTO(), "game_state_update")
-
+	g.OnGameStarting()
 	just.OK("game_started", struct{}{}).WriteJSONResponse(w)
 	just.Logger.Debugf("started game with id [%s]", g.id)
 }
@@ -466,18 +463,18 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 
 	// we send the update here to snapshot the state how it is in this moment, further checks will alter the tate
 	// and would require a new update afterwards.
-	handleUpdates(g, g.AsDTO(), "game_state_update")
+	g.OnGameStatusChanged()
 
 	if g.IsGameOver() {
 		// update the game state and send a new update
 		g.OnGameOver()
-		handleUpdates(g, g.AsDTO(), "game_state_update")
+		g.OnGameEnded()
 	} else if g.table.currentRound.currentRoundType == RoundTypeCompleted {
 		// if the game is configured for auto-starting the next hand we do so now
 		if g.config.AutoStartHands {
 			// we need to block here until this completes, the handleUpdates snapshot should include the completed state here.
 			g.nextHand(g.config.BigBlind, g.config.SmallBlind)
-			handleUpdates(g, g.AsDTO(), "game_state_update")
+			g.OnGameStatusChanged()
 		}
 	}
 
@@ -596,45 +593,4 @@ func OnCreateGameConnection(w http.ResponseWriter, r *http.Request) {
 	}
 
 	just.HandleWebSocket(w, r, gameID, user, dto)
-}
-
-func handleUpdates(g *game, dto GameDTO, eventType string) {
-	just.Logger.Debugf("sending [%s] update for game with ID [%s]", eventType, dto.ID)
-
-	for _, conn := range just.UpdateHub.GetChannelsForGame(dto.ID) {
-		just.Logger.Debugf("sending update to player %s", conn.PlayerID)
-		dtoNew := dto.DeepCopy()
-
-		if conn.UserType != just.UserTypeAdmin && conn.UserType != just.UserTypeGameMaster {
-			dtoNew.MaskCards(conn.PlayerID)
-		}
-
-		msg := just.WebsocketMessage[any]{
-			Data:      dtoNew,
-			EventType: eventType,
-		}
-
-		select {
-		case conn.MessageChannel <- msg:
-		default:
-		}
-	}
-
-	if g.endedAt != nil {
-		just.Logger.Infof("game has ended sending game_over and closing connections game=[%s]", g.id)
-		for _, conn := range just.UpdateHub.GetChannelsForGame(g.id) {
-			conn.MessageChannel <- just.WebsocketMessage[any]{
-				EventType: "game_over",
-				Data:      dto.Table.Players,
-			}
-
-			conn.SignalExit("game ended")
-		}
-
-		delete(CurrentGames.games, g.id)
-	}
-
-	if err := just.RecordingHub.OnGameUpdate(dto); err != nil {
-		just.Logger.Errorf("error updating game state in elastic: %v", err)
-	}
 }
