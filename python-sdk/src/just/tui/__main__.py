@@ -230,7 +230,7 @@ class PokerApp(App):
                 EventType.WELCOME,
                 EventType.GAME_STATE_UPDATE,
                 # EventType.STARTING_GAME,
-                EventType.GAME_OVER,
+                EventType.GAME_ENDING,
             )
             async def _on_update(event: Event) -> None:
                 logger.debug(f"received for Player [{me._user_id}]:\t{event.event_type} - {event.data}")

@@ -3,10 +3,11 @@ import asyncio
 import json
 import logging
 
-import openapi_client as api
 import poker_bot.bot.poker_helpers as help
-from poker_bot.bot import event_hub
 from poker_bot.bot.bot import PokerBot
+
+import openapi_client as api
+from poker_bot.bot import event_hub
 
 parser = argparse.ArgumentParser(prog="just__poker: call bot", description="an example bot that always calls")
 parser.add_argument("--game-id", "--id", type=str, required=True, help="the id of the game to join")
@@ -105,7 +106,7 @@ async def run_jambler_bot(bot: PokerBot):
 
         logger.info("subscribing")
         subscribers = [
-            bot.events.subscribe(event_hub.EventType.GAME_OVER, on_game_over),
+            bot.events.subscribe(event_hub.EventType.GAME_ENDING, on_game_over),
             bot.events.subscribe(event_hub.EventType.STARTING_GAME, on_game_started),
             bot.events.subscribe(event_hub.EventType.GAME_STATE_UPDATE, on_game_state_changed),
         ]
