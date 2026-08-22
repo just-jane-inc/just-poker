@@ -505,15 +505,6 @@ function dealHand(onFinish_params)
 
   dealCards()
 
-  function waitCoroutine()
-    count = 0
-    while count < 240*6 do
-      count = count + 1
-      coroutine.yield(0)
-    end
-    return 1
-  end
-
   return true
 end
 

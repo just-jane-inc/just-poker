@@ -7,9 +7,6 @@ local PlayerManager
 local PotManager
 local EventBus
 
--- Prefab deck layout for testing DeckManager.sortDeck
-local PREFAB_DECK_LAYOUT = '[{"rank":50,"suit":99},{"rank":50,"suit":104},{"rank":57,"suit":99},{"rank":84,"suit":99},{"rank":74,"suit":115},{"rank":52,"suit":100},{"rank":53,"suit":104},{"rank":52,"suit":104},{"rank":57,"suit":100},{"rank":53,"suit":115},{"rank":81,"suit":115},{"rank":57,"suit":104},{"rank":75,"suit":99},{"rank":53,"suit":99},{"rank":55,"suit":99},{"rank":65,"suit":99},{"rank":75,"suit":100},{"rank":65,"suit":115},{"rank":84,"suit":115},{"rank":65,"suit":104},{"rank":51,"suit":99},{"rank":51,"suit":104},{"rank":75,"suit":104},{"rank":54,"suit":99},{"rank":55,"suit":115},{"rank":55,"suit":104},{"rank":56,"suit":100},{"rank":56,"suit":104},{"rank":54,"suit":115},{"rank":74,"suit":104},{"rank":81,"suit":104},{"rank":51,"suit":115},{"rank":57,"suit":115},{"rank":54,"suit":100},{"rank":56,"suit":99},{"rank":52,"suit":99},{"rank":75,"suit":115},{"rank":84,"suit":104},{"rank":52,"suit":115},{"rank":84,"suit":100},{"rank":55,"suit":100},{"rank":50,"suit":115},{"rank":81,"suit":99},{"rank":51,"suit":100},{"rank":74,"suit":100},{"rank":81,"suit":100},{"rank":65,"suit":100},{"rank":50,"suit":100},{"rank":53,"suit":100},{"rank":54,"suit":104},{"rank":74,"suit":99},{"rank":56,"suit":115}]'
-
 --[[
     Ran into an issue where I couldn't access the PotManager by
     GUID in the onLoaded overload.

@@ -10,7 +10,6 @@
   to those events via the methods provided here.
 ]]
 
-
 HAND_IN_PROGRESS         = false
 ROUND_IN_PROGRESS        = false
 
@@ -69,8 +68,18 @@ function unlockExternalScriptMutex()  log("EventBus mutex unlocked") awaiting_ex
 function isExternalScriptMutexUnlocked() return not awaiting_external_script_action end
 
 --[[
-  When a subscriber is notified of an event, they must handle that event 
-  and inform the EventBus when they have finished.
+  Explicit coordination between scripts regarding actions that may take an indeterminate amount
+  of time require blocking of the flow of execution to avoid race conditions.
+  This paradigm is present in most other scripts in this mod, first defined in GameManager and
+  replicated in other scripts as the need arose.
+
+  There are two components to this:
+  1. onFinish_params for the encapsulating script:
+      {
+        service  = self,
+        callback = "unlockExternalScriptMutex"
+      }
+  2. The ability to process others' onFinish_params that follow the same paradigm.
 ]]
 local onFinishExternalScript_params = {
   service  = self,
@@ -243,23 +252,6 @@ end
 
 end -- End callbacks block
 
---[[
-  Explicit coordination between scripts regarding actions that may take an indeterminate amount
-  of time require blocking of the flow of execution to avoid race conditions.
-  This paradigm is present in most other scripts in this mod, first defined in GameManager and
-  replicated in other scripts as the need arose.
-
-  There are two components to this:
-  1. onFinish_params for the encapsulating script:
-      {
-        service  = self,
-        callback = "unlockExternalScriptMutex"
-      }
-  2. The ability to process others' onFinish_params that follow the same paradigm.
-]]
-do
-
-end
 
 --[[
 params = {
