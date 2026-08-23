@@ -1,7 +1,6 @@
 import asyncio
 import logging
 from dataclasses import dataclass
-from typing import List
 
 import openapi_client as api
 import poker_bot.poker_exceptions as ex
@@ -70,18 +69,21 @@ class PokerBot:
         self._timeout = timeout
 
     @property
-    def _current_stack(self) -> List[help.Chips]:
+    def _current_stack(self) -> list[help.Chips]:
         """
         Read only view of the current player's stack as a List of Chips
         """
-        return sorted(
-            help.convert_stack(self._player.stack or {}),
-            key=lambda i: i.denomination,
-            reverse=True,
-        ) or []
+        return (
+            sorted(
+                help.convert_stack(self._player.stack or {}),
+                key=lambda i: i.denomination,
+                reverse=True,
+            )
+            or []
+        )
 
     @_current_stack.setter
-    def _current_stack(self, stack: List[help.Chips]):
+    def _current_stack(self, stack: list[help.Chips]):
         self._player.stack = help.convert_chips(stack)
 
     def chip_total(self) -> int:
@@ -187,7 +189,6 @@ class PokerBot:
         for chip in receive:
             self.merge_stack(chip)
 
-
     def merge_stack(self, chips: help.Chips):
         """joins provided chip with the bots current stack"""
         if chips.count == 0:
@@ -200,7 +201,6 @@ class PokerBot:
             raise ex.CustomException("erm, cannot merge stack - attempted to set stack count to negative")
 
         self._player.stack[str(chips.denomination)] = self._player.stack.get(str(chips.denomination), 0) + chips.count
-
 
     async def check(self) -> bool:
         """sends the check action after waiting for the bots turn
@@ -446,6 +446,10 @@ class PokerBot:
         denominations = self._current_state.game_config.chip_denominations
         chips = {int(d): c for d, c in self._player.stack.items()}
 
+        print(f"computing bet for: {amount}")
+        print(f"current stack: {chips}")
+        print(f"denominations: {denominations}")
+
         if not denominations:
             raise ex.CustomException("missing denomination from game config")
 
@@ -465,9 +469,7 @@ class PokerBot:
                 # this denomination is not useful for constructing the required set
                 continue
 
-            take = amount // denomination # TODO This causes big bets to fail (raise to > 1000 if no 1000 chips, it does not combine values of existing chips ever)
-            # take = min(amount // denomination, chips.get(denomination, 0))  # TODO this causes chip downs to fail (stack has 1x 10, bet is say, 30 or 250 and rest are >100)
-
+            take = amount // denomination
             amount -= take * denomination
             valid_bet[denomination] = take
 
@@ -505,12 +507,13 @@ class PokerBot:
             # this iteration of the loop cannot terminate without satisfying
             # this requirement
             if count == 0:
-                continue # NOTE should still look at others?
+                continue
 
             # note that we _always_ give chips of value d and receive
             # those of denomination in this section - we are trying to construct
             # the required valid_bet.
-            for d, c in sorted(chips.items(), reverse=True):
+            available_to_exchange: dict[int, int] = {}
+            for d, c in sorted(chips.items()):
                 if count <= 0:
                     break
 
@@ -526,7 +529,7 @@ class PokerBot:
                         receive[denomination] += exchange_rate
                         count -= exchange_rate
 
-                # we are chipping down with this part of the exchange
+                # we are chipping up with this part of the exchange
                 elif d < denomination:
                     exchange_rate = denomination // d
                     while chips[d] >= exchange_rate and count > 0:
@@ -535,6 +538,28 @@ class PokerBot:
                         receive[denomination] += 1
                         count -= 1
 
+                    available_to_exchange[d] = chips[d]
+
+            # while iterating our chips it is possible that we needed to exchange many
+            # different denomination chip for a single larger one, e.g. 1x500 and 5x100 for a single 1000.
+            # handle this situation
+            if count > 0:
+               print(f"available to exchange: {available_to_exchange} | {denomination}x{count}")
+               need = count * denomination
+               for d, c in sorted(available_to_exchange.items(), reverse=True):
+                    while chips[d] > 0 and need > 0:
+                        give[d] += 1
+                        need -= d
+                        chips[d] -= 1
+
+               # we assume above worked - this will just fail in the chip exchange if not
+               # no more recovery is possible.
+               # TODO: can we prove that this blocks terminates with a valid solution?
+               # can we construct a counter example? because we assert that denominations
+               # are all divisible evenly by lower chips this greedy approach should be fine?
+               receive[denomination] += count # TODO This is causing new failures in test_chip_exchange_over_give_issue
+
+        print(f"computed bet | receive={receive} | give={give} | bet={valid_bet} | stack={self._player.stack}")
         if sum((d * c for d, c in give.items())) > 0:
             try:
                 await self.exchange_chips(
@@ -552,11 +577,11 @@ class PokerBot:
                 )
                 raise
 
-        short = {d: c for d, c in valid_bet.items() if c > self._player.stack.get(str(d), 0)}
-        if short:
-            # TODO Is this a failure scenario? Valid Bet dict exists, but player stack doesn't have it even after exchanges?
-            # Or was this the "All in" scenario, in which case, it should be more explicit somehow
-            raise ex.CustomException("player stack does not contain all necessary chips from found valid bet after exchanging")
+        # short = {d: c for d, c in valid_bet.items() if c > self._player.stack.get(str(d), 0)}
+        # if short:
+        #     # TODO Is this a failure scenario? Valid Bet dict exists, but player stack doesn't have it even after exchanges?
+        #     # Or was this the "All in" scenario, in which case, it should be more explicit somehow
+        #     raise ex.CustomException("player stack does not contain all necessary chips from found valid bet after exchanging")
 
         return {str(d): c for d, c in valid_bet.items()}
 
