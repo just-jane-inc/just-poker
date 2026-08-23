@@ -12,7 +12,7 @@ import websockets
 
 import poker_bot.poker_exceptions as ex
 from openapi_client import GameGameDTO, GamePlayerActionDTO, GamePlayerDTO, GameRoundDTO, GameChipExchangeDTO, \
-    GameHandStartEventDTO, GamePayoutEventDTO, GameTurnStartEventDTO
+    GameHandStartEventDTO, GamePayoutEventDTO, GameTurnStartEventDTO, GameRoundStartEventDTO
 
 logger = logging.getLogger("websocket")
 
@@ -82,7 +82,7 @@ class WebSocketEventType(Enum):
     GAME_STATE_UPDATE = "game_status_changed", GameGameDTO
     PLAYER_ACTION = "player_action", GamePlayerActionDTO
     PAYOUT = "hand_payouts", list[GamePayoutEventDTO]
-    ROUND_START = "round_started", GameRoundDTO
+    ROUND_START = "round_started", GameRoundStartEventDTO
     HAND_STARTED = "hand_started", GameHandStartEventDTO
     GAME_ENDING = "game_ending", list[GamePlayerDTO]
     STARTING_GAME = "game_starting", GameGameDTO
