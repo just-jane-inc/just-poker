@@ -1,5 +1,5 @@
-import random
 import asyncio
+import random
 
 import helpers as test_helpers
 import pytest
@@ -25,8 +25,13 @@ async def test_chip_exchange_happens():
         "1000": 1,
     }
 
-    game_id = await help.create_game(test_helpers.base_url, str(jane.token), auto_start_hands=False,
-                                     chips=starting_chips, denominations=[10, 50, 100, 500, 1000])
+    game_id = await help.create_game(
+        test_helpers.base_url,
+        str(jane.token),
+        auto_start_hands=False,
+        chips=starting_chips,
+        denominations=[10, 50, 100, 500, 1000],
+    )
     assert game_id
     print(game_id)
 
@@ -46,10 +51,11 @@ async def test_chip_exchange_happens():
     await jane_bot.get_game_state()
 
     for x in range(5):
-        target = random.randint(2, 98) * 10 # 20 to 98
+        target = random.randint(2, 98) * 10  # 20 to 98
         await jane_bot._compute_valid_bet(target)
         await asyncio.sleep(0.05)
 
+    await asyncio.sleep(1)
     assert len(received) > 0
 
 
@@ -68,8 +74,13 @@ async def test_chip_exchange_over_give_issue(target: int):
         "1000": 1,
     }
 
-    game_id = await help.create_game(test_helpers.base_url, str(jane.token), auto_start_hands=False,
-                                     chips=starting_chips, denominations=[10, 50, 100, 500, 1000])
+    game_id = await help.create_game(
+        test_helpers.base_url,
+        str(jane.token),
+        auto_start_hands=False,
+        chips=starting_chips,
+        denominations=[10, 50, 100, 500, 1000],
+    )
     assert game_id
     print(game_id)
 
@@ -90,7 +101,9 @@ async def test_chip_exchange_over_give_issue(target: int):
 
     await jane_bot._compute_valid_bet(target)
 
+    await asyncio.sleep(1)
     assert len(received) > 0
+
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(30)
@@ -108,8 +121,13 @@ async def test_raise_with_big_chips():
 
     total = sum(int(d) * c for d, c in starting_chips.items())
 
-    game_id = await help.create_game(test_helpers.base_url, str(jane.token), auto_start_hands=True,
-                                     chips=starting_chips, denominations=[10, 50, 100, 500, 1000])
+    game_id = await help.create_game(
+        test_helpers.base_url,
+        str(jane.token),
+        auto_start_hands=True,
+        chips=starting_chips,
+        denominations=[10, 50, 100, 500, 1000],
+    )
     assert game_id
     print(game_id)
 
@@ -151,8 +169,13 @@ async def test_bet_with_big_chips():
 
     total = sum(int(d) * c for d, c in starting_chips.items())
 
-    game_id = await help.create_game(test_helpers.base_url, str(jane.token), auto_start_hands=True,
-                                     chips=starting_chips, denominations=[10, 50, 100, 500, 1000])
+    game_id = await help.create_game(
+        test_helpers.base_url,
+        str(jane.token),
+        auto_start_hands=True,
+        chips=starting_chips,
+        denominations=[10, 50, 100, 500, 1000],
+    )
     assert game_id
     print(game_id)
 
@@ -174,6 +197,7 @@ async def test_bet_with_big_chips():
         short = {d: c - held.get(d, 0) for d, c in bet.items() if c > held.get(d, 0)}
         assert not short, f"betting {target} returned {bet}; needs {short} more than the player has ({held})"
 
+
 @pytest.mark.asyncio
 @pytest.mark.timeout(30)
 async def test_bet_with_small_chips():
@@ -190,8 +214,13 @@ async def test_bet_with_small_chips():
 
     total = sum(int(d) * c for d, c in starting_chips.items())
 
-    game_id = await help.create_game(test_helpers.base_url, str(jane.token), auto_start_hands=True,
-                                     chips=starting_chips, denominations=[10, 50, 100, 500, 1000])
+    game_id = await help.create_game(
+        test_helpers.base_url,
+        str(jane.token),
+        auto_start_hands=True,
+        chips=starting_chips,
+        denominations=[10, 50, 100, 500, 1000],
+    )
     assert game_id
     print(game_id)
 

@@ -446,6 +446,13 @@ class PokerBot:
         denominations = self._current_state.game_config.chip_denominations
         chips = {int(d): c for d, c in self._player.stack.items()}
 
+        # we just want to ensure that chips always contains a key
+        # for everything in denominations rather then having to check
+        # for a missing key all the time
+        for d in denominations:
+            if d not in chips:
+                chips[d] = 0
+
         print(f"computing bet for: {amount}")
         print(f"current stack: {chips}")
         print(f"denominations: {denominations}")
@@ -502,6 +509,12 @@ class PokerBot:
         # stack in descending, this allows us to select exchanges in a greedy way.
         give: dict[int, int] = {d: 0 for d in denominations}
         receive: dict[int, int] = {d: 0 for d in denominations}
+        # while making exchanges it can often happen that we overshoot the required amount,
+        # this can lead to not being able to construct the bet. this map is used to track
+        # any chips that we plan to receive but do not actually require for valid_bet
+        # construction to enable chipping down into split denominations e.g.
+        # 1x500 => 3x100 + 4x50
+        extra: dict[int, int] = {d: 0 for d in denominations}
         for denomination, count in sorted(missing_chips.items()):
             # we need to get count of denomination, end of story.
             # this iteration of the loop cannot terminate without satisfying
@@ -513,25 +526,46 @@ class PokerBot:
             # those of denomination in this section - we are trying to construct
             # the required valid_bet.
             available_to_exchange: dict[int, int] = {}
-            for d, c in sorted(chips.items()):
+            for d in sorted(denominations):
                 if count <= 0:
                     break
 
-                if d == denomination or c == 0:
+                if d == denomination:
                     continue
 
                 # we are chipping down with this part of the exchange
                 if d > denomination:
                     exchange_rate = d // denomination
+
+                    # we want to try and restructure our exchange first,
+                    # prior to interacting with our chips
+                    while extra[d] > 0 and count > 0:
+                        extra[d] -= 1
+                        receive[d] -= 1
+                        receive[denomination] += exchange_rate
+                        count -= exchange_rate
+
                     while chips[d] > 0 and count > 0:
                         chips[d] -= 1
                         give[d] += 1
                         receive[denomination] += exchange_rate
                         count -= exchange_rate
 
+                    if count < 0:
+                        extra[denomination] += -count
+
                 # we are chipping up with this part of the exchange
                 elif d < denomination:
                     exchange_rate = denomination // d
+
+                    # we want to try and restructure our exchange first,
+                    # prior to interacting with our chips
+                    while extra[d] >= exchange_rate and count > 0:
+                        extra[d] -= exchange_rate
+                        receive[d] -= exchange_rate
+                        receive[denomination] += 1
+                        count -= 1
+
                     while chips[d] >= exchange_rate and count > 0:
                         chips[d] -= exchange_rate
                         give[d] += exchange_rate
@@ -544,22 +578,27 @@ class PokerBot:
             # different denomination chip for a single larger one, e.g. 1x500 and 5x100 for a single 1000.
             # handle this situation
             if count > 0:
-               print(f"available to exchange: {available_to_exchange} | {denomination}x{count}")
-               need = count * denomination
-               for d, c in sorted(available_to_exchange.items(), reverse=True):
+                print(f"available to exchange: {available_to_exchange} | {denomination}x{count}")
+                need = count * denomination
+                for d, c in sorted(available_to_exchange.items(), reverse=True):
                     while chips[d] > 0 and need > 0:
                         give[d] += 1
                         need -= d
                         chips[d] -= 1
 
-               # we assume above worked - this will just fail in the chip exchange if not
-               # no more recovery is possible.
-               # TODO: can we prove that this blocks terminates with a valid solution?
-               # can we construct a counter example? because we assert that denominations
-               # are all divisible evenly by lower chips this greedy approach should be fine?
-               receive[denomination] += count # TODO This is causing new failures in test_chip_exchange_over_give_issue
+                if need > 0:
+                    logger.error("compute valid bet failed to get required chips")
 
-        print(f"computed bet | receive={receive} | give={give} | bet={valid_bet} | stack={self._player.stack}")
+                # we assume above worked - this will just fail in the chip exchange if not
+                # no more recovery is possible.
+                # TODO: can we prove that this blocks terminates with a valid solution?
+                # can we construct a counter example? because we assert that denominations
+                # are all divisible evenly by lower chips this greedy approach should be fine?
+                receive[denomination] += (
+                    count  # TODO This is causing new failures in test_chip_exchange_over_give_issue
+                )
+
+        print(f"computed bet:\n receive={receive}\n give={give} \n bet={valid_bet} \n stack={self._player.stack}")
         if sum((d * c for d, c in give.items())) > 0:
             try:
                 await self.exchange_chips(
