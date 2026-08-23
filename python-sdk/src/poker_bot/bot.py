@@ -20,8 +20,6 @@ from poker_bot.websocket_events import (
 
 logger = logging.getLogger("bot")
 
-MAX_CHIP_DOWNS = 16
-
 
 # TODO: move this into helpers or whatever
 @dataclass
@@ -467,7 +465,9 @@ class PokerBot:
                 # this denomination is not useful for constructing the required set
                 continue
 
-            take = amount // denomination
+            take = amount // denomination # TODO This causes big bets to fail (raise to > 1000 if no 1000 chips, it does not combine values of existing chips ever)
+            # take = min(amount // denomination, chips.get(denomination, 0))  # TODO this causes chip downs to fail (stack has 1x 10, bet is say, 30 or 250 and rest are >100)
+
             amount -= take * denomination
             valid_bet[denomination] = take
 
@@ -497,7 +497,7 @@ class PokerBot:
 
         # deal with missing chips by constructing a chip exchange
         # we iterate the missing chips in ascending order and the player
-        # stack in decending, this allows us to select exchanges in a greedy way.
+        # stack in descending, this allows us to select exchanges in a greedy way.
         give: dict[int, int] = {d: 0 for d in denominations}
         receive: dict[int, int] = {d: 0 for d in denominations}
         for denomination, count in sorted(missing_chips.items()):
@@ -505,7 +505,7 @@ class PokerBot:
             # this iteration of the loop cannot terminate without satisfying
             # this requirement
             if count == 0:
-                break
+                continue # NOTE should still look at others?
 
             # note that we _always_ give chips of value d and receive
             # those of denomination in this section - we are trying to construct
@@ -551,6 +551,12 @@ class PokerBot:
                     self._player.stack,
                 )
                 raise
+
+        short = {d: c for d, c in valid_bet.items() if c > self._player.stack.get(str(d), 0)}
+        if short:
+            # TODO Is this a failure scenario? Valid Bet dict exists, but player stack doesn't have it even after exchanges?
+            # Or was this the "All in" scenario, in which case, it should be more explicit somehow
+            raise ex.CustomException("player stack does not contain all necessary chips from found valid bet after exchanging")
 
         return {str(d): c for d, c in valid_bet.items()}
 
