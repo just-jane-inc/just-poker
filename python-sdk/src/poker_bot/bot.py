@@ -594,9 +594,7 @@ class PokerBot:
                 # TODO: can we prove that this blocks terminates with a valid solution?
                 # can we construct a counter example? because we assert that denominations
                 # are all divisible evenly by lower chips this greedy approach should be fine?
-                receive[denomination] += (
-                    count  # TODO This is causing new failures in test_chip_exchange_over_give_issue
-                )
+                receive[denomination] += count
 
         print(f"computed bet:\n receive={receive}\n give={give} \n bet={valid_bet} \n stack={self._player.stack}")
         if sum((d * c for d, c in give.items())) > 0:
