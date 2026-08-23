@@ -11,7 +11,8 @@ from urllib.parse import urlsplit, urlunsplit
 import websockets
 
 import poker_bot.poker_exceptions as ex
-from openapi_client import GameGameDTO, GamePlayerActionDTO, GamePlayerDTO, GameRoundDTO
+from openapi_client import GameGameDTO, GamePlayerActionDTO, GamePlayerDTO, GameRoundDTO, GameChipExchangeDTO, \
+    GameHandStartEventDTO, GamePayoutEventDTO, GameTurnStartEventDTO
 
 logger = logging.getLogger("websocket")
 
@@ -76,28 +77,17 @@ class WebSocketEventType(Enum):
         obj.obj_type = obj_type
         return obj
 
-    """
-const (
-	GameStarting      EventType = "game_starting"
-	HandStarted       EventType = "hand_started"
-	RoundStarted      EventType = "round_started"
-	HandPayouts       EventType = "hand_payouts"
-	TurnStarted       EventType = "turn_started"
-	PlayerAction      EventType = "player_action"
-	GameStatusChanged EventType = "game_status_changed"
-	GameEnding        EventType = "game_ending"
-	ChipExchange      EventType = "chip_exchange"
-)
-    """
     UNKNOWN = "", Any
     WELCOME = "welcome", GameGameDTO
     GAME_STATE_UPDATE = "game_status_changed", GameGameDTO
     PLAYER_ACTION = "player_action", GamePlayerActionDTO
-    PAYOUT = "hand_payouts", dict
+    PAYOUT = "hand_payouts", GamePayoutEventDTO
     ROUND_START = "round_started", GameRoundDTO
-    HAND_STARTED = "hand_started", dict
+    HAND_STARTED = "hand_started", GameHandStartEventDTO
     GAME_ENDING = "game_ending", list[GamePlayerDTO]
     STARTING_GAME = "game_starting", GameGameDTO
+    CHIP_EXCHANGE = "chip_exchange", GameChipExchangeDTO
+    TURN_STARTED = "turn_started", GameTurnStartEventDTO
 
     @property
     def data_class(self):
@@ -108,6 +98,10 @@ const (
         try:
             return cls(event_type)
         except ValueError:
+            # Attempt to find it by matching known string name if enum name does not match
+            for _event_type in cls.__subclasses__():
+                if _event_type.value[0] == event_type:
+                    return _event_type
             return UnknownWebSocketEventType(event_type)
 
     def __str__(self) -> str:

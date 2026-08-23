@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from dataclasses import dataclass
+from typing import List
 
 import openapi_client as api
 import poker_bot.poker_exceptions as ex
@@ -64,12 +65,26 @@ class PokerBot:
         self._joined = False
         self._user_id = user_id
         self._player: api.GamePlayerDTO | None = None
-        self._current_stack: list[help.Chips] = []
         self._current_state: api.GameGameDTO | None = None
         self._listener: ws.WebSocketListener | None = None
         self._hub: EventHub | None = None
         self._state_subscription: EventSubscriber | None = None
         self._timeout = timeout
+
+    @property
+    def _current_stack(self) -> List[help.Chips]:
+        """
+        Read only view of the current player's stack as a List of Chips
+        """
+        return sorted(
+            help.convert_stack(self._player.stack or {}),
+            key=lambda i: i.denomination,
+            reverse=True,
+        ) or []
+
+    @_current_stack.setter
+    def _current_stack(self, stack: List[help.Chips]):
+        self._player.stack = help.convert_chips(stack)
 
     def chip_total(self) -> int:
         total = 0
@@ -142,7 +157,7 @@ class PokerBot:
         """stops the EventHub
 
         Raises:
-            ex.CustomException: if their is no hub initialized
+            ex.CustomException: if there is no hub initialized
         """
         if self._hub is None:
             raise ex.CustomException("you have made an error")
@@ -167,14 +182,27 @@ class PokerBot:
         if resp.type == "error":
             raise ex.CustomException("error in chip exchange: %s", resp.data.error)
 
+        for chip in give:
+            chip.count *= -1
+            self.merge_stack(chip)
+
+        for chip in receive:
+            self.merge_stack(chip)
+
+
     def merge_stack(self, chips: help.Chips):
         """joins provided chip with the bots current stack"""
-        for s in self._current_stack:
-            if s.denomination == chips.denomination:
-                s.count += chips.count
-                return
+        if chips.count == 0:
+            return
 
-        self._current_stack.append(chips)
+        if not self._player or not self._player.stack:
+            return
+
+        if self._player.stack.get(str(chips.denomination), 0) + chips.count < 0:
+            raise ex.CustomException("erm, cannot merge stack - attempted to set stack count to negative")
+
+        self._player.stack[str(chips.denomination)] = self._player.stack.get(str(chips.denomination), 0) + chips.count
+
 
     async def check(self) -> bool:
         """sends the check action after waiting for the bots turn
@@ -336,6 +364,9 @@ class PokerBot:
         if self._player is None:
             return False
 
+        if self._player.state != "active":
+            return False
+
         current_player_position = self._current_position()
         if current_player_position is None:
             return False
@@ -371,7 +402,7 @@ class PokerBot:
     def _ingest_game_dto(self, state: api.GameGameDTO):
         """updates the internal model based on a new state
 
-        alters the _current_state field as well as the _player and _current_stack
+        alters the _current_state field as well as the _player
         """
         if state is None or state.table is None or state.table.players is None:
             logger.warning("state is none in _ingest_game_dto")
@@ -383,11 +414,6 @@ class PokerBot:
             if player.user_id == self._user_id:
                 self._joined = True
                 self._player = player
-                self._current_stack = sorted(
-                    help.convert_stack(self._player.stack),
-                    key=lambda i: i.denomination,
-                    reverse=True,
-                )
                 break
 
         self._current_state = state
@@ -415,14 +441,21 @@ class PokerBot:
             a mapping of string to integer expressing the bet that the player
             can make to satisfy the provided amount.
         """
+
+        if not self._current_state or not self._current_state.game_config:
+            raise ex.CustomException("missing current game state and config")
+
         denominations = self._current_state.game_config.chip_denominations
         chips = {int(d): c for d, c in self._player.stack.items()}
+
+        if not denominations:
+            raise ex.CustomException("missing denomination from game config")
 
         if sum((d * c for d, c in chips.items())) < amount:
             # we are all in here
             return {str(d): c for d, c in chips.items()}
 
-        # we want to iterate the denominations in decending order to support a greedy algorithm
+        # we want to iterate the denominations in descending order to support a greedy algorithm
         denominations = sorted(denominations, reverse=True)
 
         # this loop terminates with a valid bet, ignoring what the player
@@ -455,7 +488,7 @@ class PokerBot:
             available = chips[denomination]
             if available < count:
                 # if we do not have enough chips to cover this denomination
-                # we zero out our count and track the reminaing chips required
+                # we zero out our count and track the remaining chips required
                 missing_chips[denomination] = count - available
                 chips[denomination] = 0
             else:
@@ -520,12 +553,6 @@ class PokerBot:
                 raise
 
         return {str(d): c for d, c in valid_bet.items()}
-
-    def _held(self) -> dict[int, int]:
-        held: dict[int, int] = {}
-        for s in self._current_stack:
-            held[s.denomination] = held.get(s.denomination, 0) + s.count
-        return held
 
     def _current_position(self) -> int | None:
         if self._current_state is None or self._current_state.table is None:
