@@ -21,7 +21,7 @@ from typing_extensions import Annotated
 from openapi_client.models.game_active_game_dto import GameActiveGameDTO
 from openapi_client.models.game_card_dto import GameCardDTO
 from openapi_client.models.game_chip_exchange_dto import GameChipExchangeDTO
-from openapi_client.models.game_game_dto import GameGameDTO
+from openapi_client.models.game_game_id_state_listen_get200_response import GameGameIdStateListenGet200Response
 from openapi_client.models.game_new_game_config_dto import GameNewGameConfigDTO
 from openapi_client.models.game_new_hand_dto import GameNewHandDTO
 from openapi_client.models.game_player_action_dto import GamePlayerActionDTO
@@ -2081,7 +2081,7 @@ class GameApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GameGameDTO:
+    ) -> GameGameIdStateListenGet200Response:
         """Get Listener
 
         creates a listener that will begin buffering game events that can be queried from an endpoint
@@ -2119,7 +2119,7 @@ class GameApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GameGameDTO",
+            '200': "GameGameIdStateListenGet200Response",
         }
         response_data = await self.api_client.call_api(
             *_param,
@@ -2148,7 +2148,7 @@ class GameApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GameGameDTO]:
+    ) -> ApiResponse[GameGameIdStateListenGet200Response]:
         """Get Listener
 
         creates a listener that will begin buffering game events that can be queried from an endpoint
@@ -2186,7 +2186,7 @@ class GameApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GameGameDTO",
+            '200': "GameGameIdStateListenGet200Response",
         }
         response_data = await self.api_client.call_api(
             *_param,
@@ -2253,7 +2253,7 @@ class GameApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GameGameDTO",
+            '200': "GameGameIdStateListenGet200Response",
         }
         response_data = await self.api_client.call_api(
             *_param,
