@@ -81,7 +81,7 @@ class WebSocketEventType(Enum):
     WELCOME = "welcome", GameGameDTO
     GAME_STATE_UPDATE = "game_status_changed", GameGameDTO
     PLAYER_ACTION = "player_action", GamePlayerActionDTO
-    PAYOUT = "hand_payouts", GamePayoutEventDTO
+    PAYOUT = "hand_payouts", list[GamePayoutEventDTO]
     ROUND_START = "round_started", GameRoundDTO
     HAND_STARTED = "hand_started", GameHandStartEventDTO
     GAME_ENDING = "game_ending", list[GamePlayerDTO]

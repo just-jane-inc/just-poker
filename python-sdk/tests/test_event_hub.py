@@ -54,7 +54,7 @@ async def test_subscriber_receives_matching_events():
     transport = FakeTransport(
         [
             make_event(EventType.WELCOME),
-            make_event(EventType.PAYOUT, payout_event.to_dict()),
+            make_event(EventType.PAYOUT, [payout_event.to_dict()]),
             make_event(EventType.GAME_ENDING),
         ]
     )
@@ -65,8 +65,8 @@ async def test_subscriber_receives_matching_events():
     async with hub:
         await hub.wait_closed(timeout=5)
 
-    assert len(received) == 1
-    assert received[0].data.to_dict() == {"chips": {'10': 20}, 'player_id': '45'}
+    assert len(received) == 1 and len(received[0].data) == 1
+    assert received[0].data[0].to_dict() == {"chips": {'10': 20}, 'player_id': '45'}
 
 
 @pytest.mark.asyncio
@@ -154,7 +154,7 @@ async def test_wait_for_event_then_unsub():
                 make_event(EventType.GAME_STATE_UPDATE),
                 make_event(EventType.PLAYER_ACTION),
                 make_event(EventType.GAME_STATE_UPDATE),
-                make_event(EventType.PAYOUT, {"chips": {'10': 20}, 'player_id': '45'}),
+                make_event(EventType.PAYOUT, [{"chips": {'10': 20}, 'player_id': '45'}]),
             ],
             hold_open=True,
         )
@@ -162,7 +162,7 @@ async def test_wait_for_event_then_unsub():
 
     try:
         event = await hub.wait_for(EventType.PAYOUT, timeout=5)
-        assert event.data.to_dict() == {"chips": {'10': 20}, 'player_id': '45'}
+        assert event.data[0].to_dict() == {"chips": {'10': 20}, 'player_id': '45'}
         assert hub.subscriber_count() == 0
     finally:
         await hub.stop()
@@ -187,21 +187,23 @@ async def test_wait_for_fancy_predicate():
     hub = EventHub(
         FakeTransport(
             [
-                make_event(EventType.PAYOUT, {"chips": {'10': 20}, 'player_id': '45'}),
-                make_event(EventType.PAYOUT, {"chips": {'10': 20, '100': 5}, 'player_id': '420'}),
-                make_event(EventType.PAYOUT, {"chips": {'50': 1, '10': 1, '1': 7}, 'player_id': '67'}),  # Is this considered a bribe
-                make_event(EventType.PAYOUT, {"chips": {'10': 5, '100': 5}, 'player_id': '68'}),
-                make_event(EventType.PAYOUT, {"chips": {'10': 1, '500': 2}, 'player_id': '69'}),
+                make_event(EventType.PAYOUT, [{"chips": {'10': 20}, 'player_id': '45'}]),
+                make_event(EventType.PAYOUT, [{"chips": {'10': 20, '100': 5}, 'player_id': '420'}]),
+                make_event(EventType.PAYOUT, [{"chips": {'50': 1, '10': 1, '1': 7}, 'player_id': '67'}]),  # Is this considered a bribe
+                make_event(EventType.PAYOUT, [{"chips": {'10': 5, '100': 5}, 'player_id': '68'}]),
+                make_event(EventType.PAYOUT, [{"chips": {'10': 1, '500': 2}, 'player_id': '69'}, {"chips": {'10': 1, '500': 2}, 'player_id': '42'}]),
             ],
             hold_open=True,
         )
     )
 
     try:
-        event = await hub.wait_for(EventType.PAYOUT, timeout=5, predicate=lambda e: help.chip_sum(e.data.chips) == 67)
-        assert event.data.to_dict()['chips'] == {'50': 1, '10': 1, '1': 7}
-        event = await hub.wait_for(EventType.PAYOUT, timeout=5, predicate=lambda e: e.data.player_id == '69')
-        assert event.data.player_id == '69'
+        event = await hub.wait_for(EventType.PAYOUT, timeout=5, predicate=lambda e: help.chip_sum(e.data[0].chips) == 67)
+        assert event.data[0].to_dict()['chips'] == {'50': 1, '10': 1, '1': 7}
+        event = await hub.wait_for(EventType.PAYOUT, timeout=5, predicate=lambda e: any([payout.player_id == '69' for payout in e.data]))
+        assert len(event.data) == 2
+        assert event.data[0].to_dict()['player_id'] in ['42', '69'];
+        assert event.data[1].to_dict()['player_id'] in ['42', '69'];
     finally:
         await hub.stop()
 
@@ -227,7 +229,7 @@ async def test_stream_filtering():
                 make_event(EventType.WELCOME),
                 make_event(EventType.GAME_STATE_UPDATE, {}),
                 make_event(EventType.PLAYER_ACTION),
-                make_event(EventType.PAYOUT, {"chips": {'10': 20}, 'player_id': '45'}),
+                make_event(EventType.PAYOUT, [{"chips": {'10': 20}, 'player_id': '45'}]),
                 make_event(EventType.GAME_STATE_UPDATE, {}),
             ]
         )
@@ -235,19 +237,21 @@ async def test_stream_filtering():
 
     received = [e async for e in hub.stream(EventType.PAYOUT)]
 
-    assert [e.data.to_dict()["player_id"] for e in received] == ['45']
+    assert [e.data[0].to_dict()["player_id"] for e in received] == ['45']
 
 
 @pytest.mark.asyncio
 async def test_stream_queued_events():
-    hub = EventHub(FakeTransport([make_event(EventType.PAYOUT, {"chips": {'10': 5}, 'player_id': str(40 + n)}) for n in range(5)]))
+    # if these were same pot, they would all be in the same single event
+    # this test is just testing the queue
+    hub = EventHub(FakeTransport([make_event(EventType.PAYOUT, [{"chips": {'10': 5}, 'player_id': str(40 + n)}]) for n in range(5)]))
 
     received = []
     async for e in hub.stream():
         received.append(e)
         await asyncio.sleep(0.05)  # delay consumption from feed to verify it's still there
 
-    assert [e.data.to_dict()["player_id"] for e in received] == ['40', '41', '42', '43', '44']
+    assert [e.data[0].to_dict()["player_id"] for e in received] == ['40', '41', '42', '43', '44']
 
 
 @pytest.mark.asyncio
