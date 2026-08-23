@@ -49,6 +49,10 @@ func (s ChipStackDTO) asStack() stack {
 // Contains checks if a stack (that) is a subset of another stack (s)
 func (s stack) Contains(that stack) bool {
 	for d, c := range that {
+		if c == 0 {
+			continue
+		}
+
 		// get the number of chips with the provided denomination
 		// available to this stack
 		count, ok := s[d]

@@ -81,6 +81,21 @@ components:
           description: the time that this hand started
           type: string
       type: object
+    game.HandStartEventDTO:
+      properties:
+        big_blind_cost:
+          type: integer
+        big_blind_position:
+          type: integer
+        button_position:
+          type: integer
+        id:
+          type: integer
+        small_blind_cost:
+          type: integer
+        small_blind_position:
+          type: integer
+      type: object
     game.NewGameConfigDTO:
       description: the configuration used to setup the game
       properties:
@@ -121,6 +136,13 @@ components:
             $ref: '#/components/schemas/game.CardDTO'
           type: array
           uniqueItems: false
+      type: object
+    game.PayoutEventDTO:
+      properties:
+        chips:
+          $ref: '#/components/schemas/game.ChipStackDTO'
+        player_id:
+          type: string
       type: object
     game.PlayerActionDTO:
       properties:
@@ -209,6 +231,11 @@ components:
         current_round_type:
           $ref: '#/components/schemas/game.RoundType'
       type: object
+    game.RoundStartEventDTO:
+      properties:
+        round_type:
+          $ref: '#/components/schemas/game.RoundType'
+      type: object
     game.RoundType:
       description: the type of round
       enum:
@@ -258,6 +285,15 @@ components:
             $ref: '#/components/schemas/game.CardDTO'
           type: array
           uniqueItems: false
+      type: object
+    game.TurnStartEventDTO:
+      properties:
+        bet_amount:
+          type: integer
+        player_id:
+          type: string
+        round_type:
+          $ref: '#/components/schemas/game.RoundType'
       type: object
     just.ErrorCode:
       enum:
@@ -363,6 +399,86 @@ components:
       - UserTypeAdmin
       - UserTypeDealer
       - UserTypeGameMaster
+    just.WebsocketMessage-array_game_PayoutEventDTO:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/game.PayoutEventDTO'
+          type: array
+          uniqueItems: false
+        event_type:
+          type: string
+        id:
+          type: integer
+        time_sent:
+          type: string
+      type: object
+    just.WebsocketMessage-game_ChipExchangeDTO:
+      properties:
+        data:
+          $ref: '#/components/schemas/game.ChipExchangeDTO'
+        event_type:
+          type: string
+        id:
+          type: integer
+        time_sent:
+          type: string
+      type: object
+    just.WebsocketMessage-game_GameDTO:
+      properties:
+        data:
+          $ref: '#/components/schemas/game.GameDTO'
+        event_type:
+          type: string
+        id:
+          type: integer
+        time_sent:
+          type: string
+      type: object
+    just.WebsocketMessage-game_HandStartEventDTO:
+      properties:
+        data:
+          $ref: '#/components/schemas/game.HandStartEventDTO'
+        event_type:
+          type: string
+        id:
+          type: integer
+        time_sent:
+          type: string
+      type: object
+    just.WebsocketMessage-game_PlayerActionDTO:
+      properties:
+        data:
+          $ref: '#/components/schemas/game.PlayerActionDTO'
+        event_type:
+          type: string
+        id:
+          type: integer
+        time_sent:
+          type: string
+      type: object
+    just.WebsocketMessage-game_RoundStartEventDTO:
+      properties:
+        data:
+          $ref: '#/components/schemas/game.RoundStartEventDTO'
+        event_type:
+          type: string
+        id:
+          type: integer
+        time_sent:
+          type: string
+      type: object
+    just.WebsocketMessage-game_TurnStartEventDTO:
+      properties:
+        data:
+          $ref: '#/components/schemas/game.TurnStartEventDTO'
+        event_type:
+          type: string
+        id:
+          type: integer
+        time_sent:
+          type: string
+      type: object
   securitySchemes:
     BearerAuth:
       description: Type "Bearer" followed by a space and your token (e.g. "Bearer
@@ -823,8 +939,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/game.GameDTO'
-          description: OK
+                oneOf:
+                - $ref: '#/components/schemas/just.WebsocketMessage-game_RoundStartEventDTO'
+                - $ref: '#/components/schemas/just.WebsocketMessage-game_HandStartEventDTO'
+                - $ref: '#/components/schemas/just.WebsocketMessage-game_GameDTO'
+                - $ref: '#/components/schemas/just.WebsocketMessage-array_game_PayoutEventDTO'
+                - $ref: '#/components/schemas/just.WebsocketMessage-game_PlayerActionDTO'
+                - $ref: '#/components/schemas/just.WebsocketMessage-game_TurnStartEventDTO'
+                - $ref: '#/components/schemas/just.WebsocketMessage-game_ChipExchangeDTO'
+          description: ChipExchange
       summary: Get Listener
       tags:
       - Game

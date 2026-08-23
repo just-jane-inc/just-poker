@@ -526,13 +526,33 @@ func OnRegisterListener(w http.ResponseWriter, r *http.Request) {
 	just.OK("listener_created", g.AsDTO()).WriteJSONResponse(w)
 }
 
+/*
+const (
+	GameStarting      EventType = "game_starting"
+	HandStarted       EventType = "hand_started"
+	RoundStarted      EventType = "round_started"
+	HandPayouts       EventType = "hand_payouts"
+	TurnStarted       EventType = "turn_started"
+	PlayerAction      EventType = "player_action"
+	GameStatusChanged EventType = "game_status_changed"
+	GameEnding        EventType = "game_ending"
+	ChipExchange      EventType = "chip_exchange"
+)
+*/
+
 // OnGetNextListenerEvent _liiiisten_
 // @Summary     Get Listener
 // @Description  creates a listener that will begin buffering game events that can be queried from an endpoint
 // @Tags         Game
 // @Param game_id path string true "ID of the Game to get events from"
 // @Produce      json
-// @Success      200 {object} GameDTO
+// @Success      200 {object} just.WebsocketMessage[RoundStartEventDTO] "RoundStarted"
+// @Success      200 {object} just.WebsocketMessage[HandStartEventDTO] "HandStarted"
+// @Success      200 {object} just.WebsocketMessage[GameDTO] "GameStarting, GameStatusChanged, GameEnding"
+// @Success      200 {object} just.WebsocketMessage[[]PayoutEventDTO] "HandPayouts"
+// @Success      200 {object} just.WebsocketMessage[PlayerActionDTO] "PlayerAction"
+// @Success      200 {object} just.WebsocketMessage[TurnStartEventDTO] "TurnStarted"
+// @Success      200 {object} just.WebsocketMessage[ChipExchangeDTO] "ChipExchange"
 // @Router       /game/{game_id}/state/listen [get]
 func OnGetNextListenerEvent(w http.ResponseWriter, r *http.Request) {
 	user, _ := just.GetAuthorizedUser(r)
