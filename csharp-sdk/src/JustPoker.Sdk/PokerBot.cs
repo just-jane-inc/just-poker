@@ -193,56 +193,124 @@ public sealed class PokerBot : IAsyncDisposable {
     }
 
     /// <summary>
-    ///     Try to calculate if you can cover a bet for an amount needed. Will recursively do chip exchanges to try.
-    ///     If you cannot cover, but have chips, you can treat your bet as an all in
+    ///     computes a valid bet from a set of available chips and denominations to satisfy a required amount
     /// </summary>
-    /// <param name="amountNeeded"></param>
+    /// <param name="amount"></param>
+    /// the amount we need to bet
     /// <returns></returns>
-    public Task<List<Chips>> TryCoverBetAsync(int amountNeeded) {
-        _logger.LogDebug("try cover bet for [{Amount}] stack: [{Stack}]", amountNeeded,
-            string.Join(" ", _currentStack));
-        return TryCoverBetAsync(amountNeeded, []);
+    /// a mapping of string to integer expressing the bet that the player can make to satisfy the provided amount.
+    /// <remarks>
+    ///     Constraints:
+    ///     - let D = self._current_state.game_config.chip_denominations
+    ///     - let C = self._player.stack.keys()
+    ///     - ∀d ∈ D, d > 0             (all denominations are positive integers)
+    ///     - C ⊆ D                     (denominations appearing in players stack are strictly a subset of those in the game)
+    ///     - ∀k,d ∈ D, d lt k gte d∣k      (for all k,d in denominations k less than d implies k divides d evenly)
+    ///     - ∃d ∈ D such that d∣amount (for the provided amount to bet their exists some element of denominations which divdes
+    ///     it evenly)
+    ///     Notes:
+    ///     1. The constraints described above are not validated in this code and their violation represents undefined behavior
+    ///     2. This funcion will alter the state of the game - it can preform a single chip exchange if one is required
+    ///     3. If the provided amount is greater then the sum of all chips the player has we simply return all of their chips -
+    ///     "all in"
+    /// </remarks>
+    /// <exception cref="PokerException"></exception>
+    /// <exception cref="InvalidBetException"></exception>
+    public async Task<Dictionary<string, int>> ComputeValidBetAsync(int amount) {
+        if (CurrentState?.GameConfig?.ChipDenominations is not { Count: > 0 } chipDenominations)
+            throw new PokerException("compute valid bet invoked before a state was received");
+
+        if (Player?.Stack is null)
+            throw new PokerException("compute valid bet invoked before a player was received");
+
+        var chips = Player.Stack.ToDictionary(entry => int.Parse(entry.Key), entry => entry.Value);
+
+        if (chips.Sum(entry => entry.Key * entry.Value) < amount)
+            return chips.ToDictionary(entry => entry.Key.ToString(), entry => entry.Value);
+
+        var denominations = chipDenominations.OrderByDescending(d => d).ToList();
+
+        var validBet = new Dictionary<int, int>();
+        foreach (var denomination in denominations) {
+            if (denomination > amount) continue;
+
+            var take = amount / denomination;
+            amount -= take * denomination;
+            validBet[denomination] = take;
+
+            if (amount == 0) break;
+        }
+
+        if (amount != 0)
+            throw new InvalidBetException("no valid bet can be constructed - constraint violation likely");
+
+        var missingChips = new Dictionary<int, int>();
+        foreach (var (denomination, count) in validBet) {
+            if (!chips.TryGetValue(denomination, out var available)) {
+                missingChips[denomination] = count;
+                continue;
+            }
+
+            if (available < count) {
+                missingChips[denomination] = count - available;
+                chips[denomination] = 0;
+            }
+            else {
+                chips[denomination] = available - count;
+            }
+        }
+
+        var give = denominations.ToDictionary(d => d, _ => 0);
+        var receive = denominations.ToDictionary(d => d, _ => 0);
+
+        foreach (var (denomination, missing) in missingChips.OrderBy(entry => entry.Key)) {
+            var count = missing;
+            if (count == 0) break;
+
+            foreach (var held in chips.Keys.OrderByDescending(d => d).ToList()) {
+                if (count <= 0) break;
+
+                if (held == denomination || chips[held] == 0) continue;
+
+                if (held > denomination) {
+                    var exchangeRate = held / denomination;
+                    while (chips[held] > 0 && count > 0) {
+                        chips[held] -= 1;
+                        give[held] += 1;
+                        receive[denomination] += exchangeRate;
+                        count -= exchangeRate;
+                    }
+                }
+                else {
+                    var exchangeRate = denomination / held;
+                    while (chips[held] >= exchangeRate && count > 0) {
+                        chips[held] -= exchangeRate;
+                        give[held] += exchangeRate;
+                        receive[denomination] += 1;
+                        count -= 1;
+                    }
+                }
+            }
+        }
+
+        if (give.Sum(entry => entry.Key * entry.Value) > 0)
+            try {
+                await ExchangeChipsAsync(
+                    give.Select(entry => new Chips(entry.Key, entry.Value)).ToList(),
+                    receive.Select(entry => new Chips(entry.Key, entry.Value)).ToList());
+            }
+            catch (Exception) {
+                _logger.LogError(
+                    "encountered error exchanging chips | receive=[{Receive}] | give=[{Give}] | bet=[{Bet}] | stack=[{Stack}]",
+                    ChipDictionaryToString(receive), ChipDictionaryToString(give), ChipDictionaryToString(validBet), string.Join(" ", _currentStack));
+                throw;
+            }
+
+        return validBet.ToDictionary(entry => entry.Key.ToString(), entry => entry.Value);
     }
 
-    private async Task<List<Chips>> TryCoverBetAsync(int amountNeeded, List<Chips> bet) {
-        if (amountNeeded <= 0) return bet;
-
-        var denominations = CurrentState?.GameConfig?.ChipDenominations;
-        if (denominations is null || denominations.Count == 0)
-            throw new PokerException("try cover bet invoked before a state was received");
-
-        var denoms = denominations.OrderBy(d => d).ToList();
-
-        if (ChipTotal() <= amountNeeded) {
-            foreach (var chips in _currentStack.Where(chips => chips.Count > 0)) {
-                AddToBet(bet, chips.Denomination, chips.Count);
-                chips.Count = 0;
-            }
-
-            return bet;
-        }
-
-        if (!IsReachable(amountNeeded, denoms))
-            throw new PokerException(
-                $"{amountNeeded} cannot be made from the denominations in this game " +
-                $"([{string.Join(", ", denoms)}])");
-
-        for (var attempt = 0; attempt <= MaxChipDowns; attempt++) {
-            var chosen = SelectChips(amountNeeded);
-            if (chosen is not null) {
-                foreach (var (denomination, count) in chosen) {
-                    TakeFromStack(denomination, count);
-                    AddToBet(bet, denomination, count);
-                }
-
-                return bet;
-            }
-
-            if (!await ChipDownAsync(amountNeeded, denoms)) break;
-        }
-
-        throw new InvalidBetException(
-            $"could not construct a bet covering {amountNeeded} from [{string.Join(" ", _currentStack)}]");
+    private static string ChipDictionaryToString(IDictionary<int, int> chips) {
+        return string.Join(" ", chips.Select(entry => $"{entry.Value}x{entry.Key}"));
     }
 
     private Dictionary<int, int> Held() {
@@ -250,138 +318,6 @@ public sealed class PokerBot : IAsyncDisposable {
         foreach (var chips in _currentStack)
             held[chips.Denomination] = held.GetValueOrDefault(chips.Denomination, 0) + chips.Count;
         return held;
-    }
-
-    private Dictionary<int, int>? SelectChips(int amount) {
-        if (amount <= 0) return new Dictionary<int, int>();
-
-        var counts = Held();
-        var denoms = counts.Keys.OrderByDescending(d => d).ToList();
-        // yeah, this is exactly what you think it is
-        var memo = new Dictionary<(int, int), Dictionary<int, int>?>();
-
-        Dictionary<int, int>? Search(int index, int remaining) {
-            if (remaining == 0) return new Dictionary<int, int>();
-            if (index >= denoms.Count) return null;
-            if (memo.TryGetValue((index, remaining), out var cached)) return cached;
-
-            Dictionary<int, int>? found = null;
-            var denomination = denoms[index];
-            for (var take = Math.Min(counts[denomination], remaining / denomination); take >= 0; take--) {
-                var rest = Search(index + 1, remaining - take * denomination);
-                if (rest is null) continue;
-
-                found = new Dictionary<int, int>(rest);
-                if (take > 0) found[denomination] = take;
-                break;
-            }
-
-            memo[(index, remaining)] = found;
-            return found;
-        }
-
-        return Search(0, amount);
-    }
-
-    private static bool IsReachable(int amount, IList<int> denominations) {
-        if (amount <= 0) return true;
-
-        var reachable = new bool[amount + 1];
-        reachable[0] = true;
-        for (var value = 1; value <= amount; value++)
-            foreach (var denomination in denominations)
-                if (denomination <= value && reachable[value - denomination]) {
-                    reachable[value] = true;
-                    break;
-                }
-
-        return reachable[amount];
-    }
-
-    private void TakeFromStack(int denomination, int count) {
-        foreach (var chips in _currentStack)
-            if (chips.Denomination == denomination) {
-                chips.Count -= count;
-                return;
-            }
-
-        throw new InvalidBetException($"no {denomination} chips in the stack to take");
-    }
-
-    private async Task<bool> ChipDownAsync(int amountNeeded, IList<int> denominations) {
-        var step = denominations[0];
-        var held = Held();
-        var offDenom = denominations.Where(d => d % step != 0).ToList();
-        var needOffDenom = amountNeeded % step != 0 &&
-                           !offDenom.Any(d => held.GetValueOrDefault(d) > 0);
-
-        var candidates = denominations
-            .Where(d => d > step && held.GetValueOrDefault(d) > 0)
-            .OrderBy(d => needOffDenom ? 0 : d % step == 0 ? 0 : 1)
-            .ThenBy(d => d)
-            .ToList();
-
-        foreach (var target in candidates) {
-            List<Chips> broken;
-            try {
-                broken = BreakChip(target, denominations, needOffDenom);
-            }
-            catch (PokerException) {
-                continue;
-            }
-
-            if (broken.Count == 0) continue;
-
-            _logger.LogDebug("exchanging 1x{Denomination} for smaller chips", target);
-            await ExchangeChipsAsync([new Chips(target, 1)], broken);
-            TakeFromStack(target, 1);
-            foreach (var brokenChips in broken) MergeStack(brokenChips);
-            return true;
-        }
-
-        return await CombineOffDenomAsync(denominations);
-    }
-
-    private async Task<bool> CombineOffDenomAsync(IList<int> denominations) {
-        var step = denominations[0];
-        var held = Held();
-
-        foreach (var denomination in denominations.Where(d => d % step != 0)) {
-            var have = held.GetValueOrDefault(denomination);
-            for (var count = 2; count <= have; count++) {
-                var value = denomination * count;
-                if (value % step != 0) continue;
-
-                List<Chips> receive;
-                try {
-                    receive = BreakChip(value, denominations, false);
-                }
-                catch (PokerException) {
-                    break;
-                }
-
-                if (receive.Count == 0) break;
-
-                _logger.LogDebug("exchanging {Count}x{Denomination} for smaller chips",
-                    count, denomination);
-                await ExchangeChipsAsync([new Chips(denomination, count)], receive);
-                TakeFromStack(denomination, count);
-                foreach (var chips in receive) MergeStack(chips);
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static void AddToBet(List<Chips> bet, int denomination, int count) {
-        foreach (var chips in bet)
-            if (chips.Denomination == denomination) {
-                chips.Count += count;
-                return;
-            }
-
-        bet.Add(new Chips(denomination, count));
     }
 
     /// <summary>
@@ -416,10 +352,9 @@ public sealed class PokerBot : IAsyncDisposable {
         if (!IsMyTurn()) return false;
 
         var currentBet = PokerHelpers.ChipSum(Player.CurrentBet ?? []);
-        raiseTo -= currentBet;
-        var bet = await TryCoverBetAsync(raiseTo);
+        var amount = raiseTo - currentBet;
 
-        var stack = PokerHelpers.ConvertChips(bet);
+        var stack = await ComputeValidBetAsync(amount);
         return await SendActionAsync(GamePlayerIntent.PlayerIntentRaise, stack);
     }
 
@@ -437,8 +372,7 @@ public sealed class PokerBot : IAsyncDisposable {
 
         var currentBet = PokerHelpers.ChipSum(Player.CurrentBet ?? []);
         amount -= currentBet;
-        var bet = await TryCoverBetAsync(amount);
-        var stack = PokerHelpers.ConvertChips(bet);
+        var stack = await ComputeValidBetAsync(amount);
         try {
             return await SendActionAsync(GamePlayerIntent.PlayerIntentAnte, stack);
         }
@@ -462,8 +396,7 @@ public sealed class PokerBot : IAsyncDisposable {
 
         var currentBet = PokerHelpers.ChipSum(Player.CurrentBet ?? []);
         amount -= currentBet;
-        var bet = await TryCoverBetAsync(amount);
-        var stack = PokerHelpers.ConvertChips(bet);
+        var stack = await ComputeValidBetAsync(amount);
         return await SendActionAsync(GamePlayerIntent.PlayerIntentCall, stack);
     }
 

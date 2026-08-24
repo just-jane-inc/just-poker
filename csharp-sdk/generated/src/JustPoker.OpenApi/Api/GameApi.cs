@@ -502,7 +502,7 @@ namespace JustPoker.OpenApi.Api
     /// <summary>
     /// The <see cref="IGameGameIdStateListenGetApiResponse"/>
     /// </summary>
-    public interface IGameGameIdStateListenGetApiResponse : JustPoker.OpenApi.Client.IApiResponse, IOk<JustPoker.OpenApi.Model.GameGameDTO?>
+    public interface IGameGameIdStateListenGetApiResponse : JustPoker.OpenApi.Client.IApiResponse, IOk<JustPoker.OpenApi.Model.GameGameIdStateListenGet200Response?>
     {
         /// <summary>
         /// Returns true if the response is 200 Ok
@@ -3301,11 +3301,11 @@ namespace JustPoker.OpenApi.Api
             /// Deserializes the response if the response is 200 Ok
             /// </summary>
             /// <returns></returns>
-            public JustPoker.OpenApi.Model.GameGameDTO? Ok()
+            public JustPoker.OpenApi.Model.GameGameIdStateListenGet200Response? Ok()
             {
                 // This logic may be modified with the AsModel.mustache template
                 return IsOk
-                    ? System.Text.Json.JsonSerializer.Deserialize<JustPoker.OpenApi.Model.GameGameDTO>(RawContent, _jsonSerializerOptions)
+                    ? System.Text.Json.JsonSerializer.Deserialize<JustPoker.OpenApi.Model.GameGameIdStateListenGet200Response>(RawContent, _jsonSerializerOptions)
                     : null;
             }
 
@@ -3314,7 +3314,7 @@ namespace JustPoker.OpenApi.Api
             /// </summary>
             /// <param name="result"></param>
             /// <returns></returns>
-            public bool TryOk([NotNullWhen(true)]out JustPoker.OpenApi.Model.GameGameDTO? result)
+            public bool TryOk([NotNullWhen(true)]out JustPoker.OpenApi.Model.GameGameIdStateListenGet200Response? result)
             {
                 result = null;
 
