@@ -262,34 +262,70 @@ public sealed class PokerBot : IAsyncDisposable {
 
         var give = denominations.ToDictionary(d => d, _ => 0);
         var receive = denominations.ToDictionary(d => d, _ => 0);
+        var extra = denominations.ToDictionary(d => d, _ => 0);
 
         foreach (var (denomination, missing) in missingChips.OrderBy(entry => entry.Key)) {
             var count = missing;
-            if (count == 0) break;
+            if (count == 0) continue;
 
-            foreach (var held in chips.Keys.OrderByDescending(d => d).ToList()) {
+            var availableToExchange = new Dictionary<int, int>();
+            foreach (var denom in denominations.OrderBy(d => d)) {
                 if (count <= 0) break;
+                if (denom == denomination) continue;
 
-                if (held == denomination || chips[held] == 0) continue;
+                if (denom > denomination) {
+                    var exchangeRate = denom / denomination;
 
-                if (held > denomination) {
-                    var exchangeRate = held / denomination;
-                    while (chips[held] > 0 && count > 0) {
-                        chips[held] -= 1;
-                        give[held] += 1;
+                    while (extra[denom] > 0 && count > 0) {
+                        extra[denom] -= 1;
+                        receive[denom] -= 1;
                         receive[denomination] += exchangeRate;
                         count -= exchangeRate;
                     }
+
+                    while (chips[denom] > 0 && count > 0) {
+                        chips[denom] -= 1;
+                        give[denom] += 1;
+                        receive[denomination] += exchangeRate;
+                        count -= exchangeRate;
+                    }
+
+                    if (count < 0) extra[denomination] += -count;
                 }
-                else {
-                    var exchangeRate = denomination / held;
-                    while (chips[held] >= exchangeRate && count > 0) {
-                        chips[held] -= exchangeRate;
-                        give[held] += exchangeRate;
+                else if (denom < denomination) {
+                    var exchangeRate = denomination / denom;
+
+                    while (extra[denom] > exchangeRate && count > 0) {
+                        extra[denom] -= exchangeRate;
+                        receive[denom] -= exchangeRate;
                         receive[denomination] += 1;
                         count -= 1;
                     }
+
+                    while (chips[denom] > exchangeRate && count > 0) {
+                        chips[denom] -= exchangeRate;
+                        give[denom] += exchangeRate;
+                        receive[denomination] += 1;
+                        count -= 1;
+                    }
+
+                    availableToExchange[denom] = chips[denom];
                 }
+            }
+
+            if (count > 0) {
+                _logger.LogDebug($"available to exchange: {availableToExchange} | {denomination}x{count}");
+                var need = count * denomination;
+                foreach (var (d, c) in availableToExchange.OrderBy(entry => entry.Key).Reverse())
+                    while (chips[d] > 0 && need > 0) {
+                        give[d] += 1;
+                        need -= d;
+                        chips[d] -= 1;
+                    }
+
+                if (need > 0) _logger.LogError("compute valid but failed to get required chips");
+
+                receive[denomination] += count;
             }
         }
 
@@ -302,7 +338,8 @@ public sealed class PokerBot : IAsyncDisposable {
             catch (Exception) {
                 _logger.LogError(
                     "encountered error exchanging chips | receive=[{Receive}] | give=[{Give}] | bet=[{Bet}] | stack=[{Stack}]",
-                    ChipDictionaryToString(receive), ChipDictionaryToString(give), ChipDictionaryToString(validBet), string.Join(" ", _currentStack));
+                    ChipDictionaryToString(receive), ChipDictionaryToString(give), ChipDictionaryToString(validBet),
+                    string.Join(" ", _currentStack));
                 throw;
             }
 
@@ -311,13 +348,6 @@ public sealed class PokerBot : IAsyncDisposable {
 
     private static string ChipDictionaryToString(IDictionary<int, int> chips) {
         return string.Join(" ", chips.Select(entry => $"{entry.Value}x{entry.Key}"));
-    }
-
-    private Dictionary<int, int> Held() {
-        var held = new Dictionary<int, int>();
-        foreach (var chips in _currentStack)
-            held[chips.Denomination] = held.GetValueOrDefault(chips.Denomination, 0) + chips.Count;
-        return held;
     }
 
     /// <summary>
