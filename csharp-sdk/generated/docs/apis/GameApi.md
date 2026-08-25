@@ -286,7 +286,7 @@ gets the current state of the game from the perspective of the requesting user
 
 <a id="gamegameidstatelistenget"></a>
 # **GameGameIdStateListenGet**
-> GameGameDTO GameGameIdStateListenGet (string gameId)
+> GameGameIdStateListenGet200Response GameGameIdStateListenGet (string gameId)
 
 Get Listener
 
@@ -301,7 +301,7 @@ creates a listener that will begin buffering game events that can be queried fro
 
 ### Return type
 
-[**GameGameDTO**](GameGameDTO.md)
+[**GameGameIdStateListenGet200Response**](GameGameIdStateListenGet200Response.md)
 
 ### Authorization
 
@@ -316,7 +316,7 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | OK |  -  |
+| **200** | ChipExchange |  -  |
 
 [[Back to top]](#) [[Back to API list]](../../README.md#documentation-for-api-endpoints) [[Back to Model list]](../../README.md#documentation-for-models) [[Back to README]](../../README.md)
 

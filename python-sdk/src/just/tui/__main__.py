@@ -229,14 +229,14 @@ class PokerApp(App):
             @self.events.on_event(
                 EventType.WELCOME,
                 EventType.GAME_STATE_UPDATE,
-                # EventType.STARTING_GAME,
+                EventType.STARTING_GAME,
                 EventType.GAME_ENDING,
             )
             async def _on_update(event: Event) -> None:
                 logger.debug(f"received for Player [{me._user_id}]:\t{event.event_type} - {event.data}")
                 if isinstance(event.data, GameGameDTO):
                     await self.apply_state(event.data)
-                elif event.event_type == EventType.GAME_OVER:
+                elif event.event_type == EventType.GAME_ENDING:
                     await self.apply_game_over(event.data)
 
             # alternative - subscribe inline with reference hook

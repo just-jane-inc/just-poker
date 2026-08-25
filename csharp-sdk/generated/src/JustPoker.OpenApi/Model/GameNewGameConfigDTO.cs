@@ -35,15 +35,17 @@ namespace JustPoker.OpenApi.Model
         /// </summary>
         /// <param name="autoStartsHands">a flag which indicates true if the game server should wait for a signal to start hands or if it should do so automatically</param>
         /// <param name="bigBlind">the big blind</param>
+        /// <param name="botTurnTimeout">the number of milliseconds that a bot has to take a turn</param>
         /// <param name="chipDenominations">a collection of denominations that are available for chips at the table</param>
         /// <param name="playerCount">the number of players (max) the game supports</param>
         /// <param name="smallBlind">the small blind</param>
         /// <param name="startingChips">an optional mapping of chips that is required by some action types.</param>
         [JsonConstructor]
-        public GameNewGameConfigDTO(Option<bool?> autoStartsHands = default, Option<int?> bigBlind = default, Option<List<int>?> chipDenominations = default, Option<int?> playerCount = default, Option<int?> smallBlind = default, Option<Dictionary<string, int>?> startingChips = default)
+        public GameNewGameConfigDTO(Option<bool?> autoStartsHands = default, Option<int?> bigBlind = default, Option<int?> botTurnTimeout = default, Option<List<int>?> chipDenominations = default, Option<int?> playerCount = default, Option<int?> smallBlind = default, Option<Dictionary<string, int>?> startingChips = default)
         {
             AutoStartsHandsOption = autoStartsHands;
             BigBlindOption = bigBlind;
+            BotTurnTimeoutOption = botTurnTimeout;
             ChipDenominationsOption = chipDenominations;
             PlayerCountOption = playerCount;
             SmallBlindOption = smallBlind;
@@ -80,6 +82,20 @@ namespace JustPoker.OpenApi.Model
         /// <value>the big blind</value>
         [JsonPropertyName("big_blind")]
         public int? BigBlind { get { return this.BigBlindOption.Value; } set { this.BigBlindOption = new(value); } }
+
+        /// <summary>
+        /// Used to track the state of BotTurnTimeout
+        /// </summary>
+        [JsonIgnore]
+        [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
+        public Option<int?> BotTurnTimeoutOption { get; private set; }
+
+        /// <summary>
+        /// the number of milliseconds that a bot has to take a turn
+        /// </summary>
+        /// <value>the number of milliseconds that a bot has to take a turn</value>
+        [JsonPropertyName("bot_turn_timeout")]
+        public int? BotTurnTimeout { get { return this.BotTurnTimeoutOption.Value; } set { this.BotTurnTimeoutOption = new(value); } }
 
         /// <summary>
         /// Used to track the state of ChipDenominations
@@ -147,6 +163,7 @@ namespace JustPoker.OpenApi.Model
             sb.Append("class GameNewGameConfigDTO {\n");
             sb.Append("  AutoStartsHands: ").Append(AutoStartsHands).Append("\n");
             sb.Append("  BigBlind: ").Append(BigBlind).Append("\n");
+            sb.Append("  BotTurnTimeout: ").Append(BotTurnTimeout).Append("\n");
             sb.Append("  ChipDenominations: ").Append(ChipDenominations).Append("\n");
             sb.Append("  PlayerCount: ").Append(PlayerCount).Append("\n");
             sb.Append("  SmallBlind: ").Append(SmallBlind).Append("\n");
@@ -200,6 +217,7 @@ namespace JustPoker.OpenApi.Model
 
             Option<bool?> autoStartsHands = default;
             Option<int?> bigBlind = default;
+            Option<int?> botTurnTimeout = default;
             Option<List<int>?> chipDenominations = default;
             Option<int?> playerCount = default;
             Option<int?> smallBlind = default;
@@ -226,6 +244,9 @@ namespace JustPoker.OpenApi.Model
                         case "big_blind":
                             bigBlind = new Option<int?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (int?)null : utf8JsonReader.GetInt32());
                             break;
+                        case "bot_turn_timeout":
+                            botTurnTimeout = new Option<int?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (int?)null : utf8JsonReader.GetInt32());
+                            break;
                         case "chip_denominations":
                             chipDenominations = new Option<List<int>?>(JsonSerializer.Deserialize<List<int>>(ref utf8JsonReader, jsonSerializerOptions)!);
                             break;
@@ -250,6 +271,9 @@ namespace JustPoker.OpenApi.Model
             if (bigBlind.IsSet && bigBlind.Value == null)
                 throw new ArgumentNullException(nameof(bigBlind), "Property is not nullable for class GameNewGameConfigDTO.");
 
+            if (botTurnTimeout.IsSet && botTurnTimeout.Value == null)
+                throw new ArgumentNullException(nameof(botTurnTimeout), "Property is not nullable for class GameNewGameConfigDTO.");
+
             if (chipDenominations.IsSet && chipDenominations.Value == null)
                 throw new ArgumentNullException(nameof(chipDenominations), "Property is not nullable for class GameNewGameConfigDTO.");
 
@@ -262,7 +286,7 @@ namespace JustPoker.OpenApi.Model
             if (startingChips.IsSet && startingChips.Value == null)
                 throw new ArgumentNullException(nameof(startingChips), "Property is not nullable for class GameNewGameConfigDTO.");
 
-            return new GameNewGameConfigDTO(autoStartsHands, bigBlind, chipDenominations, playerCount, smallBlind, startingChips);
+            return new GameNewGameConfigDTO(autoStartsHands, bigBlind, botTurnTimeout, chipDenominations, playerCount, smallBlind, startingChips);
         }
 
         /// <summary>
@@ -300,6 +324,9 @@ namespace JustPoker.OpenApi.Model
 
             if (gameNewGameConfigDTO.BigBlindOption.IsSet)
                 writer.WriteNumber("big_blind", gameNewGameConfigDTO.BigBlindOption.Value!.Value);
+
+            if (gameNewGameConfigDTO.BotTurnTimeoutOption.IsSet)
+                writer.WriteNumber("bot_turn_timeout", gameNewGameConfigDTO.BotTurnTimeoutOption.Value!.Value);
 
             if (gameNewGameConfigDTO.ChipDenominationsOption.IsSet)
             {
