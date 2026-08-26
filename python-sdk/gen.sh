@@ -5,4 +5,3 @@ openapi-generator-cli generate \
   -i 'http://localhost:7256/swagger/openapi.json' \
   -g python \
   --output src
-#mv async-lib/openapi_client src/poker_bot
