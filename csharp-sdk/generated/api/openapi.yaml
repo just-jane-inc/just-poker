@@ -479,8 +479,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/game.GameDTO"
-          description: OK
+                $ref: "#/components/schemas/_game__game_id__state_listen_get_200_response"
+          description: ChipExchange
       summary: Get Listener
       tags:
       - Game
@@ -630,8 +630,8 @@ components:
           default: null
     game.CardDTO:
       example:
-        rank: 1
-        suit: 6
+        rank: 6
+        suit: 7
       properties:
         rank:
           description: the rank of a card as a rune - int32 ASCII encoding
@@ -664,26 +664,27 @@ components:
         game_config:
           auto_starts_hands: true
           big_blind: 0
+          bot_turn_timeout: 6
           chip_denominations:
-          - 6
-          - 6
-          player_count: 1
+          - 1
+          - 1
+          player_count: 5
           small_blind: 5
           starting_chips:
-            key: 5
+            key: 2
         id: id
         started_at: started_at
         table:
-          big_blind_position: 2
-          button_position: 7
+          big_blind_position: 7
+          button_position: 9
           current_hand:
-            big_blind: 9
-            id: 3
-            small_blind: 2
+            big_blind: 3
+            id: 2
+            small_blind: 4
             started_at: started_at
           current_round:
-            bet: 4
-            current_aggressor: 7
+            bet: 7
+            current_aggressor: 1
             current_player_position: 1
             current_round_type: unset
           players:
@@ -691,14 +692,14 @@ components:
               key: 1
             display_name: display_name
             hole:
-            - rank: 1
-              suit: 6
-            - rank: 1
-              suit: 6
-            position: 7
-            pot_contribution: 1
+            - rank: 6
+              suit: 7
+            - rank: 6
+              suit: 7
+            position: 1
+            pot_contribution: 4
             stack:
-              key: 4
+              key: 5
             state: state
             user_id: user_id
             user_type: bot
@@ -706,25 +707,25 @@ components:
               key: 1
             display_name: display_name
             hole:
-            - rank: 1
-              suit: 6
-            - rank: 1
-              suit: 6
-            position: 7
-            pot_contribution: 1
+            - rank: 6
+              suit: 7
+            - rank: 6
+              suit: 7
+            position: 1
+            pot_contribution: 4
             stack:
-              key: 4
+              key: 5
             state: state
             user_id: user_id
             user_type: bot
           pot:
-            key: 5
+            key: 9
           small_blind_position: 9
           street:
-          - rank: 1
-            suit: 6
-          - rank: 1
-            suit: 6
+          - rank: 6
+            suit: 7
+          - rank: 6
+            suit: 7
       properties:
         ended_at:
           description: the time that the game ended
@@ -744,9 +745,9 @@ components:
     game.HandDTO:
       description: the current hand
       example:
-        big_blind: 9
-        id: 3
-        small_blind: 2
+        big_blind: 3
+        id: 2
+        small_blind: 4
         started_at: started_at
       properties:
         big_blind:
@@ -761,18 +762,33 @@ components:
         started_at:
           description: the time that this hand started
           type: string
+    game.HandStartEventDTO:
+      properties:
+        big_blind_cost:
+          type: integer
+        big_blind_position:
+          type: integer
+        button_position:
+          type: integer
+        id:
+          type: integer
+        small_blind_cost:
+          type: integer
+        small_blind_position:
+          type: integer
     game.NewGameConfigDTO:
       description: the configuration used to setup the game
       example:
         auto_starts_hands: true
         big_blind: 0
+        bot_turn_timeout: 6
         chip_denominations:
-        - 6
-        - 6
-        player_count: 1
+        - 1
+        - 1
+        player_count: 5
         small_blind: 5
         starting_chips:
-          key: 5
+          key: 2
       properties:
         auto_starts_hands:
           description: |-
@@ -781,6 +797,9 @@ components:
           type: boolean
         big_blind:
           description: the big blind
+          type: integer
+        bot_turn_timeout:
+          description: the number of milliseconds that a bot has to take a turn
           type: integer
         chip_denominations:
           description: a collection of denominations that are available for chips
@@ -812,6 +831,15 @@ components:
           type: array
           uniqueItems: false
           default: null
+    game.PayoutEventDTO:
+      properties:
+        chips:
+          additionalProperties:
+            type: integer
+          description: an optional mapping of chips that is required by some action
+            types.
+        player_id:
+          type: string
     game.PlayerActionDTO:
       properties:
         accepted_at:
@@ -835,14 +863,14 @@ components:
           key: 1
         display_name: display_name
         hole:
-        - rank: 1
-          suit: 6
-        - rank: 1
-          suit: 6
-        position: 7
-        pot_contribution: 1
+        - rank: 6
+          suit: 7
+        - rank: 6
+          suit: 7
+        position: 1
+        pot_contribution: 4
         stack:
-          key: 4
+          key: 5
         state: state
         user_id: user_id
         user_type: bot
@@ -909,8 +937,8 @@ components:
     game.RoundDTO:
       description: the current round
       example:
-        bet: 4
-        current_aggressor: 7
+        bet: 7
+        current_aggressor: 1
         current_player_position: 1
         current_round_type: unset
       properties:
@@ -926,6 +954,12 @@ components:
             currently is
           type: integer
         current_round_type:
+          $ref: "#/components/schemas/game.RoundType"
+    game.RoundStartEventDTO:
+      example:
+        round_type: unset
+      properties:
+        round_type:
           $ref: "#/components/schemas/game.RoundType"
     game.RoundType:
       description: the type of round
@@ -949,16 +983,16 @@ components:
     game.TableDTO:
       description: the table
       example:
-        big_blind_position: 2
-        button_position: 7
+        big_blind_position: 7
+        button_position: 9
         current_hand:
-          big_blind: 9
-          id: 3
-          small_blind: 2
+          big_blind: 3
+          id: 2
+          small_blind: 4
           started_at: started_at
         current_round:
-          bet: 4
-          current_aggressor: 7
+          bet: 7
+          current_aggressor: 1
           current_player_position: 1
           current_round_type: unset
         players:
@@ -966,14 +1000,14 @@ components:
             key: 1
           display_name: display_name
           hole:
-          - rank: 1
-            suit: 6
-          - rank: 1
-            suit: 6
-          position: 7
-          pot_contribution: 1
+          - rank: 6
+            suit: 7
+          - rank: 6
+            suit: 7
+          position: 1
+          pot_contribution: 4
           stack:
-            key: 4
+            key: 5
           state: state
           user_id: user_id
           user_type: bot
@@ -981,25 +1015,25 @@ components:
             key: 1
           display_name: display_name
           hole:
-          - rank: 1
-            suit: 6
-          - rank: 1
-            suit: 6
-          position: 7
-          pot_contribution: 1
+          - rank: 6
+            suit: 7
+          - rank: 6
+            suit: 7
+          position: 1
+          pot_contribution: 4
           stack:
-            key: 4
+            key: 5
           state: state
           user_id: user_id
           user_type: bot
         pot:
-          key: 5
+          key: 9
         small_blind_position: 9
         street:
-        - rank: 1
-          suit: 6
-        - rank: 1
-          suit: 6
+        - rank: 6
+          suit: 7
+        - rank: 6
+          suit: 7
       properties:
         big_blind_position:
           description: the position of the big blind
@@ -1033,6 +1067,14 @@ components:
           type: array
           uniqueItems: false
           default: null
+    game.TurnStartEventDTO:
+      properties:
+        bet_amount:
+          type: integer
+        player_id:
+          type: string
+        round_type:
+          $ref: "#/components/schemas/game.RoundType"
     just.ErrorCode:
       enum:
       - 67
@@ -1111,26 +1153,27 @@ components:
           game_config:
             auto_starts_hands: true
             big_blind: 0
+            bot_turn_timeout: 6
             chip_denominations:
-            - 6
-            - 6
-            player_count: 1
+            - 1
+            - 1
+            player_count: 5
             small_blind: 5
             starting_chips:
-              key: 5
+              key: 2
           id: id
           started_at: started_at
           table:
-            big_blind_position: 2
-            button_position: 7
+            big_blind_position: 7
+            button_position: 9
             current_hand:
-              big_blind: 9
-              id: 3
-              small_blind: 2
+              big_blind: 3
+              id: 2
+              small_blind: 4
               started_at: started_at
             current_round:
-              bet: 4
-              current_aggressor: 7
+              bet: 7
+              current_aggressor: 1
               current_player_position: 1
               current_round_type: unset
             players:
@@ -1138,14 +1181,14 @@ components:
                 key: 1
               display_name: display_name
               hole:
-              - rank: 1
-                suit: 6
-              - rank: 1
-                suit: 6
-              position: 7
-              pot_contribution: 1
+              - rank: 6
+                suit: 7
+              - rank: 6
+                suit: 7
+              position: 1
+              pot_contribution: 4
               stack:
-                key: 4
+                key: 5
               state: state
               user_id: user_id
               user_type: bot
@@ -1153,25 +1196,25 @@ components:
                 key: 1
               display_name: display_name
               hole:
-              - rank: 1
-                suit: 6
-              - rank: 1
-                suit: 6
-              position: 7
-              pot_contribution: 1
+              - rank: 6
+                suit: 7
+              - rank: 6
+                suit: 7
+              position: 1
+              pot_contribution: 4
               stack:
-                key: 4
+                key: 5
               state: state
               user_id: user_id
               user_type: bot
             pot:
-              key: 5
+              key: 9
             small_blind_position: 9
             street:
-            - rank: 1
-              suit: 6
-            - rank: 1
-              suit: 6
+            - rank: 6
+              suit: 7
+            - rank: 6
+              suit: 7
         type: user.created
       properties:
         data:
@@ -1205,15 +1248,106 @@ components:
       description: the type of user
       enum:
       - bot
-      - normal
+      - human
       - admin
+      - dealer
       - game_master
       type: string
       x-enum-varnames:
       - UserTypeBot
       - UserTypeHuman
       - UserTypeAdmin
+      - UserTypeDealer
       - UserTypeGameMaster
+    just.WebsocketMessage-array_game_PayoutEventDTO:
+      properties:
+        data:
+          items:
+            $ref: "#/components/schemas/game.PayoutEventDTO"
+          type: array
+          uniqueItems: false
+          default: null
+        event_type:
+          type: string
+        id:
+          type: integer
+        time_sent:
+          type: string
+    just.WebsocketMessage-game_ChipExchangeDTO:
+      properties:
+        data:
+          $ref: "#/components/schemas/game.ChipExchangeDTO"
+        event_type:
+          type: string
+        id:
+          type: integer
+        time_sent:
+          type: string
+    just.WebsocketMessage-game_GameDTO:
+      properties:
+        data:
+          $ref: "#/components/schemas/game.GameDTO"
+        event_type:
+          type: string
+        id:
+          type: integer
+        time_sent:
+          type: string
+    just.WebsocketMessage-game_HandStartEventDTO:
+      properties:
+        data:
+          $ref: "#/components/schemas/game.HandStartEventDTO"
+        event_type:
+          type: string
+        id:
+          type: integer
+        time_sent:
+          type: string
+    just.WebsocketMessage-game_PlayerActionDTO:
+      properties:
+        data:
+          $ref: "#/components/schemas/game.PlayerActionDTO"
+        event_type:
+          type: string
+        id:
+          type: integer
+        time_sent:
+          type: string
+    just.WebsocketMessage-game_RoundStartEventDTO:
+      example:
+        data:
+          round_type: unset
+        event_type: event_type
+        id: 0
+        time_sent: time_sent
+      properties:
+        data:
+          $ref: "#/components/schemas/game.RoundStartEventDTO"
+        event_type:
+          type: string
+        id:
+          type: integer
+        time_sent:
+          type: string
+    just.WebsocketMessage-game_TurnStartEventDTO:
+      properties:
+        data:
+          $ref: "#/components/schemas/game.TurnStartEventDTO"
+        event_type:
+          type: string
+        id:
+          type: integer
+        time_sent:
+          type: string
+    _game__game_id__state_listen_get_200_response:
+      oneOf:
+      - $ref: "#/components/schemas/just.WebsocketMessage-game_RoundStartEventDTO"
+      - $ref: "#/components/schemas/just.WebsocketMessage-game_HandStartEventDTO"
+      - $ref: "#/components/schemas/just.WebsocketMessage-game_GameDTO"
+      - $ref: "#/components/schemas/just.WebsocketMessage-array_game_PayoutEventDTO"
+      - $ref: "#/components/schemas/just.WebsocketMessage-game_PlayerActionDTO"
+      - $ref: "#/components/schemas/just.WebsocketMessage-game_TurnStartEventDTO"
+      - $ref: "#/components/schemas/just.WebsocketMessage-game_ChipExchangeDTO"
   securitySchemes:
     BearerAuth:
       description: Type "Bearer" followed by a space and your token (e.g. "Bearer

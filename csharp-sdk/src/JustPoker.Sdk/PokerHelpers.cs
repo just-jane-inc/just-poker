@@ -96,7 +96,7 @@ public static class PokerHelpers {
         denominations ??= [10, 50, 100, 500]; // Default
 
         var config = new GameNewGameConfigDTO(autoStartHands, bigBlind,
-            denominations.ToList(), playerCount, smallBlind,
+            0, denominations.ToList(), playerCount, smallBlind,
             new Dictionary<string, int>(startingChips));
 
         return CreateGameFromConfigAsync(baseUrl, token, config);

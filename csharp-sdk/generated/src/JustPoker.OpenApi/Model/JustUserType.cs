@@ -37,7 +37,7 @@ namespace JustPoker.OpenApi.Model
         UserTypeBot = 1,
 
         /// <summary>
-        /// Enum UserTypeHuman for value: normal
+        /// Enum UserTypeHuman for value: human
         /// </summary>
         UserTypeHuman = 2,
 
@@ -47,9 +47,14 @@ namespace JustPoker.OpenApi.Model
         UserTypeAdmin = 3,
 
         /// <summary>
+        /// Enum UserTypeDealer for value: dealer
+        /// </summary>
+        UserTypeDealer = 4,
+
+        /// <summary>
         /// Enum UserTypeGameMaster for value: game_master
         /// </summary>
-        UserTypeGameMaster = 4
+        UserTypeGameMaster = 5
     }
 
     /// <summary>
@@ -67,11 +72,14 @@ namespace JustPoker.OpenApi.Model
             if (value.Equals("bot"))
                 return JustUserType.UserTypeBot;
 
-            if (value.Equals("normal"))
+            if (value.Equals("human"))
                 return JustUserType.UserTypeHuman;
 
             if (value.Equals("admin"))
                 return JustUserType.UserTypeAdmin;
+
+            if (value.Equals("dealer"))
+                return JustUserType.UserTypeDealer;
 
             if (value.Equals("game_master"))
                 return JustUserType.UserTypeGameMaster;
@@ -89,11 +97,14 @@ namespace JustPoker.OpenApi.Model
             if (value.Equals("bot"))
                 return JustUserType.UserTypeBot;
 
-            if (value.Equals("normal"))
+            if (value.Equals("human"))
                 return JustUserType.UserTypeHuman;
 
             if (value.Equals("admin"))
                 return JustUserType.UserTypeAdmin;
+
+            if (value.Equals("dealer"))
+                return JustUserType.UserTypeDealer;
 
             if (value.Equals("game_master"))
                 return JustUserType.UserTypeGameMaster;
@@ -113,10 +124,13 @@ namespace JustPoker.OpenApi.Model
                 return "bot";
 
             if (value == JustUserType.UserTypeHuman)
-                return "normal";
+                return "human";
 
             if (value == JustUserType.UserTypeAdmin)
                 return "admin";
+
+            if (value == JustUserType.UserTypeDealer)
+                return "dealer";
 
             if (value == JustUserType.UserTypeGameMaster)
                 return "game_master";
