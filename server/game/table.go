@@ -187,6 +187,7 @@ func (g *game) nextRound() {
 		handEvaluations := g.GetHandEvaluations()
 		payouts := make(map[int]int)
 		pots := g.getSplitPots()
+
 		for _, p := range pots {
 			just.Logger.Debugf("processing pot for payout: %v", p)
 			payout, err := g.handlePayout(handEvaluations, p)
@@ -546,15 +547,36 @@ func (g *game) handlePayout(handEvaluations map[int]int, pot pot) (winnings map[
 		return nil, just.NewPokerError("critical error - no winner for a given pot", just.Unknown)
 	}
 
+	lowestDenomination := slices.Min(g.table.denominations)
 	winnings = make(map[int]int)
+	remainder := pot.Sum()
 	for _, position := range winners {
-		winnings[position] = pot.Sum() / len(winners)
+		amount := pot.Sum() / len(winners)
+		erm := amount % lowestDenomination
+
+		winnings[position] = amount - erm
+		remainder -= amount
+		remainder += erm
 	}
 
-	remainder := pot.Sum() % len(winners)
-
 	// need to update this to get the player from winners who is nearest the button
-	winnings[winners[0]] += remainder
+	if remainder > 0 {
+		slices.Sort(winners)
+		winner := winners[0]
+		for _, curr := range winners {
+			if curr > g.table.buttonPosition {
+				winner = curr
+				break
+			}
+		}
+
+		just.Logger.Infof("remainder of %d being distributed to %d", remainder, winners[0])
+		winnings[winner] += remainder
+
+		if remainder%lowestDenomination != 0 {
+			just.Logger.Errorf("remainder of %d is not divisible by lowest denom chip %d", remainder, lowestDenomination)
+		}
+	}
 
 	return winnings, nil
 }

@@ -13,6 +13,7 @@ join-game = "just.join_game.__main__:main"
 listen-game = "just.listen_game.__main__:main"
 start-game = "just.start_game.__main__:main"
 get-game = "just.game_state.__main__:main"
+test-game = "just.test_game.__main__:main"
 jamble-bot = "examples.jambler.__main__:main"
 
 [tool.setuptools.packages.find]
