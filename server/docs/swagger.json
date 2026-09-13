@@ -1559,6 +1559,49 @@
                 "tags": [
                     "User"
                 ]
+            },
+            "get": {
+                "description": "gets the user information for the requesting user based on their provided authorization token",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-any"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "gets your user",
+                "tags": [
+                    "User"
+                ]
             }
         }
     },

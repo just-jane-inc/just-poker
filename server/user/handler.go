@@ -42,6 +42,53 @@ func OnDeleteMe(w http.ResponseWriter, r *http.Request) {
 	just.DeleteUser(user.ID, w)
 }
 
+// OnGetMe godoc
+// @Summary gets your user
+// @Description gets the user information for the requesting user based on their provided authorization token
+// @Tags         User
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  just.ResponseMessage[any]
+// @Failure      401 {object}  just.ResponseMessage[just.ErrorDTO]
+// @Security BearerAuth
+// @Router       /user/me [get]
+func OnGetMe(w http.ResponseWriter, r *http.Request) {
+	user, _ := just.GetAuthorizedUser(r)
+	if user == nil {
+		just.Unauthorized().WriteJSONResponse(w)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	conn, err := just.DBConnPool.Acquire(ctx)
+	if err != nil {
+		just.Logger.Errorf("encountered error acquiring db conn: %v", err)
+		just.InternalError("error with database").WriteJSONResponse(w)
+		return
+	}
+	defer conn.Release()
+
+	stmt := `select username, id, user_type, twitch_user from poker_users where id=$1`
+	row := conn.QueryRow(ctx, stmt, user.ID)
+	if row == nil {
+		just.Logger.Errorf("error finding user", err)
+		just.InternalError("error with database").WriteJSONResponse(w)
+		return
+	}
+
+	var userDTO UserDTO
+	err = row.Scan(&userDTO.DisplayName, &userDTO.UserID, &userDTO.UserType, &userDTO.TwitchID)
+	if err != nil {
+		just.Logger.Errorf("error scanning row when getting user: %v", err)
+		just.InternalError("internal server error").WriteJSONResponse(w)
+		return
+	}
+
+	just.OK("user", userDTO).WriteJSONResponse(w)
+}
+
 // OnCreateUser Create a user
 // Internal only, unauthenticated
 func OnCreateUser(w http.ResponseWriter, r *http.Request) {

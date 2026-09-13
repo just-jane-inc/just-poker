@@ -1,8 +1,16 @@
 package user
 
+// UserDTO describes an individual user
 type UserDTO struct {
-	UserID      string `json:"user_id"`
+	// the id of the user
+	UserID string `json:"user_id"`
+
+	// the users display name
 	DisplayName string `json:"display_name"`
-	UserType    string `json:"user_type"`
-	TwitchID    string `json:"twitch_id"`
+
+	// the type of user
+	UserType string `json:"user_type"`
+
+	// the id of the twitch user that owns this poker user
+	TwitchID string `json:"twitch_id"`
 }

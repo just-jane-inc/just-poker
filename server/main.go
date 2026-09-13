@@ -211,6 +211,12 @@ func main() {
 		user.OnDeleteUser,
 	)
 
+	// get the calling user
+	apiMux.HandleFunc(
+		"GET /user/me",
+		user.OnGetMe,
+	)
+
 	// =====Admin Panel End=====
 
 	apiMux.HandleFunc(
