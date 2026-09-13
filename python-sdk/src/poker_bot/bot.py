@@ -1,12 +1,13 @@
 import asyncio
 import logging
+from copy import deepcopy
 from dataclasses import dataclass
 
 import openapi_client as api
 import poker_bot.poker_exceptions as ex
 import poker_bot.poker_helpers as help
 import poker_bot.websocket_events as ws
-from openapi_client import GamePlayerIntent, JustResponseMessageAny
+from openapi_client import GamePlayerIntent, JustResponseMessageAny, GameCardDTO, GameGameDTO
 from poker_bot.event_hub import (
     EventHub,
     EventSubscriber,
@@ -86,8 +87,61 @@ class PokerBot:
     def _current_stack(self, stack: list[help.Chips]):
         self._player.stack = help.convert_chips(stack)
 
+    @property
+    def stack(self) -> list[help.Chips]:
+        """
+        Read only view of the current player's stack as a List of Chips
+        """
+        return self._current_stack
+
+    @property
+    def stack_as_dict(self) -> dict[str, int]:
+        """
+        Read only view of the current player's stack as a dictionary of denomination and count
+        """
+        if not self._player or not self._player.stack:
+            return {}
+        return deepcopy(self._player.stack)
+
+    @property
+    def hole(self) -> list[GameCardDTO]:
+        """
+        Read only view of the current player's cards
+        """
+        cards: list = []
+        if not self._player or not self._player.hole:
+            return cards
+
+        for card in self._player.hole:
+            cards.append(card)
+        return cards
+
+    @property
+    def game_state(self) -> GameGameDTO | None:
+        """
+        Read only view of the current game state.
+
+        You can get the table, players, street, bet info, and more from here
+        """
+        return deepcopy(self._current_state)
+
+    @property
+    def position(self) -> int:
+        """
+        Read only view of the current player's position at the table
+        """
+        if self._player and self._player.position is not None:
+            return self._player.position
+        return -1
+
     def chip_total(self) -> int:
+        """
+        Fetch the current sum total of your chips
+        """
         total = 0
+        if not self._player or not self._player.stack:
+            return total
+
         for denom, count in self._player.stack.items():
             total += int(denom) * count
 
@@ -109,7 +163,7 @@ class PokerBot:
         await self._game_api.game_game_id_started_post(self._game_id)
 
     async def get_game_state(self) -> api.GameGameDTO | None:
-        """gets the current game state
+        """gets the current game state fresh from the server
 
         when getting the game state this will also update the internally tracked game state.
         """

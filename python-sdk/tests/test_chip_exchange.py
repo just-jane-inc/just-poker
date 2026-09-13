@@ -193,7 +193,7 @@ async def test_bet_with_big_chips():
 
         assert sum(int(d) * c for d, c in bet.items()) == target, f"bet {bet} is not worth {target}"
 
-        held = jane_bot._player.stack
+        held = jane_bot.stack_as_dict
         short = {d: c - held.get(d, 0) for d, c in bet.items() if c > held.get(d, 0)}
         assert not short, f"betting {target} returned {bet}; needs {short} more than the player has ({held})"
 
@@ -238,6 +238,6 @@ async def test_bet_with_small_chips():
 
         assert sum(int(d) * c for d, c in bet.items()) == target, f"bet {bet} is not worth {target}"
 
-        held = jane_bot._player.stack
+        held = jane_bot.stack_as_dict
         short = {d: c - held.get(d, 0) for d, c in bet.items() if c > held.get(d, 0)}
         assert not short, f"betting {target} returned {bet}; needs {short} more than the player has ({held})"
