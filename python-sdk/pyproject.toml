@@ -5,6 +5,15 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "poker-bot-sdk"
 version = "0.1.0"
+dependencies = [
+  "httpx>=0.28",
+  "pydantic>=2.13",
+  "python-dateutil>=2.9",
+  "websockets>=17",
+  "python-dotenv>=1.2",
+  "textual>=8.2",
+  "truststore>=0.10; sys_platform == 'win32'",
+]
 
 [project.scripts]
 poker-tui = "just.tui.__main__:main"

@@ -7,7 +7,7 @@ import openapi_client as api
 import poker_bot.poker_exceptions as ex
 import poker_bot.poker_helpers as help
 import poker_bot.websocket_events as ws
-from openapi_client import GamePlayerIntent, JustResponseMessageAny, GameCardDTO, GameGameDTO
+from openapi_client import GameCardDTO, GameGameDTO, GamePlayerIntent, JustResponseMessageAny
 from poker_bot.event_hub import (
     EventHub,
     EventSubscriber,
@@ -507,9 +507,9 @@ class PokerBot:
             if d not in chips:
                 chips[d] = 0
 
-        print(f"computing bet for: {amount}")
-        print(f"current stack: {chips}")
-        print(f"denominations: {denominations}")
+        logger.debug(f"computing bet for: {amount}")
+        logger.debug(f"current stack: {chips}")
+        logger.debug(f"denominations: {denominations}")
 
         if not denominations:
             raise ex.CustomException("missing denomination from game config")
@@ -632,7 +632,7 @@ class PokerBot:
             # different denomination chip for a single larger one, e.g. 1x500 and 5x100 for a single 1000.
             # handle this situation
             if count > 0:
-                print(f"available to exchange: {available_to_exchange} | {denomination}x{count}")
+                logger.debug(f"available to exchange: {available_to_exchange} | {denomination}x{count}")
                 need = count * denomination
                 for d, c in sorted(available_to_exchange.items(), reverse=True):
                     while chips[d] > 0 and need > 0:
@@ -650,7 +650,9 @@ class PokerBot:
                 # are all divisible evenly by lower chips this greedy approach should be fine?
                 receive[denomination] += count
 
-        print(f"computed bet:\n receive={receive}\n give={give} \n bet={valid_bet} \n stack={self._player.stack}")
+        logger.debug(
+            f"computed bet:\n receive={receive}\n give={give} \n bet={valid_bet} \n stack={self._player.stack}"
+        )
         if sum((d * c for d, c in give.items())) > 0:
             try:
                 await self.exchange_chips(

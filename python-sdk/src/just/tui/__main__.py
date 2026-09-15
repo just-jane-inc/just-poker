@@ -20,6 +20,39 @@ from openapi_client.models import GameGameDTO, GamePlayerDTO, GameTableDTO
 from poker_bot.bot import PokerBot
 from poker_bot.event_hub import Event, EventHub, EventType
 
+
+# Man we can't have nothing around here not even cool unicode - bwopbwop1
+def get_unicode_mapping():
+    suits = {help.CardSuit.SPADE: "♠", help.CardSuit.HEART: "♥", help.CardSuit.DIAMOND: "♦", help.CardSuit.CLUB: "♣"}
+    ranks = {
+        help.CardRank.ACE: "A",
+        help.CardRank.TWO: "2",
+        help.CardRank.THREE: "3",
+        help.CardRank.FOUR: "4",
+        help.CardRank.FIVE: "5",
+        help.CardRank.SIX: "6",
+        help.CardRank.SEVEN: "7",
+        help.CardRank.EIGHT: "8",
+        help.CardRank.NINE: "9",
+        help.CardRank.TEN: "T",
+        help.CardRank.JACK: "J",
+        help.CardRank.QUEEN: "Q",
+        help.CardRank.KING: "K",
+        help.CardRank.UNKNOWN: "x",
+    }
+
+    mapping = {}
+
+    for ks, suit in suits.items():
+        mapping[ks] = {}
+        for kr, rank in ranks.items():
+            mapping[ks][kr] = f"{rank}{suit}"
+
+    mapping[help.CardSuit.UNKNOWN] = dict()
+    mapping[help.CardSuit.UNKNOWN][help.CardRank.UNKNOWN] = chr(0x1F0A0)
+    return mapping
+
+
 load_dotenv("config/.env")
 base_url = os.getenv("BASE_URL")
 
@@ -90,14 +123,11 @@ class InputPopup(ModalScreen[str]):
 
 class Table(Static):
     table: reactive[GameTableDTO | None] = reactive(GameTableDTO(), layout=True)
-    card_map = help.get_unicode_mapping()
+    card_map = get_unicode_mapping()
     winner: str | None = None
     game_id: str | None = None
 
     def render(self) -> str:
-        # -ˋˏ ༻❁❀༺ ˎˊ-
-        # ˖⁺‧₊˚˚₊‧⁺˖
-        # .𓋼𓍊 𓆏 𓍊𓋼𓍊.☆
         view = f"♠♥ ☆༻❁♡✿⊱༻{self.game_id!s:^6}༺⊰✿♡❁༺☆ ♦♣\n"
         view += f"║|{'-' * 22}|║\n"
         if self.winner:
@@ -126,7 +156,7 @@ class Table(Static):
 class Players(Static):
     players: reactive[list[GamePlayerDTO] | None] = reactive(None, layout=True)
     current_turn: reactive[int] = reactive(-1, layout=True)
-    card_map = help.get_unicode_mapping()
+    card_map = get_unicode_mapping()
     me: PokerBot | reactive[None] = reactive(None, layout=True)
 
     def render(self) -> str:
