@@ -436,7 +436,22 @@ func OnPlayerAction(w http.ResponseWriter, r *http.Request) {
 
 	just.Logger.Debugf("player action request received from [%s] for [%s]", user.ID, gameID)
 
-	playerAction.PlayerID = user.ID
+	// users generally should not put the id in this DTO,
+	// if the endpoint receives a DTO with a different user
+	// it must be from a game master to be accepted
+	//
+	// this is to enable front end integrations with update the
+	// server with human actions
+	if playerAction.PlayerID == "" {
+		playerAction.PlayerID = user.ID
+	} else if playerAction.PlayerID == user.ID {
+		// do nothing
+	} else {
+		if user.Type != just.UserTypeGameMaster {
+			just.Forbidden().WriteJSONResponse(w)
+			return
+		}
+	}
 
 	if g.isPaused {
 		just.InvalidPlayerActionGameIsPaused().WriteJSONResponse(w)

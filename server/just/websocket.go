@@ -62,7 +62,7 @@ func (h *ServerUpdateHub) AddPlayerToHub(gameID string, user *AuthorizedUser) *P
 	p := &PlayerUpdateConnection{
 		GameID:         gameID,
 		PlayerID:       user.ID,
-		MessageChannel: make(chan WebsocketMessage[any], 10),
+		MessageChannel: make(chan WebsocketMessage[any], 1024),
 		Exit:           make(chan any),
 		UserType:       user.Type,
 	}

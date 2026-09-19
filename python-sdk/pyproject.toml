@@ -3,9 +3,10 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "poker-bot-sdk"
-version = "0.1.0"
 dependencies = [
+  "pytest >= 9.1.1",
+  "pytest-asyncio >= 1.4.0",
+  "pytest-xdist >= 3.1.1",
   "httpx>=0.28",
   "pydantic>=2.13",
   "python-dateutil>=2.9",
@@ -14,6 +15,8 @@ dependencies = [
   "textual>=8.2",
   "truststore>=0.10; sys_platform == 'win32'",
 ]
+name = "poker-bot-sdk"
+version = "0.1.0"
 
 [project.scripts]
 poker-tui = "just.tui.__main__:main"
@@ -23,11 +26,11 @@ listen-game = "just.listen_game.__main__:main"
 start-game = "just.start_game.__main__:main"
 get-game = "just.game_state.__main__:main"
 test-game = "just.test_game.__main__:main"
-jamble-bot = "examples.jambler.__main__:main"
+jamble-bot = "jambler.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src", "examples"]
-include = ["poker_bot*", "openapi_client*", "just*"]
+include = ["poker_bot*", "openapi_client*", "just*", "jambler*"]
 
 [tool.pyright]
 typeCheckingMode = "off"
