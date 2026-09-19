@@ -1,0 +1,77 @@
+<Defaults>
+</Defaults>
+
+<!-- Game configuration menu for the Game Master -->
+<Panel
+    id="gameConfigurationMenu"
+    width="400"
+    height="300"
+    rectAlignment="UpperLeft"
+    
+    showAnimation="SlideIn_Left"
+    hideAnimation="SlideOut_Left"
+
+    visibility="Black"
+>
+
+    <!-- Load from state section? Input GameID, load gamestate from server. -->
+    <!-- Tabs for switching between new game and continue game menus -->
+
+    <!-- ________________________________ -->
+    <!--         New game menu            -->
+    <!-- ________________________________ -->
+
+    <!-- Starting Stack -->
+
+
+    <!-- Starting Blinds -->
+
+
+    <!-- Register bots -->
+
+
+    <!-- Start game -->
+
+</Panel>
+
+<Defaults>
+  <Panel class="TurnPanel"
+    color="#8f8478"
+    outline="#635341"
+    outlineSize="2 -2"
+  />
+</Defaults>
+
+<Panel
+  visibility="Black"
+  id="TurnPanelUI"
+  class="TurnPanel"
+  ignoreLayout="true"
+  allowDragging="true"
+  rectAlignment="LowerCenter" offsetXY="0 250"
+  padding="10 10 10 10"
+  width="300" height="200"
+  returnToOriginalPositionWhenReleased="false"
+  >
+  <TableLayout
+    autoCalculateHeight="false"
+    automaticallyRemoveEmptyColumns="false"
+    columnWidths="16"
+  >
+    <Row preferredHeight="20"><Cell columnSpan="8"><Text>Hello WOrld!</Text></Cell></Row>
+    <Row />
+    <Row preferredHeight="30">
+      <Cell columnSpan="16">
+        <Button text="End Turn" onClick="onEndTurnButtonClicked"/>
+      </Cell>
+    </Row>
+  </TableLayout>
+  <!-- <Button id="CloseButton"
+    width="20" height="20"
+    rectAlignment="UpperRight"
+    color="#990000"
+    textColor="#FFFFFF"
+    text="-"
+    onClick="minimizeTurnMenu"
+  /> -->
+</Panel>
