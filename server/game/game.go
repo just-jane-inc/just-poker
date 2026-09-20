@@ -188,16 +188,16 @@ func createGameFromConfig(config NewGameConfigDTO) (*game, *just.PokerError) {
 	}
 
 	// this is the canosa validation algorithm
-	var values []int
+	values := make([]int, len(config.ChipDenominations))
 	copy(values, config.ChipDenominations)
 	slices.Sort(values)
 
-	candidateHighestCommonDenominator := config.ChipDenominations[0]
+	candidateHighestCommonDenominator := values[0]
 	if candidateHighestCommonDenominator <= 0 {
 		return nil, just.NewPokerError("the lowest value denomination in collection must be greater then zero", just.InvalidGameConfiguration)
 	}
 
-	for _, denomination := range config.ChipDenominations {
+	for _, denomination := range values {
 		if denomination%candidateHighestCommonDenominator != 0 {
 			return nil, just.NewPokerError("The lowest value chip in the set of denominations is not the highest common denominator of the set. i don't know what that value is, i will leave it as an excercise for canosa", just.InvalidGameConfiguration)
 		}
