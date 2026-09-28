@@ -37,6 +37,39 @@ func OnEvalHand(w http.ResponseWriter, r *http.Request) {
 	just.WriteJSONResponse(w, 200, dto)
 }
 
+// OnGetDeck godoc
+// @Summary	     Get the deck (order)
+// @Description  Gets the order of the deck used by the current hand
+// @Tags         Admin
+// @Accept       json
+// @Produce      json
+// @Param game_id path string true "ID of the game to get deck for"
+// @Success      200 {object} just.ResponseMessage[[]CardDTO]
+// @Failure      400 {object} just.ResponseMessage[just.ErrorDTO]
+// @Security BearerAuth
+// @Router       /game/{game_id}/deck [get]
+func OnGetDeck(w http.ResponseWriter, r *http.Request) {
+	gameID := r.PathValue("game_id")
+	user, _ := just.GetAuthorizedUser(r)
+	if user == nil {
+		just.Unauthorized().WriteJSONResponse(w)
+		return
+	}
+
+	if user.NotType(just.UserTypeAdmin) && user.NotType(just.UserTypeGameMaster) {
+		just.Forbidden().WriteJSONResponse(w)
+		return
+	}
+
+	g, ok := CurrentGames.GetGame(gameID)
+	if !ok {
+		just.NotFound("game not found", just.GameNotFound).WriteJSONResponse(w)
+		return
+	}
+
+	just.OK("game_deck", g.table.CurrentDeck).WriteJSONResponse(w)
+}
+
 // OnDeleteGame godoc
 // @Summary      Delete a Game
 // @Description  Delete a game
@@ -82,6 +115,8 @@ func OnDeleteGame(w http.ResponseWriter, r *http.Request) {
 // @Param game_id path string true "ID of the Game to join"
 // @Success      200 {object} just.ResponseMessage[any]
 // @Failure      400 {object} just.ResponseMessage[just.ErrorDTO]
+// @Failure      401 {object} just.ResponseMessage[just.ErrorDTO]
+// @Failure      403 {object} just.ResponseMessage[just.ErrorDTO]
 // @Security BearerAuth
 // @Router       /game/{game_id}/player [post]
 func OnJoinGameRequest(w http.ResponseWriter, r *http.Request) {
@@ -91,7 +126,12 @@ func OnJoinGameRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Check user.Type
+	if user.Type != just.UserTypeBot && user.Type != just.UserTypeHuman {
+		// only human and bot tokens should be players in games, other user
+		// types with privledges are not allowed.
+		just.Forbidden().WriteJSONResponse(w)
+		return
+	}
 
 	gameID := r.PathValue("game_id")
 	just.Logger.Debugf("received request to join game [%s]", gameID)

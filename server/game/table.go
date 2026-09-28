@@ -16,6 +16,7 @@ var (
 )
 
 type table struct {
+	CurrentDeck        []CardDTO
 	currentHand        HandDTO
 	currentTurn        TurnDTO
 	currentRound       round
@@ -437,6 +438,11 @@ func (g *game) nextHand(bb int, sb int) *just.PokerError {
 	t.bigBlindPosition = g.NextInactivePlayer(t.smallBlindPosition).position
 
 	t.deck.Reset()
+	t.CurrentDeck = make([]CardDTO, 52)
+	for i, c := range t.deck.cards {
+		t.CurrentDeck[i] = c.AsDTO()
+	}
+
 	t.street = make([]*card, 0)
 	t.pot = make(map[int]int)
 	t.currentRound.currentRoundType = RoundTypeUnset

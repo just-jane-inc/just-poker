@@ -129,6 +129,11 @@ func main() {
 	apiMux.HandleFunc("GET /game/{game_id}/state/listen", game.OnGetNextListenerEvent)
 
 	apiMux.HandleFunc(
+		"GET /game/{game_id}/deck",
+		game.OnGetDeck,
+	)
+
+	apiMux.HandleFunc(
 		"GET /game",
 		game.OnGetCurrentActiveGames,
 	)

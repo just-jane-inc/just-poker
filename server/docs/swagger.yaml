@@ -360,6 +360,17 @@ components:
           example: user.created
           type: string
       type: object
+    just.ResponseMessage-array_game_CardDTO:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/game.CardDTO'
+          type: array
+          uniqueItems: false
+        type:
+          example: user.created
+          type: string
+      type: object
     just.ResponseMessage-game_GameDTO:
       properties:
         data:
@@ -765,6 +776,39 @@ paths:
       summary: Exchange Chips
       tags:
       - Game
+  /game/{game_id}/deck:
+    get:
+      description: Gets the order of the deck used by the current hand
+      parameters:
+      - description: ID of the game to get deck for
+        in: path
+        name: game_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/just.ResponseMessage-array_game_CardDTO'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/just.ResponseMessage-just_ErrorDTO'
+          description: Bad Request
+      security:
+      - BearerAuth: []
+      summary: Get the deck (order)
+      tags:
+      - Admin
   /game/{game_id}/hand:
     post:
       description: Starts the next poker hand
@@ -831,6 +875,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/just.ResponseMessage-just_ErrorDTO'
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/just.ResponseMessage-just_ErrorDTO'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/just.ResponseMessage-just_ErrorDTO'
+          description: Forbidden
       security:
       - BearerAuth: []
       summary: Join a Game
