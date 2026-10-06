@@ -6,6 +6,7 @@ Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**admin_game_game_id_status_post**](AdminApi.md#admin_game_game_id_status_post) | **POST** /admin/game/{game_id}/status | Update Game Status
 [**admin_game_game_id_table_post**](AdminApi.md#admin_game_game_id_table_post) | **POST** /admin/game/{game_id}/table | Change Game Table
+[**game_game_id_deck_get**](AdminApi.md#game_game_id_deck_get) | **GET** /game/{game_id}/deck | Get the deck (order)
 
 
 # **admin_game_game_id_status_post**
@@ -151,6 +152,87 @@ Name | Type | Description  | Notes
 ### Return type
 
 **object**
+
+### Authorization
+
+[BearerAuth](../README.md#BearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | OK |  -  |
+**400** | Bad Request |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **game_game_id_deck_get**
+> JustResponseMessageArrayGameCardDTO game_game_id_deck_get(game_id, body=body)
+
+Get the deck (order)
+
+Gets the order of the deck used by the current hand
+
+### Example
+
+* Bearer Authentication (BearerAuth):
+
+```python
+import openapi_client
+from openapi_client.models.just_response_message_array_game_card_dto import JustResponseMessageArrayGameCardDTO
+from openapi_client.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to https://game.bahms.org/api/poker
+# See configuration.py for a list of all supported configuration parameters.
+configuration = openapi_client.Configuration(
+    host = "https://game.bahms.org/api/poker"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+# Configure Bearer authorization: BearerAuth
+configuration = openapi_client.Configuration(
+    access_token = os.environ["BEARER_TOKEN"]
+)
+
+# Enter a context with an instance of the API client
+async with openapi_client.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = openapi_client.AdminApi(api_client)
+    game_id = 'game_id_example' # str | ID of the game to get deck for
+    body = None # object |  (optional)
+
+    try:
+        # Get the deck (order)
+        api_response = await api_instance.game_game_id_deck_get(game_id, body=body)
+        print("The response of AdminApi->game_game_id_deck_get:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling AdminApi->game_game_id_deck_get: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **game_id** | **str**| ID of the game to get deck for | 
+ **body** | **object**|  | [optional] 
+
+### Return type
+
+[**JustResponseMessageArrayGameCardDTO**](JustResponseMessageArrayGameCardDTO.md)
 
 ### Authorization
 

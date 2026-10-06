@@ -17,19 +17,20 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
+from openapi_client.models.game_card_dto import GameCardDTO
 from typing import Optional, Set
 from typing_extensions import Self
 from pydantic_core import to_jsonable_python
 
-class JustHandEvaluationDTO(BaseModel):
+class JustResponseMessageArrayGameCardDTO(BaseModel):
     """
-    JustHandEvaluationDTO
+    JustResponseMessageArrayGameCardDTO
     """ # noqa: E501
-    error: Optional[StrictStr] = None
-    evaluation: Optional[StrictInt] = None
-    __properties: ClassVar[List[str]] = ["error", "evaluation"]
+    data: Optional[List[GameCardDTO]] = None
+    type: Optional[StrictStr] = Field(default=None, json_schema_extra={"examples": ["user.created"]})
+    __properties: ClassVar[List[str]] = ["data", "type"]
 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -49,7 +50,7 @@ class JustHandEvaluationDTO(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of JustHandEvaluationDTO from a JSON string"""
+        """Create an instance of JustResponseMessageArrayGameCardDTO from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -70,11 +71,17 @@ class JustHandEvaluationDTO(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of each item in data (list)
+        _items = []
+        if self.data:
+            for _item_data in self.data:
+                _items.append(_item_data.to_dict() if _item_data is not None else None)
+            _dict['data'] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of JustHandEvaluationDTO from a dict"""
+        """Create an instance of JustResponseMessageArrayGameCardDTO from a dict"""
         if obj is None:
             return None
 
@@ -82,8 +89,8 @@ class JustHandEvaluationDTO(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "error": obj.get("error"),
-            "evaluation": obj.get("evaluation")
+            "data": [GameCardDTO.from_dict(_item) for _item in obj["data"]] if obj.get("data") is not None else None,
+            "type": obj.get("type")
         })
         return _obj
 

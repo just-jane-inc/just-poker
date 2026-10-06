@@ -424,6 +424,8 @@ Name | Type | Description  | Notes
 |-------------|-------------|------------------|
 **200** | OK |  -  |
 **400** | Bad Request |  -  |
+**401** | Unauthorized |  -  |
+**403** | Forbidden |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -1014,7 +1016,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **hand_evaluator_evaluate_post**
-> JustHandEvaluationDTO hand_evaluator_evaluate_post(game_card_dto)
+> GameHandEvaluationDTO hand_evaluator_evaluate_post(game_card_dto)
 
 Evaluate a Hand
 
@@ -1026,7 +1028,7 @@ Evaluator? I hardly...
 ```python
 import openapi_client
 from openapi_client.models.game_card_dto import GameCardDTO
-from openapi_client.models.just_hand_evaluation_dto import JustHandEvaluationDTO
+from openapi_client.models.game_hand_evaluation_dto import GameHandEvaluationDTO
 from openapi_client.rest import ApiException
 from pprint import pprint
 
@@ -1063,7 +1065,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**JustHandEvaluationDTO**](JustHandEvaluationDTO.md)
+[**GameHandEvaluationDTO**](GameHandEvaluationDTO.md)
 
 ### Authorization
 

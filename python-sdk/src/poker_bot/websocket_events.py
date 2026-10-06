@@ -11,8 +11,16 @@ from urllib.parse import urlsplit, urlunsplit
 import websockets
 
 import poker_bot.poker_exceptions as ex
-from openapi_client import GameGameDTO, GamePlayerActionDTO, GamePlayerDTO, GameRoundDTO, GameChipExchangeDTO, \
-    GameHandStartEventDTO, GamePayoutEventDTO, GameTurnStartEventDTO, GameRoundStartEventDTO
+from openapi_client import (
+    GameChipExchangeDTO,
+    GameGameDTO,
+    GameHandStartEventDTO,
+    GamePayoutEventDTO,
+    GamePlayerActionDTO,
+    GamePlayerDTO,
+    GameRoundStartEventDTO,
+    GameTurnStartEventDTO,
+)
 
 logger = logging.getLogger("websocket")
 

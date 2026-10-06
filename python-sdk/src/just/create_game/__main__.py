@@ -46,7 +46,6 @@ parser.add_argument(
 )
 
 parser.add_argument("--bb", "--big-blind", type=int, required=False, default=100, help="the big blind to configure")
-
 parser.add_argument("--sb", "--small-blind", type=int, required=False, default=50, help="the small blind to configure")
 
 
@@ -77,7 +76,7 @@ def main():
             small_blind=args.sb,
             chip_denominations=[10, 50, 100, 500, 1000],
             player_count=args.players,
-            starting_chips={"10": 20, "50": 6, "100": 5, "500": 1, "1000": 0},
+            starting_chips={"10": 20, "50": 6, "100": 5, "500": 5, "1000": 3},
         )
 
     asyncio.run(new_game(config, token))

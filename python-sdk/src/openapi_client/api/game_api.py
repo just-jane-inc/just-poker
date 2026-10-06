@@ -22,11 +22,11 @@ from openapi_client.models.game_active_game_dto import GameActiveGameDTO
 from openapi_client.models.game_card_dto import GameCardDTO
 from openapi_client.models.game_chip_exchange_dto import GameChipExchangeDTO
 from openapi_client.models.game_game_id_state_listen_get200_response import GameGameIdStateListenGet200Response
+from openapi_client.models.game_hand_evaluation_dto import GameHandEvaluationDTO
 from openapi_client.models.game_new_game_config_dto import GameNewGameConfigDTO
 from openapi_client.models.game_new_hand_dto import GameNewHandDTO
 from openapi_client.models.game_player_action_dto import GamePlayerActionDTO
 from openapi_client.models.game_table_dto import GameTableDTO
-from openapi_client.models.just_hand_evaluation_dto import JustHandEvaluationDTO
 from openapi_client.models.just_response_message_any import JustResponseMessageAny
 from openapi_client.models.just_response_message_game_game_dto import JustResponseMessageGameGameDTO
 from openapi_client.models.just_response_message_string import JustResponseMessageString
@@ -1277,6 +1277,8 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageAny",
             '400': "JustResponseMessageJustErrorDTO",
+            '401': "JustResponseMessageJustErrorDTO",
+            '403': "JustResponseMessageJustErrorDTO",
         }
         response_data = await self.api_client.call_api(
             *_param,
@@ -1349,6 +1351,8 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageAny",
             '400': "JustResponseMessageJustErrorDTO",
+            '401': "JustResponseMessageJustErrorDTO",
+            '403': "JustResponseMessageJustErrorDTO",
         }
         response_data = await self.api_client.call_api(
             *_param,
@@ -1421,6 +1425,8 @@ class GameApi:
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JustResponseMessageAny",
             '400': "JustResponseMessageJustErrorDTO",
+            '401': "JustResponseMessageJustErrorDTO",
+            '403': "JustResponseMessageJustErrorDTO",
         }
         response_data = await self.api_client.call_api(
             *_param,
@@ -3668,7 +3674,7 @@ class GameApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> JustHandEvaluationDTO:
+    ) -> GameHandEvaluationDTO:
         """Evaluate a Hand
 
         Evaluator? I hardly...
@@ -3706,7 +3712,7 @@ class GameApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JustHandEvaluationDTO",
+            '200': "GameHandEvaluationDTO",
         }
         response_data = await self.api_client.call_api(
             *_param,
@@ -3735,7 +3741,7 @@ class GameApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[JustHandEvaluationDTO]:
+    ) -> ApiResponse[GameHandEvaluationDTO]:
         """Evaluate a Hand
 
         Evaluator? I hardly...
@@ -3773,7 +3779,7 @@ class GameApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JustHandEvaluationDTO",
+            '200': "GameHandEvaluationDTO",
         }
         response_data = await self.api_client.call_api(
             *_param,
@@ -3840,7 +3846,7 @@ class GameApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JustHandEvaluationDTO",
+            '200': "GameHandEvaluationDTO",
         }
         response_data = await self.api_client.call_api(
             *_param,

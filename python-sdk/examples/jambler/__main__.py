@@ -114,72 +114,71 @@ async def execute_bot_turn(bot: pb.PokerBot, game_state: api.GameGameDTO):
 
 
 async def run_jambler_bot(bot: pb.PokerBot):
-    # we create an async context for the bot
-    async with bot:
-        # try to join the provided game, if it fails
-        # we assume the game has already started
-        try:
-            print("joining game")
-            await bot.join_game()
-        except Exception as e:
-            logger.warning(f"assuming the game has already started - right? {e}")
+    # try to join the provided game, if it fails
+    # we assume the game has already started
+    try:
+        print("joining game")
+        await bot.join_game()
+    except Exception as e:
+        logger.warning(f"assuming the game has already started - right? {e}")
 
-        # we use these events to block until
-        # specific state is achieved
-        game_over = asyncio.Event()
-        game_started = asyncio.Event()
+    # we use these events to block until
+    # specific state is achieved
+    game_over = asyncio.Event()
+    game_started = asyncio.Event()
 
-        async def on_game_over(e: eh.Event):
-            logger.info("game over!")
-            game_over.set()
+    async def on_game_over(e: eh.Event):
+        logger.info("game over!")
+        game_over.set()
 
-        async def on_game_started(e: eh.Event):
-            logger.info("game started!")
-            game_started.set()
+    async def on_game_started(e: eh.Event):
+        logger.info("game started!")
+        game_started.set()
 
-        async def on_game_state_changed(e: eh.Event):
-            logger.info("processing game state")
-            if e.event_type is not eh.EventType.GAME_STATE_UPDATE:
-                logger.error(f"received event type {e.event_type} in error on game_state subscriber")
-                return
+    async def on_game_state_changed(e: eh.Event):
+        logger.info("processing game state")
+        if e.event_type is not eh.EventType.GAME_STATE_UPDATE:
+            logger.error(f"received event type {e.event_type} in error on game_state subscriber")
+            return
 
-            if e.data is None:
-                return
+        if e.data is None:
+            return
 
-            if not isinstance(e.data, api.GameGameDTO):
-                logger.error(
-                    f"received data that does not match the expected type: {type(e.data)} != {type(api.GameGameDTO)}"
-                )
+        if not isinstance(e.data, api.GameGameDTO):
+            logger.error(
+                f"received data that does not match the expected type: {type(e.data)} != {type(api.GameGameDTO)}"
+            )
 
-                return
+            return
 
-            game_state: api.GameGameDTO = e.data
-            if not bot.is_my_turn():
-                return
+        game_state: api.GameGameDTO = e.data
+        if not bot.is_my_turn():
+            return
 
-            await execute_bot_turn(bot, game_state)
+        await execute_bot_turn(bot, game_state)
 
-        logger.info("subscribing")
-        subscribers = [
-            bot.events.subscribe(eh.EventType.GAME_ENDING, on_game_over),
-            bot.events.subscribe(eh.EventType.STARTING_GAME, on_game_started),
-            bot.events.subscribe(eh.EventType.GAME_STATE_UPDATE, on_game_state_changed),
-        ]
+    logger.info("subscribing")
+    subscribers = [
+        bot.events.subscribe(eh.EventType.GAME_ENDING, on_game_over),
+        bot.events.subscribe(eh.EventType.STARTING_GAME, on_game_started),
+        bot.events.subscribe(eh.EventType.GAME_STATE_UPDATE, on_game_state_changed),
+    ]
 
-        logger.info("getting game state")
-        state = await bot.get_game_state()
+    await bot.events.start()
+    logger.info("getting game state")
+    state = await bot.get_game_state()
 
-        if state.started_at is None:
-            logger.info("game has not started, waiting for it")
-            await asyncio.wait_for(game_started.wait(), None)
-        elif bot.is_my_turn():
-            await execute_bot_turn(bot, state)
+    if state.started_at is None:
+        logger.info("game has not started, waiting for it")
+        await asyncio.wait_for(game_started.wait(), None)
+    elif bot.is_my_turn():
+        await execute_bot_turn(bot, state)
 
-        logger.info("everything is okay")
-        await asyncio.wait_for(game_over.wait(), None)
+    logger.info("everything is okay")
+    await asyncio.wait_for(game_over.wait(), None)
 
-        for subscriber in subscribers:
-            subscriber.unsubscribe()
+    for subscriber in subscribers:
+        subscriber.unsubscribe()
 
 
 if __name__ == "__main__":

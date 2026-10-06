@@ -14,10 +14,10 @@
 
 import unittest
 
-from openapi_client.models.just_hand_evaluation_dto import JustHandEvaluationDTO
+from openapi_client.models.just_response_message_array_game_card_dto import JustResponseMessageArrayGameCardDTO
 
-class TestJustHandEvaluationDTO(unittest.TestCase):
-    """JustHandEvaluationDTO unit test stubs"""
+class TestJustResponseMessageArrayGameCardDTO(unittest.TestCase):
+    """JustResponseMessageArrayGameCardDTO unit test stubs"""
 
     def setUp(self):
         pass
@@ -25,26 +25,30 @@ class TestJustHandEvaluationDTO(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def make_instance(self, include_optional) -> JustHandEvaluationDTO:
-        """Test JustHandEvaluationDTO
+    def make_instance(self, include_optional) -> JustResponseMessageArrayGameCardDTO:
+        """Test JustResponseMessageArrayGameCardDTO
             include_optional is a boolean, when False only required
             params are included, when True both required and
             optional params are included """
-        # uncomment below to create an instance of `JustHandEvaluationDTO`
+        # uncomment below to create an instance of `JustResponseMessageArrayGameCardDTO`
         """
-        model = JustHandEvaluationDTO()
+        model = JustResponseMessageArrayGameCardDTO()
         if include_optional:
-            return JustHandEvaluationDTO(
-                error = '',
-                evaluation = 56
+            return JustResponseMessageArrayGameCardDTO(
+                data = [
+                    openapi_client.models.game/card_dto.game.CardDTO(
+                        rank = 56, 
+                        suit = 56, )
+                    ],
+                type = 'user.created'
             )
         else:
-            return JustHandEvaluationDTO(
+            return JustResponseMessageArrayGameCardDTO(
         )
         """
 
-    def testJustHandEvaluationDTO(self):
-        """Test JustHandEvaluationDTO"""
+    def testJustResponseMessageArrayGameCardDTO(self):
+        """Test JustResponseMessageArrayGameCardDTO"""
         # inst_req_only = self.make_instance(include_optional=False)
         # inst_req_and_optional = self.make_instance(include_optional=True)
 

@@ -9,7 +9,7 @@ Store it somewhere accessible from your code anywhere you need it.
 
 This bot is given a game_id, so this instance will only have access to this one game.
 
-```py 
+```py
     from poker_bot.bot.bot import PokerBot
     # ...
 
@@ -19,7 +19,7 @@ This bot is given a game_id, so this instance will only have access to this one 
                    game_id  = ""                   # Game Id, I.E., "4201"
           )
 
-    await bot.start_events()                       # Guarantee the bot will start listening for events.
+    await bot.events.start()                # Guarantee the bot will start listening for events.
     await bot.join_game()                          # Join the game you are configured for 
 ```
 
@@ -87,7 +87,7 @@ def main():
     asyncio.run(run_bot(bot))
     
 async def run_bot(bot: PokerBot): 
-    await bot.start_events()
+    await bot.events.start()
     await bot.join_game()
     
     # These are used to help the program "wait"/block until we get info on the game
@@ -142,5 +142,5 @@ if __name__ == "__main__":
     main()
 ```
 
-There are other ways to run your bot and listen for events, 
+There are other ways to run your bot and listen for events,
 but the subscription method is the easiest to onboard and setup, with the most code examples.

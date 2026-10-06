@@ -3,3 +3,4 @@ async-lib
 .test-token
 *.egg-info/
 app.log
+*.data

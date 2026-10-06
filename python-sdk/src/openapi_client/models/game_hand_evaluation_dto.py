@@ -12,34 +12,79 @@
 """  # noqa: E501
 
 
-import unittest
+from __future__ import annotations
+import pprint
+import re  # noqa: F401
+import json
 
-from openapi_client.api.user_api import UserApi
+from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from typing import Optional, Set
+from typing_extensions import Self
+from pydantic_core import to_jsonable_python
+
+class GameHandEvaluationDTO(BaseModel):
+    """
+    GameHandEvaluationDTO
+    """ # noqa: E501
+    error: Optional[StrictStr] = None
+    evaluation: Optional[StrictInt] = None
+    __properties: ClassVar[List[str]] = ["error", "evaluation"]
+
+    model_config = ConfigDict(
+        validate_by_name=True,
+        validate_by_alias=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
 
 
-class TestUserApi(unittest.IsolatedAsyncioTestCase):
-    """UserApi unit test stubs"""
+    def to_str(self) -> str:
+        """Returns the string representation of the model using alias"""
+        return pprint.pformat(self.model_dump(by_alias=True))
 
-    async def asyncSetUp(self) -> None:
-        self.api = UserApi()
+    def to_json(self) -> str:
+        """Returns the JSON representation of the model using alias"""
+        return json.dumps(to_jsonable_python(self.to_dict()))
 
-    async def asyncTearDown(self) -> None:
-        await self.api.api_client.close()
+    @classmethod
+    def from_json(cls, json_str: str) -> Optional[Self]:
+        """Create an instance of GameHandEvaluationDTO from a JSON string"""
+        return cls.from_dict(json.loads(json_str))
 
-    async def test_user_me_delete(self) -> None:
-        """Test case for user_me_delete
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
 
-        delete requesting user
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
         """
-        pass
+        excluded_fields: Set[str] = set([
+        ])
 
-    async def test_user_me_get(self) -> None:
-        """Test case for user_me_get
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        return _dict
 
-        gets your user
-        """
-        pass
+    @classmethod
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
+        """Create an instance of GameHandEvaluationDTO from a dict"""
+        if obj is None:
+            return None
+
+        if not isinstance(obj, dict):
+            return cls.model_validate(obj)
+
+        _obj = cls.model_validate({
+            "error": obj.get("error"),
+            "evaluation": obj.get("evaluation")
+        })
+        return _obj
 
 
-if __name__ == '__main__':
-    unittest.main()

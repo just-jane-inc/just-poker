@@ -14,32 +14,39 @@
 
 import unittest
 
-from openapi_client.api.user_api import UserApi
+from openapi_client.models.game_hand_evaluation_dto import GameHandEvaluationDTO
 
+class TestGameHandEvaluationDTO(unittest.TestCase):
+    """GameHandEvaluationDTO unit test stubs"""
 
-class TestUserApi(unittest.IsolatedAsyncioTestCase):
-    """UserApi unit test stubs"""
-
-    async def asyncSetUp(self) -> None:
-        self.api = UserApi()
-
-    async def asyncTearDown(self) -> None:
-        await self.api.api_client.close()
-
-    async def test_user_me_delete(self) -> None:
-        """Test case for user_me_delete
-
-        delete requesting user
-        """
+    def setUp(self):
         pass
 
-    async def test_user_me_get(self) -> None:
-        """Test case for user_me_get
-
-        gets your user
-        """
+    def tearDown(self):
         pass
 
+    def make_instance(self, include_optional) -> GameHandEvaluationDTO:
+        """Test GameHandEvaluationDTO
+            include_optional is a boolean, when False only required
+            params are included, when True both required and
+            optional params are included """
+        # uncomment below to create an instance of `GameHandEvaluationDTO`
+        """
+        model = GameHandEvaluationDTO()
+        if include_optional:
+            return GameHandEvaluationDTO(
+                error = '',
+                evaluation = 56
+            )
+        else:
+            return GameHandEvaluationDTO(
+        )
+        """
+
+    def testGameHandEvaluationDTO(self):
+        """Test GameHandEvaluationDTO"""
+        # inst_req_only = self.make_instance(include_optional=False)
+        # inst_req_and_optional = self.make_instance(include_optional=True)
 
 if __name__ == '__main__':
     unittest.main()

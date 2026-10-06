@@ -57,6 +57,7 @@ class PokerBot:
         self._game_id = game_id
         self._base_url = base_url
         self._token = token
+        self._hub: EventHub = websocket_event_hub(self._base_url, self._token, self._game_id)
         self._api_client = help.create_connection(base_url, token)
         self._user_api = api.UserApi(self._api_client)
         self._game_api = api.api.GameApi(self._api_client)
@@ -65,9 +66,17 @@ class PokerBot:
         self._player: api.GamePlayerDTO | None = None
         self._current_state: api.GameGameDTO | None = None
         self._listener: ws.WebSocketListener | None = None
-        self._hub: EventHub | None = None
         self._state_subscription: EventSubscriber | None = None
         self._timeout = timeout
+
+        self._state_subscription = self._hub.subscribe(
+            (
+                EventType.WELCOME,
+                EventType.GAME_STATE_UPDATE,
+                EventType.STARTING_GAME,
+            ),
+            self._ingest_websocket_event,
+        )
 
     @property
     def _current_stack(self) -> list[help.Chips]:
@@ -108,13 +117,10 @@ class PokerBot:
         """
         Read only view of the current player's cards
         """
-        cards: list = []
         if not self._player or not self._player.hole:
-            return cards
+            return []
 
-        for card in self._player.hole:
-            cards.append(card)
-        return cards
+        return list.copy(self._player.hole)
 
     @property
     def game_state(self) -> GameGameDTO | None:
@@ -148,6 +154,11 @@ class PokerBot:
         return total
 
     def get_game_api(self) -> api.GameApi:
+        """get an instance of GameApi configured with this bots credentials
+
+        used when there is something required by a bot in the GameApi that is not
+        exposed within this wrapper
+        """
         return api.GameApi(self._api_client)
 
     async def join_game(self):
@@ -177,48 +188,9 @@ class PokerBot:
 
     @property
     def events(self) -> EventHub:
-        """gets reference to EventHub configured for the bot
-
-        this will create a hub if one does not already exist.
-        """
-        if self._hub:
-            return self._hub
-
-        # TODO: why do we allow this to be None? it is bad to just make one in constructor?
-        self._hub = websocket_event_hub(self._base_url, self._token, self._game_id)
-
-        if self._hub is None:
-            raise ex.CustomException("could not create eventhub")
-
-        # Listen to gamestate updates immediately to bake in helpers
-        # Requires something to call x.events somehow for setup, many paths automatically do it but not all
-        self._state_subscription = self._hub.subscribe(
-            (
-                EventType.WELCOME,
-                EventType.GAME_STATE_UPDATE,
-                EventType.STARTING_GAME,
-            ),
-            self._ingest_websocket_event,
-        )
-
+        """gets reference to EventHub configured for the bot"""
         return self._hub
 
-    async def start_events(self) -> EventHub:
-        """Only necessary to call if manually setting up all listeners"""
-        return await self.events.start()
-
-    async def stop_events(self) -> None:
-        """stops the EventHub
-
-        Raises:
-            ex.CustomException: if there is no hub initialized
-        """
-        if self._hub is None:
-            raise ex.CustomException("you have made an error")
-
-        await self._hub.stop()
-
-    # TODO: it might be nice to link to swagger stuff for these
     async def exchange_chips(self, give: list[help.Chips], receive: list[help.Chips]):
         """exchanges chips held by the bot with the games exchange
 
@@ -401,7 +373,7 @@ class PokerBot:
             raise ex.CustomException("you are not in the game - it can never be your turn")
 
         if not self.events.running:
-            await self.start_events()
+            await self.events.start()
 
         if self._timeout >= 0:
             timeout = self._timeout
@@ -413,6 +385,7 @@ class PokerBot:
                 await asyncio.sleep(0.5)
 
     def is_my_turn(self) -> bool:
+        """gets a flag indicating True if it is currently the bots turn"""
         if self._player is None:
             return False
 
@@ -688,15 +661,3 @@ class PokerBot:
     def _ingest_websocket_event(self, event: WebSocketEvent):
         if event.data is not None and isinstance(event.data, api.GameGameDTO):
             self._ingest_game_dto(event.data)
-
-    async def __aenter__(self) -> "PokerBot":
-        # we call this to ensure that the event hub as been started prior
-        # to exposing the bot within an async with block. this follows a
-        # pattern for starting/stopping an async context.
-        await self.start_events()
-        return self
-
-    async def __aexit__(self, exc_type, exc, tb) -> None:
-        if self._state_subscription:
-            self._state_subscription.unsubscribe()
-        await self.stop_events()

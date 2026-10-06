@@ -40,6 +40,13 @@ class TestAdminApi(unittest.IsolatedAsyncioTestCase):
         """
         pass
 
+    async def test_game_game_id_deck_get(self) -> None:
+        """Test case for game_game_id_deck_get
+
+        Get the deck (order)
+        """
+        pass
+
 
 if __name__ == '__main__':
     unittest.main()

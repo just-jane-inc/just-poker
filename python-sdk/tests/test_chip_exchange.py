@@ -47,7 +47,7 @@ async def test_chip_exchange_happens():
     async def on_chip_exchange(e: Event):
         received.append(e.data)
 
-    await jane_bot.start_events()
+    await jane_bot.events.start()
     await jane_bot.get_game_state()
 
     for x in range(5):
@@ -96,7 +96,7 @@ async def test_chip_exchange_over_give_issue(target: int):
     async def on_chip_exchange(e: Event):
         received.append(e.data)
 
-    await jane_bot.start_events()
+    await jane_bot.events.start()
     await jane_bot.get_game_state()
 
     await jane_bot._compute_valid_bet(target)
@@ -137,7 +137,7 @@ async def test_raise_with_big_chips():
     await jane_bot.join_game()
     await red_bot.join_game()
 
-    await jane_bot.start_events()
+    await jane_bot.events.start()
     await jane_bot.start_game()
 
     await red_bot.ante()
@@ -185,7 +185,7 @@ async def test_bet_with_big_chips():
     await jane_bot.join_game()
     await red_bot.join_game()
 
-    await jane_bot.start_events()
+    await jane_bot.events.start()
     await jane_bot.get_game_state()
 
     for target in (100, 500, 900, 1000, 1100, 1200, 1400, total):
@@ -230,7 +230,7 @@ async def test_bet_with_small_chips():
     await jane_bot.join_game()
     await red_bot.join_game()
 
-    await jane_bot.start_events()
+    await jane_bot.events.start()
     await jane_bot.get_game_state()
 
     for target in (10, 90, 50, 220, 170, 440, 130, 440, 830, 180, 40, 30, 20, total):

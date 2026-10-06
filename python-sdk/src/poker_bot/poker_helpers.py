@@ -72,7 +72,7 @@ async def create_game(
     denominations: list[int] | None = None,
 ) -> str | None:
     if not chips:
-        chips = {"10": 10, "50": 5, "100": 2, "500": 1}
+        chips = {"10": 10, "50": 10, "100": 5, "500": 5}
 
     if not denominations:
         denominations = [10, 50, 100, 500]

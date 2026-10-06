@@ -116,5 +116,5 @@ async def test_post_new_hand_with_deck():
     state = await jane_bot.get_game_state()
     assert state
 
-    assert help.chip_sum(state.table.players[0].stack) == 1550
-    assert help.chip_sum(state.table.players[3].stack) == 2650
+    assert help.chip_sum(state.table.players[3].stack) == 9030
+    assert help.chip_sum(state.table.players[0].stack) == 5370

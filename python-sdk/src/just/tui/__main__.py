@@ -122,6 +122,8 @@ class InputPopup(ModalScreen[str]):
 
 
 class Table(Static):
+    """represents the table, showing cards, the pot, etc"""
+
     table: reactive[GameTableDTO | None] = reactive(GameTableDTO(), layout=True)
     card_map = get_unicode_mapping()
     winner: str | None = None
@@ -136,10 +138,13 @@ class Table(Static):
             return view
 
         to_call = self.table.current_round.bet
+        round_type = ""
+        if self.table.current_round.current_round_type:
+            round_type = self.table.current_round.current_round_type.upper()
 
         if not self.winner:
             view += f"║| POT: {chip_sum(self.table.pot):>15} |║\n"
-            view += f"║| STREET: {self.table.current_round.current_round_type.upper():>12} |║\n"
+            view += f"║| STREET: {round_type:>12} |║\n"
             view += f"║| TO CALL: {to_call:>11} |║\n"
             view += f"║|{'-' * 22}|║\n"
         cards_view = ""
@@ -253,33 +258,29 @@ class PokerApp(App):
         self.query_one(Players).me = me
 
         self.events = me.events
+        if not self.events:
+            raise Exception("bound poker bot has no events member")
 
-        if self.events:
-            # Example of using as a decorator with specific event types
-            @self.events.on_event(
-                EventType.WELCOME,
-                EventType.GAME_STATE_UPDATE,
-                EventType.STARTING_GAME,
-                EventType.GAME_ENDING,
-            )
-            async def _on_update(event: Event) -> None:
-                logger.debug(f"received for Player [{me._user_id}]:\t{event.event_type} - {event.data}")
-                if isinstance(event.data, GameGameDTO):
-                    await self.apply_state(event.data)
-                elif event.event_type == EventType.GAME_ENDING:
-                    await self.apply_game_over(event.data)
+        subscribers = []
 
-            # alternative - subscribe inline with reference hook
-            # sub = self.events.subscribe(EventType.GAME_OVER, self.apply_game_over)
+        async def on_update(event: Event) -> None:
+            if isinstance(event.data, GameGameDTO):
+                await self.apply_state(event.data)
 
-            self._unsubscribe = _on_update.unsubscribe
-            # start it anyways
-            await self.events.start()
+            elif event.event_type == EventType.GAME_ENDING:
+                for subscriber in subscribers:
+                    subscriber.unsubscribe()
 
-        # Fetch initial via POST if desired, but welcome msg on websocket should return it.
-        # state = await me.get_game_state()
-        # if state is not None and self.game_state is None:
-        #     await self.apply_state(state)
+                await self.apply_game_over(event.data)
+
+        subscribers = [
+            me.events.subscribe(EventType.GAME_ENDING, on_update),
+            me.events.subscribe(EventType.STARTING_GAME, on_update),
+            me.events.subscribe(EventType.GAME_STATE_UPDATE, on_update),
+            me.events.subscribe(EventType.WELCOME, on_update),
+        ]
+
+        await self.events.start()
 
     async def apply_game_over(self, data: list[GamePlayerDTO]) -> None:
         if data is None:

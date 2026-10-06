@@ -78,6 +78,7 @@ Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *AdminApi* | [**admin_game_game_id_status_post**](openapi_client/docs/AdminApi.md#admin_game_game_id_status_post) | **POST** /admin/game/{game_id}/status | Update Game Status
 *AdminApi* | [**admin_game_game_id_table_post**](openapi_client/docs/AdminApi.md#admin_game_game_id_table_post) | **POST** /admin/game/{game_id}/table | Change Game Table
+*AdminApi* | [**game_game_id_deck_get**](openapi_client/docs/AdminApi.md#game_game_id_deck_get) | **GET** /game/{game_id}/deck | Get the deck (order)
 *GameApi* | [**game_game_id_action_post**](openapi_client/docs/GameApi.md#game_game_id_action_post) | **POST** /game/{game_id}/action | Player Action
 *GameApi* | [**game_game_id_chip_exchange_post**](openapi_client/docs/GameApi.md#game_game_id_chip_exchange_post) | **POST** /game/{game_id}/chip/exchange | Exchange Chips
 *GameApi* | [**game_game_id_delete**](openapi_client/docs/GameApi.md#game_game_id_delete) | **DELETE** /game/{game_id} | Delete a Game
@@ -93,6 +94,7 @@ Class | Method | HTTP request | Description
 *GameApi* | [**game_post**](openapi_client/docs/GameApi.md#game_post) | **POST** /game | Create Game
 *GameApi* | [**hand_evaluator_evaluate_post**](openapi_client/docs/GameApi.md#hand_evaluator_evaluate_post) | **POST** /hand-evaluator/evaluate/ | Evaluate a Hand
 *UserApi* | [**user_me_delete**](openapi_client/docs/UserApi.md#user_me_delete) | **DELETE** /user/me | delete requesting user
+*UserApi* | [**user_me_get**](openapi_client/docs/UserApi.md#user_me_get) | **GET** /user/me | gets your user
 
 
 ## Documentation For Models
@@ -105,6 +107,7 @@ Class | Method | HTTP request | Description
  - [GameGameDTO](openapi_client/docs/GameGameDTO.md)
  - [GameGameIdStateListenGet200Response](openapi_client/docs/GameGameIdStateListenGet200Response.md)
  - [GameHandDTO](openapi_client/docs/GameHandDTO.md)
+ - [GameHandEvaluationDTO](openapi_client/docs/GameHandEvaluationDTO.md)
  - [GameHandStartEventDTO](openapi_client/docs/GameHandStartEventDTO.md)
  - [GameNewGameConfigDTO](openapi_client/docs/GameNewGameConfigDTO.md)
  - [GameNewHandDTO](openapi_client/docs/GameNewHandDTO.md)
@@ -119,8 +122,8 @@ Class | Method | HTTP request | Description
  - [GameTurnStartEventDTO](openapi_client/docs/GameTurnStartEventDTO.md)
  - [JustErrorCode](openapi_client/docs/JustErrorCode.md)
  - [JustErrorDTO](openapi_client/docs/JustErrorDTO.md)
- - [JustHandEvaluationDTO](openapi_client/docs/JustHandEvaluationDTO.md)
  - [JustResponseMessageAny](openapi_client/docs/JustResponseMessageAny.md)
+ - [JustResponseMessageArrayGameCardDTO](openapi_client/docs/JustResponseMessageArrayGameCardDTO.md)
  - [JustResponseMessageGameGameDTO](openapi_client/docs/JustResponseMessageGameGameDTO.md)
  - [JustResponseMessageJustErrorDTO](openapi_client/docs/JustResponseMessageJustErrorDTO.md)
  - [JustResponseMessageString](openapi_client/docs/JustResponseMessageString.md)
