@@ -1,9 +1,11 @@
 package game
 
 import (
+	"fmt"
 	"math/rand/v2"
 
 	"github.com/just-jane-inc/just-poker/server/just"
+	"github.com/mattlangl/gophe"
 )
 
 // deck contains an array of [card]
@@ -86,27 +88,46 @@ func (h Hand) GetHandStrings() []string {
 	return thisHand
 }
 
+// GetHandScore calculates the int rank for a hand with 1 being the best possible hand.
+func (h Hand) GetHandScore() (int, error) {
+	if len(h.Cards) < 5 || len(h.Cards) > 7 {
+		return 0, just.NewPokerError(fmt.Sprintf("hand of len %d cannot be evaluated", len(h.Cards)), just.Unknown)
+	}
+
+	var seen uint64
+	cards := make([]gophe.Card, len(h.Cards))
+	for i, c := range h.Cards {
+		card := gophe.NewCard(c.ToString())
+		cards[i] = card
+
+		id := card.ID()
+		if id >= 52 {
+			return 0, just.NewPokerError(fmt.Sprintf("invalid card: %s", c.ToString()), just.Unknown)
+		}
+
+		mask := uint64(1) << id
+		if seen&mask != 0 {
+			return 0, just.NewPokerError(fmt.Sprintf("hand includes duplicate card: %s", c.ToString()), just.Unknown)
+		}
+
+		seen |= mask
+	}
+
+	rank := gophe.EvaluateCards(cards...)
+	return int(rank.GetValue()), nil
+}
+
 // CompareTo compares two poker hands (of 5 or 7 cards) to determine which is better
 //
 // returns 1 if h is better then other, returns 0 if the hands are equal and -1 if other is better
 func (h Hand) CompareTo(other Hand) int {
-	thisHand := make([]just.Card, len(h.Cards))
-	for i, card := range h.Cards {
-		thisHand[i] = just.Card{Rank: card.rank, Suit: card.suit}
-	}
-
-	thatHand := make([]just.Card, len(other.Cards))
-	for i, card := range other.Cards {
-		thatHand[i] = just.Card{Rank: card.rank, Suit: card.suit}
-	}
-
-	thatScore, err := just.GetHandScore(thatHand)
+	thatScore, err := other.GetHandScore()
 	if err != nil {
 		just.Logger.Errorf("encountered error when getting score for hand: %v", err)
 		return 0
 	}
 
-	thisScore, err := just.GetHandScore(thisHand)
+	thisScore, err := h.GetHandScore()
 	if err != nil {
 		just.Logger.Errorf("encountered error when getting score for hand: %v", err)
 		return 0

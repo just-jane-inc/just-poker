@@ -117,6 +117,17 @@
                 },
                 "type": "object"
             },
+            "game.HandEvaluationDTO": {
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    },
+                    "evaluation": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
             "game.HandStartEventDTO": {
                 "properties": {
                     "big_blind_cost": {
@@ -447,17 +458,6 @@
                     },
                     "error_code": {
                         "$ref": "#/components/schemas/just.ErrorCode"
-                    }
-                },
-                "type": "object"
-            },
-            "just.HandEvaluationDTO": {
-                "properties": {
-                    "error": {
-                        "type": "string"
-                    },
-                    "evaluation": {
-                        "type": "integer"
                     }
                 },
                 "type": "object"
@@ -1555,7 +1555,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/just.HandEvaluationDTO"
+                                    "$ref": "#/components/schemas/game.HandEvaluationDTO"
                                 }
                             }
                         },

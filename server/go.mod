@@ -10,6 +10,7 @@ require (
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/joho/godotenv v1.5.1
 	github.com/just-jane-inc/just-services/just-logger v0.0.0-20260807222607-121d9ed0762f
+	github.com/mattlangl/gophe v0.0.0-20240117021521-d65a1ba156dc
 )
 
 require (

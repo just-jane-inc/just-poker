@@ -8,6 +8,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/mattlangl/gophe"
+
 	"github.com/just-jane-inc/just-poker/server/just"
 )
 
@@ -18,23 +20,26 @@ import (
 // @Accept       json
 // @Produce      json
 // @Param hand body []CardDTO true "hand to evaluate, either 5 or 7 cards"
-// @Success      200 {object} just.HandEvaluationDTO
+// @Success      200 {object} game.HandEvaluationDTO
 // @Router       /hand-evaluator/evaluate/ [post]
 func OnEvalHand(w http.ResponseWriter, r *http.Request) {
-	resp, err := http.Post(just.Env.PokerEvalURL, "application/json", r.Body)
-	if err != nil {
-		just.Logger.Errorf("encountered error getting hand evaluation: %v", err)
-		just.InternalError("failed to execute request").WriteJSONResponse(w)
-	}
-
-	var dto just.HandEvaluationDTO
-	if err := json.NewDecoder(resp.Body).Decode(&dto); err != nil {
-		just.Logger.Error("OH NO")
-		just.BadRequest(err.Error(), 0).WriteJSONResponse(w)
+	var hand []CardDTO
+	eval := HandEvaluationDTO{}
+	if err := json.NewDecoder(r.Body).Decode(&hand); err != nil {
+		eval.Error = "error deserializing request, must be array of CardDTO"
+		just.WriteJSONResponse(w, 400, eval)
 		return
 	}
 
-	just.WriteJSONResponse(w, 200, dto)
+	just.Logger.Debugf("received request to evaluate hand")
+	cards := make([]gophe.Card, len(hand))
+	for i, card := range hand {
+		cards[i] = gophe.NewCard(fmt.Sprintf("%c%c", card.Rank, card.Suit))
+	}
+
+	rank := gophe.EvaluateCards(cards...)
+	eval.Evaluation = int(rank.GetValue())
+	just.WriteJSONResponse(w, 200, eval)
 }
 
 // OnGetDeck godoc

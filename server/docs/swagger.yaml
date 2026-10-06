@@ -81,6 +81,13 @@ components:
           description: the time that this hand started
           type: string
       type: object
+    game.HandEvaluationDTO:
+      properties:
+        error:
+          type: string
+        evaluation:
+          type: integer
+      type: object
     game.HandStartEventDTO:
       properties:
         big_blind_cost:
@@ -345,13 +352,6 @@ components:
           type: string
         error_code:
           $ref: '#/components/schemas/just.ErrorCode'
-      type: object
-    just.HandEvaluationDTO:
-      properties:
-        error:
-          type: string
-        evaluation:
-          type: integer
       type: object
     just.ResponseMessage-any:
       properties:
@@ -1075,7 +1075,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/just.HandEvaluationDTO'
+                $ref: '#/components/schemas/game.HandEvaluationDTO'
           description: OK
       summary: Evaluate a Hand
       tags:

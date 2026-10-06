@@ -9,9 +9,6 @@ type (
 	PlayerState  string
 )
 
-// reason: leave me alone, snake case is nice here.
-//
-//goland:noinspection GoSnakeCaseUsage
 const (
 	PlayerStateUnset    PlayerState = "unset"
 	PlayerStateInactive PlayerState = "inactive"
@@ -22,9 +19,6 @@ const (
 	PlayerStateOut      PlayerState = "out"
 )
 
-// reason: leave me alone, snake case is nice here.
-//
-//goland:noinspection GoSnakeCaseUsage
 const (
 	PlayerIntentUnset PlayerIntent = "unset"
 	PlayerIntentAnte  PlayerIntent = "ante"

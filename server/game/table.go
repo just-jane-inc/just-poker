@@ -189,6 +189,8 @@ func (g *game) nextRound() {
 		payouts := make(map[int]int)
 		pots := g.getSplitPots()
 
+		just.Logger.Debugf("received hand evaluations: %-v", handEvaluations)
+
 		for _, p := range pots {
 			just.Logger.Debugf("processing pot for payout: %v", p)
 			payout, err := g.handlePayout(handEvaluations, p)
@@ -279,8 +281,6 @@ func (g *game) nextRound() {
 		g.OnPayout(payoutEvents)
 		t.pot = make(map[int]int)
 		t.currentRound.currentRoundType = RoundTypeCompleted
-
-		// oh also if the game is over we do stuff about it here??
 	}
 
 	if t.currentRound.currentRoundType == RoundTypeUnset {
@@ -324,15 +324,10 @@ func (g *game) GetHandEvaluations() map[int]int {
 		handEvaluations[remainingPlayers[0].position] = 0
 	}
 
+	just.Logger.Debugf("getting hand evals for remaining players: %-v", remainingPlayers)
 	for _, p := range remainingPlayers {
-		model := g.GetHand(p.position).Cards
-		cards := make([]just.Card, len(model))
-
-		for i, c := range model {
-			cards[i] = just.Card{Rank: c.rank, Suit: c.suit}
-		}
-
-		eval, err := just.GetHandScore(cards)
+		model := g.GetHand(p.position)
+		eval, err := model.GetHandScore()
 		if err != nil {
 			just.Logger.Errorf("encountered error evaluating hand %v", err)
 			continue
