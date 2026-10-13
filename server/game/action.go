@@ -169,9 +169,6 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 		if p.currentBet.Sum() > g.table.currentRound.bet {
 			g.table.currentRound.currentAggressor = p.position
 		}
-
-		p.state = PlayerStateAllIn
-
 	case PlayerIntentFold:
 		p.state = PlayerStateFolded
 
@@ -191,12 +188,12 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 
 	nextPlayer := g.NextPlayer(p.position)
 	remainingPlayers := 0
-	for _, p := range g.table.players {
-		if p.state == PlayerStateFolded {
+	for _, pl := range g.table.players {
+		if pl.state == PlayerStateFolded {
 			continue
 		}
 
-		if p.state == PlayerStateOut {
+		if pl.state == PlayerStateOut {
 			continue
 		}
 
@@ -230,6 +227,23 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 	// hundreds of tests, yet this bug was not found... We need more tests
 	// - Red_Epicness
 	if g.table.currentRound.currentAggressor == nextPlayer.position {
+		remainingPlayers := 0
+		for _, pl := range g.table.players {
+			if pl.state == PlayerStateFolded {
+				continue
+			}
+
+			if pl.state == PlayerStateOut {
+				continue
+			}
+
+			if pl.state == PlayerStateAllIn {
+				continue
+			}
+
+			remainingPlayers += 1
+		}
+
 		// before shifting to the next round we need to figure out whose turn it is
 		// in general we need to ensure that:
 		// - the player is not all-in or folded
@@ -243,13 +257,7 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 		for nextRoundFirstPlayer == nil && g.table.currentRound.currentRoundType != RoundTypeCompleted {
 			// recording the previous round here for logging
 			prevRoundType := g.table.currentRound.currentRoundType
-
 			g.nextRound()
-			if g.table.currentRound.currentRoundType == RoundTypePreFlop {
-				nextRoundFirstPlayer = g.NextInactivePlayer(g.table.bigBlindPosition)
-			} else {
-				nextRoundFirstPlayer = g.NextInactivePlayer(g.table.buttonPosition)
-			}
 
 			just.Logger.Debugf(
 				"starting next round for game [%s] [%s]->[%s]",
@@ -257,6 +265,19 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 				prevRoundType,
 				g.table.currentRound.currentRoundType,
 			)
+
+			// if we only have one remaining player we just want to run out
+			// until we hit the completed round
+			if remainingPlayers == 1 {
+				nextRoundFirstPlayer = nil
+				continue
+			}
+
+			if g.table.currentRound.currentRoundType == RoundTypePreFlop {
+				nextRoundFirstPlayer = g.NextInactivePlayer(g.table.bigBlindPosition)
+			} else {
+				nextRoundFirstPlayer = g.NextInactivePlayer(g.table.buttonPosition)
+			}
 		}
 
 		if nextRoundFirstPlayer != nil {
@@ -324,6 +345,9 @@ func (g *game) handleAnte(action PlayerActionDTO, p *player) *just.PokerError {
 
 	if action.Intent == PlayerIntentAllIn {
 		action.Bet = p.chips.AsDto()
+
+		// we want to ensure that the players intent is ante to avoid executing
+		// all in logic in an outer scope. the all in is handled here.
 		action.Intent = PlayerIntentAnte
 	} else if action.Intent != PlayerIntentAnte {
 		return &just.PokerError{

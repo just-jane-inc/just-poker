@@ -321,7 +321,10 @@ func (g *game) GetHandEvaluations() map[int]int {
 	handEvaluations := make(map[int]int)
 
 	if len(remainingPlayers) == 1 {
-		handEvaluations[remainingPlayers[0].position] = 0
+		// if there is only one player remaining we do not need
+		// to to any evaluations, they win
+		handEvaluations[remainingPlayers[0].position] = 1
+		return handEvaluations
 	}
 
 	just.Logger.Debugf("getting hand evals for remaining players: %-v", remainingPlayers)

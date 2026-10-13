@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"sort"
 	"time"
 
 	"github.com/mattlangl/gophe"
@@ -392,16 +391,6 @@ func OnExchangeChips(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	g.table.denominations = make([]int, 0)
-	for denomination := range g.denominations {
-		g.table.denominations = append(g.table.denominations, denomination)
-	}
-
-	sort.Slice(g.table.denominations, func(i, j int) bool {
-		return g.table.denominations[i] > g.table.denominations[j]
-	})
-
-	g.OnChipExchange(exchange)
 	just.OK("chips_exchanged", struct{}{}).WriteJSONResponse(w)
 }
 
