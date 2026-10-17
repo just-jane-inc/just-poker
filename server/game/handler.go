@@ -45,7 +45,6 @@ func OnEvalHand(w http.ResponseWriter, r *http.Request) {
 // @Summary	     Get the deck (order)
 // @Description  Gets the order of the deck used by the current hand
 // @Tags         Admin
-// @Accept       json
 // @Produce      json
 // @Param game_id path string true "ID of the game to get deck for"
 // @Success      200 {object} just.ResponseMessage[[]CardDTO]
@@ -78,7 +77,6 @@ func OnGetDeck(w http.ResponseWriter, r *http.Request) {
 // @Summary      Delete a Game
 // @Description  Delete a game
 // @Tags         Game
-// @Accept       json
 // @Produce      json
 // @Param game_id path string true "ID of the Game to delete"
 // @Success      200 {object} just.ResponseMessage[any]
@@ -305,6 +303,7 @@ func OnCreateGame(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router       /game/{game_id}/state [post]
 func OnStartGameFromState(w http.ResponseWriter, r *http.Request) {
+	just.Logger.Debugf("starting game from a provided state...")
 	user, _ := just.GetAuthorizedUser(r)
 	if user == nil {
 		just.Unauthorized().WriteJSONResponse(w)

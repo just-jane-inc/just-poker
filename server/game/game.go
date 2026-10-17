@@ -19,17 +19,18 @@ import (
 var CurrentGames = CreateCurrentGamesCache()
 
 type game struct {
-	startedAt     *time.Time
-	endedAt       *time.Time
-	id            string
-	isPaused      bool
-	config        NewGameConfigDTO
-	table         *table
-	gameStateLock sync.Mutex
-	// TODO: is this dead code?
+	startedAt           *time.Time
+	endedAt             *time.Time
+	id                  string
+	isPaused            bool
+	config              NewGameConfigDTO
+	table               *table
+	gameStateLock       sync.Mutex
 	pauseGameSemaphor   chan any
 	playerActionChannel chan *playerAction
-	denominations       map[int]any
+
+	// TODO: Implement better hash table the go one is bad. Or something - bwopbwop1
+	denominations map[int]any
 
 	// id of the user who created this game
 	createdBy string

@@ -78,8 +78,9 @@ func (g *game) NextPlayer(offset int) *player {
 	return nil
 }
 
-// returns the player after offset in turn order
-// whos turn it would be if offset just ended
+// NextInactivePlayer fetches the next player in the inactive state
+// WARNING: do not use this function when figuring out a round boundary - this will
+// skip over agressors that are not in the inactive state e.g. all in or folded
 func (g *game) NextInactivePlayer(offset int) *player {
 	t := g.table
 	for i := range len(t.players) {

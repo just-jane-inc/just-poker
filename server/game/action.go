@@ -187,6 +187,8 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 	g.OnPlayerAction(action)
 
 	nextPlayer := g.NextPlayer(p.position)
+
+	just.Logger.Debugf("next player at table [%s]", nextPlayer.DisplayName)
 	remainingPlayers := 0
 	for _, pl := range g.table.players {
 		if pl.state == PlayerStateFolded {
@@ -211,7 +213,7 @@ func (g *game) handlePlayerAction(action PlayerActionDTO) *just.PokerError {
 		// this loop terminates either when we find an inactive player or we find the current
 		// agressor.
 		for nextPlayer.state != PlayerStateInactive && nextPlayer.position != g.table.currentRound.currentAggressor {
-			nextPlayer = g.NextInactivePlayer(nextPlayer.position)
+			nextPlayer = g.NextPlayer(nextPlayer.position)
 			if nextPlayer == nil {
 				nextPlayer = g.table.players[g.table.currentRound.currentAggressor]
 			}
