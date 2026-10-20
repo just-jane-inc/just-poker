@@ -23,17 +23,30 @@ info:
     The "error" field is intended only as a human readable message and should not be depended on for branching or parsing in code.
     This field should be considered volatile within the api.
     The error_code field is stable and intended for client code to use within recovery operations.
-    The error codes and their meanings are enumerated in the table below
+    The error codes and their meanings are enumerated bellow
 
 
     |   Code | Name                  | Meaning                                       |
     | -----: | --------------------- | --------------------------------------------- |
-    | `1000` | `Unknown` | A novel error...congrats.                |
-    | `1001` | `TurnOrderViolation`     | Player action received for a player out of turn. |
-    | `1002` | `InvalidActionType`   | Player action received with an intent that is not valid for the game state.                        |
-    | `1003` | `NotEnoughChips`   | Player action received with a chip amount that cannot be covered by the players stack            |
-    | `1004` | `InvalidBetAmount`    | Player action received with a bet amount that violates requirements i.e. incorrect amount for a blind, call, or a raise which is too low.                 |
-
+    | 67 | SkillIssue | you have a skill issue
+    | 1000 | Unknown | an unknown error occurred, likely an issue in the server
+    | 1001 | UserNotFound | a user referenced by id did not exist
+    | 1002 | GameNotFound | a game referenced by id did not exist
+    | 1003 | TokenMissing | a user request requiring authorization did not include a token
+    | 1004 | MalformedRequestBody | request parse error
+    | 2000 | TurnOrderViolation | player attempted to move out of order
+    | 2001 | InvalidActionType | action produced by player was an invalid type
+    | 2002 | NotEnoughChips | bet amount did not have sufficient chips
+    | 2003 | InvalidBetAmount | bet amount is not valid
+    | 2004 | InvalidChipExchange | a chip exchange was imbalanced or otherwise invalid
+    | 2020 | GameAlreadyStarted | attempt to join after game started
+    | 2021 | GameIsFull | attempt to join a full game
+    | 2022 | PlayerAlreadyJoined | player is already joined to this game
+    | 2023 | GameIsPaused | action attempted while the game is paused
+    | 2024 | InvalidGameConfiguration | game configuration is not valid
+    | 2025 | HandAlreadyInProgress | attempt to start a hand while one is already in progress
+    | 2026 | InvalidChipDenomination | a chip denomination is invalid e.g. negative
+    | 2027 | InvalidChipCount | a chip count is invalid e.g. negative
 
   termsOfService: http://swagger.io
   title: BAHMS Poker Tournament
@@ -177,11 +190,6 @@ paths:
         schema:
           type: string
         style: simple
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         "200":
           content:
@@ -280,6 +288,36 @@ paths:
       summary: Exchange Chips
       tags:
       - Game
+  /game/{game_id}/deck:
+    get:
+      description: Gets the order of the deck used by the current hand
+      parameters:
+      - description: ID of the game to get deck for
+        explode: false
+        in: path
+        name: game_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-array_game_CardDTO"
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+          description: Bad Request
+      security:
+      - BearerAuth: []
+      summary: Get the deck (order)
+      tags:
+      - Admin
   /game/{game_id}/hand:
     post:
       description: Starts the next poker hand
@@ -350,6 +388,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+          description: Forbidden
       security:
       - BearerAuth: []
       summary: Join a Game
@@ -543,7 +593,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/just.HandEvaluationDTO"
+                $ref: "#/components/schemas/game.HandEvaluationDTO"
           description: OK
       summary: Evaluate a Hand
       tags:
@@ -599,6 +649,32 @@ paths:
       summary: delete requesting user
       tags:
       - User
+    get:
+      description: gets the user information for the requesting user based on their
+        provided authorization token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-any"
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+          description: Unauthorized
+      security:
+      - BearerAuth: []
+      summary: gets your user
+      tags:
+      - User
 components:
   schemas:
     admin.GameStatus:
@@ -630,8 +706,8 @@ components:
           default: null
     game.CardDTO:
       example:
-        rank: 6
-        suit: 7
+        rank: 0
+        suit: 6
       properties:
         rank:
           description: the rank of a card as a rune - int32 ASCII encoding
@@ -692,14 +768,14 @@ components:
               key: 1
             display_name: display_name
             hole:
-            - rank: 6
-              suit: 7
-            - rank: 6
-              suit: 7
-            position: 1
-            pot_contribution: 4
+            - rank: 0
+              suit: 6
+            - rank: 0
+              suit: 6
+            position: 6
+            pot_contribution: 7
             stack:
-              key: 5
+              key: 1
             state: state
             user_id: user_id
             user_type: bot
@@ -707,25 +783,25 @@ components:
               key: 1
             display_name: display_name
             hole:
-            - rank: 6
-              suit: 7
-            - rank: 6
-              suit: 7
-            position: 1
-            pot_contribution: 4
+            - rank: 0
+              suit: 6
+            - rank: 0
+              suit: 6
+            position: 6
+            pot_contribution: 7
             stack:
-              key: 5
+              key: 1
             state: state
             user_id: user_id
             user_type: bot
           pot:
-            key: 9
-          small_blind_position: 9
+            key: 4
+          small_blind_position: 5
           street:
-          - rank: 6
-            suit: 7
-          - rank: 6
-            suit: 7
+          - rank: 0
+            suit: 6
+          - rank: 0
+            suit: 6
       properties:
         ended_at:
           description: the time that the game ended
@@ -762,6 +838,15 @@ components:
         started_at:
           description: the time that this hand started
           type: string
+    game.HandEvaluationDTO:
+      example:
+        error: error
+        evaluation: 0
+      properties:
+        error:
+          type: string
+        evaluation:
+          type: integer
     game.HandStartEventDTO:
       properties:
         big_blind_cost:
@@ -863,14 +948,14 @@ components:
           key: 1
         display_name: display_name
         hole:
-        - rank: 6
-          suit: 7
-        - rank: 6
-          suit: 7
-        position: 1
-        pot_contribution: 4
+        - rank: 0
+          suit: 6
+        - rank: 0
+          suit: 6
+        position: 6
+        pot_contribution: 7
         stack:
-          key: 5
+          key: 1
         state: state
         user_id: user_id
         user_type: bot
@@ -1000,14 +1085,14 @@ components:
             key: 1
           display_name: display_name
           hole:
-          - rank: 6
-            suit: 7
-          - rank: 6
-            suit: 7
-          position: 1
-          pot_contribution: 4
+          - rank: 0
+            suit: 6
+          - rank: 0
+            suit: 6
+          position: 6
+          pot_contribution: 7
           stack:
-            key: 5
+            key: 1
           state: state
           user_id: user_id
           user_type: bot
@@ -1015,25 +1100,25 @@ components:
             key: 1
           display_name: display_name
           hole:
-          - rank: 6
-            suit: 7
-          - rank: 6
-            suit: 7
-          position: 1
-          pot_contribution: 4
+          - rank: 0
+            suit: 6
+          - rank: 0
+            suit: 6
+          position: 6
+          pot_contribution: 7
           stack:
-            key: 5
+            key: 1
           state: state
           user_id: user_id
           user_type: bot
         pot:
-          key: 9
-        small_blind_position: 9
+          key: 4
+        small_blind_position: 5
         street:
-        - rank: 6
-          suit: 7
-        - rank: 6
-          suit: 7
+        - rank: 0
+          suit: 6
+        - rank: 0
+          suit: 6
       properties:
         big_blind_position:
           description: the position of the big blind
@@ -1128,21 +1213,30 @@ components:
           type: string
         error_code:
           $ref: "#/components/schemas/just.ErrorCode"
-    just.HandEvaluationDTO:
-      example:
-        error: error
-        evaluation: 0
-      properties:
-        error:
-          type: string
-        evaluation:
-          type: integer
     just.ResponseMessage-any:
       example:
         data: ""
         type: user.created
       properties:
         data: {}
+        type:
+          example: user.created
+          type: string
+    just.ResponseMessage-array_game_CardDTO:
+      example:
+        data:
+        - rank: 0
+          suit: 6
+        - rank: 0
+          suit: 6
+        type: user.created
+      properties:
+        data:
+          items:
+            $ref: "#/components/schemas/game.CardDTO"
+          type: array
+          uniqueItems: false
+          default: null
         type:
           example: user.created
           type: string
@@ -1181,14 +1275,14 @@ components:
                 key: 1
               display_name: display_name
               hole:
-              - rank: 6
-                suit: 7
-              - rank: 6
-                suit: 7
-              position: 1
-              pot_contribution: 4
+              - rank: 0
+                suit: 6
+              - rank: 0
+                suit: 6
+              position: 6
+              pot_contribution: 7
               stack:
-                key: 5
+                key: 1
               state: state
               user_id: user_id
               user_type: bot
@@ -1196,25 +1290,25 @@ components:
                 key: 1
               display_name: display_name
               hole:
-              - rank: 6
-                suit: 7
-              - rank: 6
-                suit: 7
-              position: 1
-              pot_contribution: 4
+              - rank: 0
+                suit: 6
+              - rank: 0
+                suit: 6
+              position: 6
+              pot_contribution: 7
               stack:
-                key: 5
+                key: 1
               state: state
               user_id: user_id
               user_type: bot
             pot:
-              key: 9
-            small_blind_position: 9
+              key: 4
+            small_blind_position: 5
             street:
-            - rank: 6
-              suit: 7
-            - rank: 6
-              suit: 7
+            - rank: 0
+              suit: 6
+            - rank: 0
+              suit: 6
         type: user.created
       properties:
         data:
