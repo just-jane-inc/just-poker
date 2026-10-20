@@ -5,8 +5,9 @@ from datetime import datetime
 
 import aiofiles
 from dotenv import load_dotenv
-from just.users.users import get_test_user
 
+from just.users.users import get_test_user
+from poker_bot import event_hub
 from poker_bot.bot import *
 from poker_bot.bot import PokerBot
 
@@ -49,6 +50,8 @@ if os.name == "nt":
 
 async def listen_as(user: str, game_id: str, file_path: str = ""):
     test_user = get_test_user(user)
+    assert base_url, "base url not found from config/.env"
+    assert test_user, "provided user not found"
     bot = PokerBot(base_url, test_user.token, test_user.user_id, game_id)
     print(test_user.token)
 
@@ -59,13 +62,21 @@ async def listen_as(user: str, game_id: str, file_path: str = ""):
     async with aiofiles.open(file_path, "a+") as f:
         await f.write(f"--- starting listener game:{game_id} user:{user} time:{now} ---\n\n")
 
-        try:
-            async for e in bot.events.stream():
-                print(f"received event: [{e.id}] [{e.time_sent}] {e.event_type}")
-                print(json.dumps(e._data, indent=2))
-                await f.write(json.dumps(e.raw) + "\n")
-        finally:
-            await bot.stop_events()
+        end = asyncio.Event()
+
+        async def on_event(e: event_hub.Event):
+            print(f"received event: [{e.id}] [{e.time_sent}] {e.event_type}")
+            print(json.dumps(e._data))
+            await f.write(json.dumps(e.raw) + "\n")
+
+            if e.event_type == event_hub.EventType.GAME_ENDING:
+                end.set()
+
+        sub = bot.events.subscribe("*", callback=on_event)
+        await bot.events.start()
+        await end.wait()
+        sub.unsubscribe()
+        await bot.events.stop()
 
 
 def main():

@@ -31,6 +31,7 @@ parser.add_argument(
 async def join_game_as(users: list[str], game_id: str):
     print(f"joining as {users}")
     test_users = get_test_users()
+    assert base_url, "base url not configured, check config/.env"
     for user in test_users:
         if user.username not in users:
             continue

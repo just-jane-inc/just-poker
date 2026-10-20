@@ -48,22 +48,14 @@ def get_unicode_mapping():
         for kr, rank in ranks.items():
             mapping[ks][kr] = f"{rank}{suit}"
 
-    mapping[help.CardSuit.UNKNOWN] = dict()
+    mapping[help.CardSuit.UNKNOWN] = {}
     mapping[help.CardSuit.UNKNOWN][help.CardRank.UNKNOWN] = chr(0x1F0A0)
     return mapping
 
 
-load_dotenv("config/.env")
-base_url = os.getenv("BASE_URL")
-
-parser = argparse.ArgumentParser(
-    prog="just__poker: TUI", description="a TUI that can be used to play a game of poker on the server"
-)
-
-parser.add_argument("--game-id", "--id", type=str, required=False, help="game id")
-parser.add_argument("--user", type=str, required=False, help="")
-parser.add_argument("--setup", type=int, default=0, required=False, help="")
-
+USER_NAME: str | None = None
+GAME_ID: str | None = None
+BASE_URL: str | None = None
 logger = logging.getLogger("tui")
 
 if os.name == "nt":
@@ -77,10 +69,37 @@ if os.name == "nt":
 
 
 def main():
+    parser = argparse.ArgumentParser(
+        prog="just__poker: TUI", description="a TUI that can be used to play a game of poker on the server"
+    )
+
+    parser.add_argument("--game-id", "--id", type=str, required=False, help="game id")
+    parser.add_argument("--user", type=str, required=False, help="the user to join a game as")
+    parser.add_argument(
+        "--setup",
+        type=int,
+        default=0,
+        required=False,
+        help="creates, joins, and starts a game with the provided number of players",
+    )
+
     args = parser.parse_args()
+    load_dotenv("config/.env")
+
+    global BASE_URL
+    global USER_NAME
+    global GAME_ID
+
+    BASE_URL = os.getenv("BASE_URL")
+    assert BASE_URL, "api url is missing from config/.env"
+
     if args.setup:
-        asyncio.run(just_users.setup(base_url, args.setup))
+        asyncio.run(just_users.setup(BASE_URL, args.setup))
     else:
+        USER_NAME = args.user
+        GAME_ID = args.game_id
+        assert USER_NAME, "username not provided see --help"
+        assert GAME_ID, "game id not provided see --help"
         PokerApp(ansi_color=True).run()
 
 
@@ -137,12 +156,21 @@ class Table(Static):
         if self.table is None or self.table.street is None:
             return view
 
-        to_call = self.table.current_round.bet
+        if self.table.current_round is None:
+            return view
+
+        if self.table.current_round.bet is None:
+            self.table.current_round.bet = 0
+
+        to_call: int = self.table.current_round.bet
         round_type = ""
         if self.table.current_round.current_round_type:
             round_type = self.table.current_round.current_round_type.upper()
 
         if not self.winner:
+            if not self.table.pot:
+                self.table.pot = {}
+
             view += f"║| POT: {chip_sum(self.table.pot):>15} |║\n"
             view += f"║| STREET: {round_type:>12} |║\n"
             view += f"║| TO CALL: {to_call:>11} |║\n"
@@ -164,15 +192,33 @@ class Players(Static):
     card_map = get_unicode_mapping()
     me: PokerBot | reactive[None] = reactive(None, layout=True)
 
+    @property
+    def current_player(self) -> PokerBot | None:
+        if isinstance(self.me, PokerBot):
+            return self.me
+        return None
+
+    @current_player.setter
+    def current_player(self, value):
+        self.me = value
+
     def render(self) -> str:
         view = ""
         if not self.players:
             return ""
 
         for player in self.players:
+            if player.stack is None:
+                player.stack = {}
+
+            if player.current_bet is None:
+                player.current_bet = {}
+
             chip_stack = chip_sum(player.stack)
             current_bet = chip_sum(player.current_bet)
 
+            assert player.display_name, "a player exists with no display name..."
+            assert self.me
             name = player.display_name[:8]
             if player.user_id == self.me._user_id:
                 name = f"<<{name}>>"
@@ -250,16 +296,21 @@ class PokerApp(App):
         yield Footer()
 
     async def on_mount(self) -> None:
-        args = parser.parse_args()
+        assert BASE_URL, "api base url is missing from config/.env"
+        assert GAME_ID, "game id not provided see --help"
+        assert USER_NAME, "username not provided"
+
         self.game_state = None
-        user = just_users.get_test_user(args.user)
+        user = just_users.get_test_user(USER_NAME)
 
-        me = PokerBot(base_url, user.token, user.user_id, args.game_id, timeout=5)
-        self.query_one(Players).me = me
+        assert user, f"no user found with name {USER_NAME}"
 
-        self.events = me.events
-        if not self.events:
-            raise Exception("bound poker bot has no events member")
+        players_view: Players = self.query_one(Players)
+        assert players_view and isinstance(players_view, Players)
+        players_view.current_player = PokerBot(BASE_URL, user.token, user.user_id, GAME_ID, timeout=5)
+
+        self.events = players_view.current_player.events
+        assert self.events, "PokerBot has no events member"
 
         subscribers = []
 
@@ -274,10 +325,10 @@ class PokerApp(App):
                 await self.apply_game_over(event.data)
 
         subscribers = [
-            me.events.subscribe(EventType.GAME_ENDING, on_update),
-            me.events.subscribe(EventType.STARTING_GAME, on_update),
-            me.events.subscribe(EventType.GAME_STATE_UPDATE, on_update),
-            me.events.subscribe(EventType.WELCOME, on_update),
+            self.events.subscribe(EventType.GAME_ENDING, on_update),
+            self.events.subscribe(EventType.STARTING_GAME, on_update),
+            self.events.subscribe(EventType.GAME_STATE_UPDATE, on_update),
+            self.events.subscribe(EventType.WELCOME, on_update),
         ]
 
         await self.events.start()
@@ -286,7 +337,10 @@ class PokerApp(App):
         if data is None:
             return
         self.query_one(Players).players = data
-        self.query_one(Table).table.pot.clear()
+        table_view: Table = self.query_one(Table)
+
+        if table_view.table and table_view.table.pot:
+            table_view.table.pot.clear()
 
         for player in data:
             if player.stack is not None and chip_sum(player.stack) > 0:
@@ -307,40 +361,50 @@ class PokerApp(App):
         if self.events is not None:
             await self.events.stop()
 
+    def on_error(self, e: api.ApiException):
+        if not isinstance(e.body, str):
+            self.notify(f"encountered unknown error type: {e}")
+            return
+
+        poker_error = api.JustResponseMessageJustErrorDTO.from_json(e.body)
+        assert poker_error, f"failed to parse error: {e.body}"
+        assert poker_error.data, f"parsed error is missing data: {e.body}"
+        self.notify(f"encountered error [{poker_error.data.error_code}] {poker_error.data.error}")
+
     async def action_fold(self) -> None:
         players = self.query_one(Players)
+        assert players.current_player, "ante called while underlying player is None"
         try:
-            if not await players.me.fold():
+            if not await players.current_player.fold():
                 self.notify("fold action has timed out")
             else:
                 self.notify("folded!")
         except api.ApiException as e:
-            poker_error = api.JustResponseMessageJustErrorDTO.from_json(e.body)
-            self.notify(f"encountered error [{poker_error.data.error_code}] {poker_error.data.error}")
+            self.on_error(e)
 
     async def action_call(self) -> None:
         players = self.query_one(Players)
+        assert players.current_player, "ante called while underlying player is None"
         try:
-            if not await players.me.call():
+            if not await players.current_player.call():
                 self.notify("call action has timed out")
             else:
                 self.notify("call!")
         except api.ApiException as e:
-            poker_error = api.JustResponseMessageJustErrorDTO.from_json(e.body)
-            self.notify(f"encountered error [{poker_error.data.error_code}] {poker_error.data.error}")
+            self.on_error(e)
 
     async def action_raise_bet(self) -> None:
         async def check_result(result: str | None) -> None:
             if result is not None:
                 players = self.query_one(Players)
+                assert players.current_player, "ante called while underlying player is None"
                 try:
-                    if not await players.me.raise_bet(int(result)):
+                    if not await players.current_player.raise_bet(int(result)):
                         self.notify("raise action has timed out")
                     else:
                         self.notify("raied!")
                 except api.ApiException as e:
-                    poker_error = api.JustResponseMessageJustErrorDTO.from_json(e.body)
-                    self.notify(f"encountered error [{poker_error.data.error_code}] {poker_error.data.error}")
+                    self.on_error(e)
 
             else:
                 self.query_one("#info", Static).update("Cancelled")
@@ -349,36 +413,36 @@ class PokerApp(App):
 
     async def action_ante(self) -> None:
         players = self.query_one(Players)
+        assert players.current_player, "ante called while underlying player is None"
         try:
-            if not await players.me.ante():
+            if not await players.current_player.ante():
                 self.notify("ante action has timed out")
             else:
                 self.notify("ante!")
         except api.ApiException as e:
-            poker_error = api.JustResponseMessageJustErrorDTO.from_json(e.body)
-            self.notify(f"encountered error [{poker_error.data.error_code}] {poker_error.data.error}")
+            self.on_error(e)
 
     async def action_check(self) -> None:
         players = self.query_one(Players)
+        assert players.current_player, "ante called while underlying player is None"
         try:
-            if not await players.me.check():
+            if not await players.current_player.check():
                 self.notify("check action has timed out")
             else:
                 self.notify("check!")
         except api.ApiException as e:
-            poker_error = api.JustResponseMessageJustErrorDTO.from_json(e.body)
-            self.notify(f"encountered error [{poker_error.data.error_code}] {poker_error.data.error}")
+            self.on_error(e)
 
     async def action_all_in(self) -> None:
         players = self.query_one(Players)
+        assert players.current_player, "ante called while underlying player is None"
         try:
-            if not await players.me.all_in():
+            if not await players.current_player.all_in():
                 self.notify("all-in action has timed out")
             else:
                 self.notify("all-in!")
         except api.ApiException as e:
-            poker_error = api.JustResponseMessageJustErrorDTO.from_json(e.body)
-            self.notify(f"encountered error [{poker_error.data.error_code}] {poker_error.data.error}")
+            self.on_error(e)
 
 
 if __name__ == "__main__":
