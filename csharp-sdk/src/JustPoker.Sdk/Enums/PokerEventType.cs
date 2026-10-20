@@ -11,26 +11,32 @@ public enum PokerEventType {
     [PokerEventMeta(Text = "welcome", DataType = typeof(GameGameDTO))]
     Welcome,
 
-    [PokerEventMeta(Text = "game_state_update", DataType = typeof(GameGameDTO))]
+    [PokerEventMeta(Text = "game_status_changed", DataType = typeof(GameGameDTO))]
     GameStateUpdate,
 
-    [PokerEventMeta(Text = "starting_game", DataType = typeof(GameGameDTO))]
+    [PokerEventMeta(Text = "game_starting", DataType = typeof(GameGameDTO))]
     StartingGame,
 
     [PokerEventMeta(Text = "player_action", DataType = typeof(GamePlayerActionDTO))]
     PlayerAction,
 
-    [PokerEventMeta(Text = "payout", DataType = typeof(JsonNode))]
+    [PokerEventMeta(Text = "hand_payouts", DataType = typeof(GamePayoutEventDTO))]
     Payout,
 
-    [PokerEventMeta(Text = "round_start", DataType = typeof(GameRoundDTO))]
+    [PokerEventMeta(Text = "round_started", DataType = typeof(GameRoundStartEventDTO))]
     RoundStart,
 
-    [PokerEventMeta(Text = "hand_started", DataType = typeof(JsonNode))]
+    [PokerEventMeta(Text = "hand_started", DataType = typeof(GameHandStartEventDTO))]
     HandStarted,
 
-    [PokerEventMeta(Text = "game_over", DataType = typeof(List<GamePlayerDTO>))]
-    GameOver
+    [PokerEventMeta(Text = "game_ending", DataType = typeof(List<GamePlayerDTO>))]
+    GameOver,
+
+    [PokerEventMeta(Text = "chip_exchange", DataType = typeof(GameChipExchangeDTO))]
+    ChipExchange,
+
+    [PokerEventMeta(Text = "turn_started", DataType = typeof(GameTurnStartEventDTO))]
+    TurnStarted
 }
 
 public static class PokerEventTypeExtensions {
