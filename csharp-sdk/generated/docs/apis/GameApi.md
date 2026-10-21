@@ -97,7 +97,7 @@ exchange chips in the players stack with the tables rack
 
 <a id="gamegameiddelete"></a>
 # **GameGameIdDelete**
-> JustResponseMessageAny GameGameIdDelete (string gameId, Object body = null)
+> JustResponseMessageAny GameGameIdDelete (string gameId)
 
 Delete a Game
 
@@ -109,7 +109,6 @@ Delete a game
 | Name | Type | Description | Notes |
 |------|------|-------------|-------|
 | **gameId** | **string** | ID of the Game to delete |  |
-| **body** | **Object** |  | [optional]  |
 
 ### Return type
 
@@ -121,7 +120,7 @@ Delete a game
 
 ### HTTP request headers
 
- - **Content-Type**: application/json
+ - **Content-Type**: Not defined
  - **Accept**: application/json
 
 
@@ -206,6 +205,8 @@ Join an open game
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
 | **400** | Bad Request |  -  |
+| **401** | Unauthorized |  -  |
+| **403** | Forbidden |  -  |
 
 [[Back to top]](#) [[Back to API list]](../../README.md#documentation-for-api-endpoints) [[Back to Model list]](../../README.md#documentation-for-models) [[Back to README]](../../README.md)
 
@@ -501,7 +502,7 @@ creates a new game from a configuration file
 
 <a id="handevaluatorevaluatepost"></a>
 # **HandEvaluatorEvaluatePost**
-> JustHandEvaluationDTO HandEvaluatorEvaluatePost (List<GameCardDTO> gameCardDTO)
+> GameHandEvaluationDTO HandEvaluatorEvaluatePost (List<GameCardDTO> gameCardDTO)
 
 Evaluate a Hand
 
@@ -516,7 +517,7 @@ Evaluator? I hardly...
 
 ### Return type
 
-[**JustHandEvaluationDTO**](JustHandEvaluationDTO.md)
+[**GameHandEvaluationDTO**](GameHandEvaluationDTO.md)
 
 ### Authorization
 
