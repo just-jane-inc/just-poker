@@ -10,7 +10,7 @@ from poker_bot import event_hub as eh
 
 parser = argparse.ArgumentParser(prog="just__poker: call bot", description="an example bot that always calls")
 parser.add_argument("--game-id", "--id", type=str, required=True, help="the id of the game to join")
-parser.add_argument("--config", type=str, required=True, help="the user configuration file to load with")
+parser.add_argument("--config", type=str, required=True, help="the file path to the user configuration file to load with")
 parser.add_argument(
     "--url",
     type=str,

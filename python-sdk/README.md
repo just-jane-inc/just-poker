@@ -5,7 +5,10 @@
 Setup the local python development environment:
 
 - create a virtual env with `python -m venv .venv`
-- activate the virtual environment `source .venv/bin/activate`
+- setup configurations `mv config/.env.example config/.env`
+- activate the virtual environment
+  - Linux: `source .venv/bin/activate`
+  - Windows: `.venv\Scripts\Activate.ps1`
 - setup the toml project environment `pip install -e .`
 
 # helper scripts
@@ -27,7 +30,7 @@ some notes to keep in mind when using the TUI:
 ```
 // setup a game between two players using the default game configuration and users
 // acquired from config/test_users.csv. insert your own players in this file in order
-// for the setup to use them, ideally place them first/earlly in the csv. games can
+// for the setup to use them, ideally place them first/early in the csv. games can
 // support up to 8 players
 poker-tui --setup 2
 
