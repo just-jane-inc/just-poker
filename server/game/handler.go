@@ -7,9 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mattlangl/gophe"
-
 	"github.com/just-jane-inc/just-poker/server/just"
+	"github.com/mattlangl/gophe"
 )
 
 // OnEvalHand godoc
@@ -143,9 +142,7 @@ func OnJoinGameRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	g.gameStateLock.Lock()
 	err := g.TryJoinGame(user)
-	g.gameStateLock.Unlock()
 
 	if err != nil {
 		var pokerErr *just.PokerError
@@ -274,7 +271,7 @@ func OnCreateGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	g, pokerError := createGameFromConfig(config)
+	g, pokerError := CreateGameFromConfig(config)
 	if pokerError != nil {
 		just.BadRequest(pokerError.Message, pokerError.Code).WriteJSONResponse(w)
 		return

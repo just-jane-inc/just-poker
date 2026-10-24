@@ -1550,6 +1550,42 @@
                 ]
             }
         },
+        "/test/game": {
+            "get": {
+                "description": "Creates a test game with random bot oponents to play against, joins the game with the requested user token and starts it",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-game_GameDTO"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/just.ResponseMessage-just_ErrorDTO"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Creates a test game",
+                "tags": [
+                    "Testing"
+                ]
+            }
+        },
         "/user/me": {
             "delete": {
                 "description": "deletes the user associated to the token used to authenticate this request",

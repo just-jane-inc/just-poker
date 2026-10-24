@@ -158,7 +158,7 @@ func (g *game) OverWriteTable(dto TableDTO) error {
 }
 
 // createGameFromConfig creates a game object from a configuration file
-func createGameFromConfig(config NewGameConfigDTO) (*game, *just.PokerError) {
+func CreateGameFromConfig(config NewGameConfigDTO) (*game, *just.PokerError) {
 	just.Logger.Debugf("%v", config)
 	if config.PlayerCount < 2 {
 		return nil, just.NewPokerError("player count must be greater then 2 for a poker game", just.InvalidGameConfiguration)
@@ -269,6 +269,8 @@ func createGameFromConfig(config NewGameConfigDTO) (*game, *just.PokerError) {
 // TODO: should this just be called and return error? do I need
 // a response channel really?
 func (g *game) TryJoinGame(user *just.AuthorizedUser) error {
+	g.gameStateLock.Lock()
+	defer g.gameStateLock.Unlock()
 	just.Logger.Debugf("%s trying to join game %s", user.Name, g.id)
 
 	if g.startedAt != nil {

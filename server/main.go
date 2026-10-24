@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/just-jane-inc/just-poker/server/botfarm"
 	"github.com/just-jane-inc/just-poker/server/game"
 	"github.com/just-jane-inc/just-poker/server/just"
 	"github.com/just-jane-inc/just-poker/server/user"
@@ -220,6 +221,12 @@ func main() {
 	apiMux.HandleFunc(
 		"GET /user/me",
 		user.OnGetMe,
+	)
+
+	// =====Bot Farm=====
+	apiMux.HandleFunc(
+		"GET /test/game",
+		botfarm.OnCreateTestGame,
 	)
 
 	// =====Admin Panel End=====

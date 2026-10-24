@@ -9,18 +9,17 @@ Store it somewhere accessible from your code anywhere you need it.
 
 This bot is given a game_id, so this instance will only have access to this one game.
 
-```py
+```python
     from poker_bot.bot.bot import PokerBot
-    # ...
+    bot = PokerBot(
+      base_url = "https://game.bahms.org/api/poker",
+      token    = "", # Your Bot Token
+      user_id  = "", # Your Bot User Id, I.E., 42
+      game_id  = ""  # Game Id, I.E., "4201"
+    )
 
-    bot = PokerBot(base_url = "https://game.bahms.org/api/poker",  
-                   token    = "",                  # Your Bot Token
-                   user_id  = "",                  # Your Bot User Id, I.E., 42
-                   game_id  = ""                   # Game Id, I.E., "4201"
-          )
-
-    await bot.events.start()                # Guarantee the bot will start listening for events.
-    await bot.join_game()                          # Join the game you are configured for 
+    await bot.events.start() # Guarantee the bot will start listening for events.
+    await bot.join_game()    # Join the game you are configured for
 ```
 
 Reminder, a user token can only be connected *once* to a Game's events websocket at a time.
@@ -30,33 +29,41 @@ Reminder, a user token can only be connected *once* to a Game's events websocket
 ```py
     from poker_bot.bot import event_hub
     import openapi_client as api
-    # ...
+
+    game_over_event = asyncio.Event()
+
+    async def on_game_over(e: event_hub.Event):
+      game_over_event.set()
+
 
     async def on_game_state_changed(e: event_hub.Event):
         # React to game states. This is what gives you everything you want
         if e.data is None or not isinstance(e.data, api.GameGameDTO):
             return
         pass
-    
+
     # Just a list of subscriptions to make collecting them easier
     subscribers = [
         # You can subscribe to a single event type and a callback function as this
         bot.events.subscribe(event_hub.EventType.GAME_ENDING, on_game_over),
-        
+
         # Or multiple at once to a single callback
         bot.events.subscribe([
             event_hub.EventType.GAME_STATE_UPDATE,
             event_hub.EventType.WELCOME,
             event_hub.EventType.STARTING_GAME
         ], on_game_state_changed),
-        # ...
     ]
-    
-    # ... When closing the bot or disconnecting unsubscribe
-    
+
+    # ensure that the bot event listener has started
+    await bot.events.start()
+
+    # block until the game is over
+    await game_over_event()
+
+    # When closing the bot or disconnecting unsubscribe
     for subscriber in subscribers:
         subscriber.unsubscribe()
-
 ```
 
 ## Bot Lifecycle
@@ -70,66 +77,82 @@ Here is a fuller example showing how, given a game id, you can:
 
 This example is similar to what is used in the `examples/jambler/__main__.py`
 
-```py
+```python
 import asyncio
 
-from poker_bot.bot.bot import PokerBot
-from poker_bot.bot import event_hub
 import openapi_client as api
+from poker_bot import event_hub
+from poker_bot.bot import PokerBot
 
 
 def main():
-    bot = PokerBot(base_url = "https://game.bahms.org/api/poker",  
-               token    = "",                  # Your Bot Token
-               user_id  = "",                  # Your Bot User Id, I.E., 42
-               game_id  = ""                   # Game Id, I.E., "4201"
+    bot = PokerBot(
+        base_url="https://game.bahms.org/api/poker",
+        token="",   # Your Bot Token
+        user_id="", # Your Bot User Id, I.E., 42
+        game_id="", # Game Id, I.E., "4201"
     )
+
     asyncio.run(run_bot(bot))
-    
-async def run_bot(bot: PokerBot): 
+
+
+async def run_bot(bot: PokerBot):
     await bot.events.start()
     await bot.join_game()
-    
+
     # These are used to help the program "wait"/block until we get info on the game
     game_over = asyncio.Event()
     game_started = asyncio.Event()
-    
+
     async def on_game_over(e: event_hub.Event):
         game_over.set()
-    
+
     async def on_game_started(e: event_hub.Event):
         game_started.set()
-    
+
     async def on_game_state_changed(e: event_hub.Event):
         if e.data is None or not isinstance(e.data, api.GameGameDTO):
             return
-        
+
         game_state: api.GameGameDTO = e.data
-        # ... Logic for analyzing hand, stack, cards, etc etc.
+        # Logic for analyzing hand, stack, cards, etc etc.
         # Make your Moves too... or something, kicks rocks...
-        # The PokerBot will handle updating and give you access to the current stack, hand, hole, river, etc. 
-        # ...
-    
-    # Subscribe
+        # The PokerBot will handle updating and give you access to the current stack, hand, hole, river, etc.
+
+        if not game_state.table:
+            return
+
+        if bot._player is None:
+            return
+
+        if game_state.table.current_round:
+            if game_state.table.current_round.current_player_position != bot._player.position:
+                return
+
+            match (game_state.table.current_round.current_round_type):
+                case api.GameRoundType.RoundTypeAnte:
+                    await bot.ante()
+                case api.GameRoundType.RoundTypePreFlop:
+                    await bot.all_in()
+
     subscribers = [
-            bot.events.subscribe(event_hub.EventType.GAME_ENDING, on_game_over),
-            bot.events.subscribe(event_hub.EventType.STARTING_GAME, on_game_started), 
-            bot.events.subscribe([
-                event_hub.EventType.GAME_STATE_UPDATE,
-                event_hub.EventType.WELCOME,
-                event_hub.EventType.STARTING_GAME
-            ], on_game_state_changed)
+        bot.events.subscribe(event_hub.EventType.GAME_ENDING, on_game_over),
+        bot.events.subscribe(event_hub.EventType.STARTING_GAME, on_game_started),
+        bot.events.subscribe(event_hub.EventType.GAME_STATE_UPDATE, on_game_state_changed),
+        bot.events.subscribe(event_hub.EventType.WELCOME, on_game_state_changed),
+        bot.events.subscribe(event_hub.EventType.STARTING_GAME, on_game_state_changed),
     ]
-        
+
     state = await bot.get_game_state()
+    assert state, "bot.get_game_state() did not return a valid game state object"
     if state.started_at is None:
         # Wait for the game_started event to be received (calls `on_game_started`)
         await asyncio.wait_for(game_started.wait(), None)
-    
+
     # At this point, game has started
     # We want to now block until we receive a game over event
     # As the game state update events will continue to be received while we are blocked here
-    
+
     await asyncio.wait_for(game_over.wait(), None)
     # Once we get here, we have received a game over state
     # so now we are wrapping up folks
@@ -140,6 +163,7 @@ async def run_bot(bot: PokerBot):
 
 if __name__ == "__main__":
     main()
+
 ```
 
 There are other ways to run your bot and listen for events,
