@@ -67,12 +67,15 @@ internal static class Program {
             return Task.CompletedTask;
         });
 
+        // Could also add StartingGame to collect all GameGameDTO's
         using var stateSubscription = bot.Events.Subscribe(
             [PokerEventType.GameStateUpdate, PokerEventType.Welcome],
             e => OnGameStateAsync(bot, e, logger));
 
-        // start up
+        // start up. Required to initialize websocket connections and receive states.
+        // hence subscribing above.
         await bot.InitializeAsync();
+        
         if (!bot.Joined)
             await bot.JoinGameAsync();
         logger.LogInformation("Joined Game");
