@@ -607,8 +607,6 @@ func OnGetNextListenerEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Check user.Type
-
 	gameID := r.PathValue("game_id")
 	h, ok := just.UpdateHub.Games[gameID]
 	if !ok {
@@ -622,11 +620,16 @@ func OnGetNextListenerEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	msg := <-conn.MessageChannel
-	msg.TimeSent = time.Now()
-	msg.ID = conn.MsgIDCounter
-	conn.MsgIDCounter += 1
-	just.WriteJSONResponse(w, http.StatusOK, msg)
+	select {
+	case <-r.Context().Done():
+		just.Logger.Debugf("listener event request context exited before message channel could read")
+		just.WriteJSONResponse(w, http.StatusTeapot, "enjoy your tea time")
+	case msg := <-conn.MessageChannel:
+		msg.TimeSent = time.Now()
+		msg.ID = conn.MsgIDCounter
+		conn.MsgIDCounter += 1
+		just.WriteJSONResponse(w, http.StatusOK, msg)
+	}
 }
 
 // OnCreateGameConnection godoc
