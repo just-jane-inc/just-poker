@@ -9,7 +9,8 @@ import (
 type ErrorCode int
 
 const (
-	SkillIssue ErrorCode = 67
+	SkillIssue            ErrorCode = 67
+	CriticalInternalError ErrorCode = 69
 
 	Unknown              ErrorCode = 1000
 	UserNotFound         ErrorCode = 1001
@@ -23,6 +24,7 @@ const (
 	InvalidBetAmount    ErrorCode = 2003
 	InvalidChipExchange ErrorCode = 2004
 	ExpectedAnteAction  ErrorCode = 2005
+	GameNotStarted      ErrorCode = 2006
 
 	GameAlreadyStarted       ErrorCode = 2020
 	GameIsFull               ErrorCode = 2021
@@ -40,12 +42,15 @@ type PokerError struct {
 	Cause   error
 }
 
+// NewCriticalInternalError creates an error and id used for tracking
+// the string return value should be used in logs so that it can be
+// linked with a user complaint - this is a kind of correlation id
 func NewCriticalInternalError() (*PokerError, string) {
 	id := uuid.NewString()
 
 	return NewPokerError(
 		fmt.Sprintf("critical error - altert game master - %s", id),
-		Unknown,
+		CriticalInternalError,
 	), id
 }
 

@@ -26,6 +26,7 @@ func OnEvalHand(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&hand); err != nil {
 		eval.Error = "error deserializing request, must be array of CardDTO"
 		just.WriteJSONResponse(w, 400, eval)
+
 		return
 	}
 

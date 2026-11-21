@@ -157,7 +157,7 @@ func (g *game) OverWriteTable(dto TableDTO) error {
 	return nil
 }
 
-// createGameFromConfig creates a game object from a configuration file
+// CreateGameFromConfig creates a game object from a configuration file
 func CreateGameFromConfig(config NewGameConfigDTO) (*game, *just.PokerError) {
 	just.Logger.Debugf("%v", config)
 	if config.PlayerCount < 2 {
@@ -250,7 +250,9 @@ func CreateGameFromConfig(config NewGameConfigDTO) (*game, *just.PokerError) {
 
 	conn, err := just.DBConnPool.Acquire(ctx)
 	if err != nil {
-		return nil, just.NewPokerError(err.Error(), just.Unknown)
+		pokerError, id := just.NewCriticalInternalError()
+		just.Logger.Errorf("error id: [ %s ] failed to acquire db conn while creating game: %v", id, err)
+		return nil, pokerError
 	}
 	defer conn.Release()
 
@@ -258,7 +260,9 @@ func CreateGameFromConfig(config NewGameConfigDTO) (*game, *just.PokerError) {
 	stmt := `insert into just_poker_game (starting_chips, player_count) values ($1, $2) RETURNING game_id`
 	err = conn.QueryRow(ctx, stmt, config.StartingChips, config.PlayerCount).Scan(&id)
 	if err != nil {
-		return nil, just.NewPokerError(err.Error(), just.Unknown)
+		pokerError, idx := just.NewCriticalInternalError()
+		just.Logger.Errorf("error id: [%s] failed to insert new game in db: %v", idx, err)
+		return nil, pokerError
 	}
 
 	g.id = strconv.Itoa(id)
@@ -277,8 +281,11 @@ func (g *game) TryJoinGame(user *just.AuthorizedUser) error {
 		return just.NewPokerError("game already started", just.GameAlreadyStarted)
 	}
 
+	// TODO: is this possible?
 	if g.table == nil {
-		return just.NewPokerError("table does not yet exist", just.Unknown)
+		err, id := just.NewCriticalInternalError()
+		just.Logger.Errorf("error id [ %s ] the table is nil when it should not be in game [ %s ]: %v", id, g.id, err)
+		return err
 	}
 
 	if len(g.table.players) >= g.config.PlayerCount {
@@ -334,8 +341,9 @@ func (g *game) TryStartGame() *just.PokerError {
 
 	conn, err := just.DBConnPool.Acquire(ctx)
 	if err != nil {
-		just.Logger.Errorf("encounterd error acquiring db conn when trying to start game [%s]", g.id)
-		return just.NewPokerError("internal server errror", just.Unknown)
+		err, id := just.NewCriticalInternalError()
+		just.Logger.Errorf("encounterd error acquiring db conn when trying to start game [%s] err id: [%s]", g.id, id)
+		return err
 	}
 	defer conn.Release()
 
@@ -343,8 +351,9 @@ func (g *game) TryStartGame() *just.PokerError {
 	for i, p := range g.table.players {
 		id, err := strconv.Atoi(p.UserID)
 		if err != nil {
-			just.Logger.Errorf("user id [%s] failed to parse as an int", p.UserID)
-			return just.NewPokerError("internal server errror", just.Unknown)
+			pokerError, id := just.NewCriticalInternalError()
+			just.Logger.Errorf("error id [ %s ] user id [ %s ] failed to parse as an int: %v", id, p.UserID, err)
+			return pokerError
 		}
 
 		players[i] = id
@@ -357,8 +366,9 @@ func (g *game) TryStartGame() *just.PokerError {
 	WHERE game_id = $2`
 	_, err = conn.Exec(ctx, stmt, players, g.id)
 	if err != nil {
-		just.Logger.Errorf("failed to update game state when trying to start game [%s]", g.id)
-		return just.NewPokerError("internal server errror", just.Unknown)
+		pokerError, id := just.NewCriticalInternalError()
+		just.Logger.Errorf("error id [ %s ] failed to update game state when trying to start game [%s]", id, g.id)
+		return pokerError
 	}
 
 	if g.config.AutoStartHands {

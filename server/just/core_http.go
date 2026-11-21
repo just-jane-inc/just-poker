@@ -54,7 +54,7 @@ func Unauthorized() HTTPResponse {
 			Type: "error",
 			Data: ErrorDTO{
 				ErrorCode: 67,
-				Error:     "=^-^=",
+				Error:     "=^-^= you need a token nya",
 			},
 		},
 	}
